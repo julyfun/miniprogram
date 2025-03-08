@@ -1,0 +1,41 @@
+<view class="container">
+    <!-- 食材管理区域 -->
+    <view class="section ingredients-section">
+        <view class="section-title">食材管理</view>
+        <view class="input-area">
+            <input type="text" class="text-input" placeholder="输入食材名称" bindinput="onIngredientInput" />
+            <button class="voice-btn" bindtap="startVoiceInput">
+                <image class="voice-icon" src="/assets/icons/voice.png" />
+            </button>
+        </view>
+        <button class="add-btn" bindtap="addIngredient">添加食材</button>
+        <!-- 食材列表 -->
+        <view class="ingredients-list">
+            <block wx:for="{{ingredients}}" wx:key="index">
+                <view class="ingredient-item">
+                    <text>{{item.name}}</text>
+                    <text class="delete-btn" bindtap="deleteIngredient" data-index="{{index}}">
+                        ×
+                    </text>
+                </view>
+            </block>
+        </view>
+    </view>
+    <!-- 健康信息区域 -->
+    <view class="section health-section">
+        <view class="section-title">健康信息</view>
+        <view class="health-form">
+            <view class="form-item">
+                <text>年龄</text>
+                <input type="number" class="health-input" placeholder="请输入年龄" bindinput="onAgeInput" />
+            </view>
+            <view class="form-item">
+                <text>体重(kg)</text>
+                <input type="digit" class="health-input" placeholder="请输入体重" bindinput="onWeightInput" />
+            </view>
+            <button class="save-btn" bindtap="saveHealthInfo">保存信息</button>
+        </view>
+    </view>
+    <!-- 生成菜谱按钮 -->
+    <button class="generate-btn" bindtap="generateRecipe">生成今日菜谱</button>
+</view>

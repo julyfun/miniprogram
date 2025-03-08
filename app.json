@@ -1,0 +1,47 @@
+{
+    "pages": [
+        "pages/home/index",
+        "pages/ingredients/index",
+        "pages/profile/index",
+        "pages/recipes/index"
+    ],
+    "window": {
+        "backgroundTextStyle": "light",
+        "navigationBarBackgroundColor": "#fff",
+        "navigationBarTitleText": "今天做什么",
+        "navigationBarTextStyle": "black"
+    },
+    "tabBar": {
+        "color": "#999999",
+        "selectedColor": "#1AAD19",
+        "backgroundColor": "#ffffff",
+        "list": [
+            {
+                "pagePath": "pages/home/index",
+                "text": "首页",
+                "iconPath": "assets/icons/home.png",
+                "selectedIconPath": "assets/icons/home-active.png"
+            },
+            {
+                "pagePath": "pages/ingredients/index",
+                "text": "食材",
+                "iconPath": "assets/icons/ingredients.png",
+                "selectedIconPath": "assets/icons/ingredients-active.png"
+            },
+            {
+                "pagePath": "pages/recipes/index",
+                "text": "菜谱",
+                "iconPath": "assets/icons/recipes.png",
+                "selectedIconPath": "assets/icons/recipes-active.png"
+            },
+            {
+                "pagePath": "pages/profile/index",
+                "text": "我的",
+                "iconPath": "assets/icons/profile.png",
+                "selectedIconPath": "assets/icons/profile-active.png"
+            }
+        ]
+    },
+    "style": "v2",
+    "sitemapLocation": "sitemap.json"
+}
