@@ -1,4 +1,6 @@
 {
-    "navigationBarTitleText": "今天做什么",
-    "usingComponents": {}
+    "navigationBarTitleText": "AI 助手",
+    "usingComponents": {},
+    "navigationBarBackgroundColor": "#121212",
+    "navigationBarTextStyle": "white"
 }

@@ -1,15 +1,215 @@
 /* 全局容器 */
 .container {
-    padding: 20rpx;
-    background-color: #f5f5f5;
-    min-height: 100vh;
-    max-width: 750rpx;
-    margin: 0 auto;
-    box-sizing: border-box;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #000000;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* 顶部标题 */
+.header {
+    padding: 40rpx 30rpx 20rpx;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .title {
+        font-size: 36rpx;
+        font-weight: 500;
+        color: #ffffff;
+    }
+}
+
+/* 聊天内容区域 */
+.chat-container {
+    flex: 1;
+    padding: 30rpx;
+    overflow-y: auto;
+}
+
+/* 消息项 */
+.message-item {
+    margin-bottom: 30rpx;
+    max-width: 80%;
+    clear: both;
+    
+    .message-content {
+        padding: 20rpx 24rpx;
+        border-radius: 18rpx;
+        font-size: 30rpx;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+}
+
+/* 用户消息样式 */
+.user-message {
+    float: right;
+    
+    .message-content {
+        background-color: #0A84FF;
+        color: #ffffff;
+        border-radius: 18rpx 4rpx 18rpx 18rpx;
+    }
+}
+
+/* AI消息样式 */
+.ai-message {
+    float: left;
+    
+    .message-content {
+        background-color: #2C2C2E;
+        color: #ffffff;
+        border-radius: 4rpx 18rpx 18rpx 18rpx;
+    }
+}
+
+/* 声波动画容器 */
+.voice-animation-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 20rpx;
+    height: 70vh;
+    position: relative;
+    
+    &::after {
+        content: '';
+        position: absolute;
+        width: 450rpx;
+        height: 450rpx;
+        background: radial-gradient(circle, rgba(20,20,20,0.7) 0%, rgba(0,0,0,0) 70%);
+        border-radius: 50%;
+        z-index: -1;
+        filter: blur(20rpx);
+    }
+    
+    .welcome-text {
+        font-size: 32rpx;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 120rpx;
+        text-align: center;
+    }
+}
+
+/* 新的语音动画 */
+.voice-animation {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 24rpx;
+    width: 300rpx;
+    height: 100rpx;
+    position: relative;
+    
+    .voice-dot {
+        height: 60rpx;
+        width: 60rpx;
+        background-color: #ffffff;
+        border-radius: 40rpx;
+        box-shadow: 0 0 40rpx rgba(255, 255, 255, 0.8);
+        animation: voicePulse 3.5s cubic-bezier(0.35, 0, 0.65, 1) infinite;
+        transform-origin: center bottom;
+        opacity: 0.92;
+        position: relative;
+        filter: blur(1rpx);
+        
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%);
+            border-radius: 40rpx;
+        }
+        
+        &:nth-child(1) {
+            animation-delay: 0.4s;
+            height: 65rpx;
+            border-radius: 32.5rpx;
+        }
+        
+        &:nth-child(2) {
+            animation-delay: 0.1s;
+            height: 85rpx;
+            border-radius: 42.5rpx;
+        }
+        
+        &:nth-child(3) {
+            animation-delay: 0.7s;
+            height: 85rpx;
+            border-radius: 42.5rpx;
+        }
+        
+        &:nth-child(4) {
+            animation-delay: 0.2s;
+            height: 65rpx;
+            border-radius: 32.5rpx;
+        }
+    }
+}
+
+@keyframes voicePulse {
+    0% {
+        transform: scaleY(0.8);
+        opacity: 0.9;
+    }
+    30% {
+        transform: scaleY(1.2);
+        opacity: 1;
+    }
+    60% {
+        transform: scaleY(0.9);
+        opacity: 0.92;
+    }
+    100% {
+        transform: scaleY(0.8);
+        opacity: 0.9;
+    }
+}
+
+/* 底部输入区域 */
+.input-container {
+    display: flex;
+    align-items: center;
+    padding: 20rpx 30rpx;
+    background-color: #121212;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    bottom: 0;
+    
+    .message-input {
+        flex: 1;
+        height: 80rpx;
+        background-color: #2C2C2E;
+        border-radius: 40rpx;
+        padding: 0 30rpx;
+        font-size: 30rpx;
+        color: #ffffff;
+    }
+    
+    .send-button {
+        width: 80rpx;
+        height: 80rpx;
+        background-color: #0A84FF;
+        border-radius: 40rpx;
+        margin-left: 20rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .send-icon {
+            width: 0;
+            height: 0;
+            border-top: 15rpx solid transparent;
+            border-bottom: 15rpx solid transparent;
+            border-left: 24rpx solid #ffffff;
+            margin-left: 8rpx;
+        }
+    }
 }
 
 /* 通用部分样式 */

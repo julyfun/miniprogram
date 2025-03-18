@@ -1,142 +1,171 @@
+interface Message {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
 interface IPageData {
-    ingredients: Array<{
-        name: string;
-    }>;
-    healthInfo: {
-        age: number;
-        weight: number;
-    };
-    currentIngredient: string;
+    messages: Message[];
+    inputMessage: string;
+    scrollToView: string;
+    isLoading: boolean;
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
     data: {
-        ingredients: [],
-        healthInfo: {
-            age: 0,
-            weight: 0
-        },
-        currentIngredient: ''
+        messages: [],
+        inputMessage: '',
+        scrollToView: 'message-bottom',
+        isLoading: false
     },
 
     onLoad() {
-        // 加载已保存的食材和健康信息
-        this.loadSavedData();
+        // 加载历史聊天记录
+        this.loadChatHistory();
     },
 
-    // 食材相关方法
-    onIngredientInput(e: WechatMiniprogram.Input) {
+    // 输入消息处理
+    onMessageInput(e: WechatMiniprogram.Input) {
         this.setData({
-            currentIngredient: e.detail.value
+            inputMessage: e.detail.value
         });
     },
 
-    startVoiceInput() {
-        // 调用微信录音接口
-        const recorderManager = wx.getRecorderManager();
-        recorderManager.start({
-            duration: 60000,
-            sampleRate: 16000,
-            numberOfChannels: 1,
-            encodeBitRate: 48000,
-            format: 'mp3'
+    // 发送消息到 Deepseek API
+    sendMessage() {
+        const { inputMessage, messages, isLoading } = this.data;
+        
+        // 检查是否正在加载或消息为空
+        if (isLoading || !inputMessage.trim()) {
+            return;
+        }
+
+        // 添加用户消息
+        const userMessage: Message = {
+            role: 'user',
+            content: inputMessage
+        };
+        
+        this.setData({
+            messages: [...messages, userMessage],
+            inputMessage: '',
+            isLoading: true
         });
 
+        // 滚动到底部
+        this.scrollToBottom();
+
+        // 调用 Deepseek API
+        wx.request({
+            url: 'https://api.deepseek.com/v1/chat/completions',
+            method: 'POST',
+            header: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer sk-09f11c2631f544a6af0456d5d058607b'
+            },
+            data: {
+                model: 'deepseek-chat',
+                messages: [
+                    ...this.data.messages.map(msg => ({
+                        role: msg.role,
+                        content: msg.content
+                    }))
+                ],
+                temperature: 0.7,
+                max_tokens: 1000
+            },
+            success: (res: any) => {
+                // 处理 API 响应
+                if (res.statusCode === 200 && res.data.choices && res.data.choices.length > 0) {
+                    const aiResponse = res.data.choices[0].message.content;
+                    
+                    // 添加 AI 响应到消息列表
+                    const aiMessage: Message = {
+                        role: 'assistant',
+                        content: aiResponse
+                    };
+                    
+                    this.setData({
+                        messages: [...this.data.messages, aiMessage],
+                        isLoading: false
+                    });
+                    
+                    // 保存聊天历史
+                    this.saveChatHistory();
+                } else {
+                    // 处理错误
+                    this.handleApiError('无法获取响应');
+                }
+            },
+            fail: (error) => {
+                console.error('API 请求失败:', error);
+                this.handleApiError('网络请求失败');
+            }
+        });
+    },
+
+    // 滚动到底部
+    scrollToBottom() {
+        setTimeout(() => {
+            this.setData({
+                scrollToView: 'message-bottom'
+            });
+        }, 100);
+    },
+
+    // 处理 API 错误
+    handleApiError(errorMsg: string) {
+        // 添加错误消息
+        const errorMessage: Message = {
+            role: 'assistant',
+            content: `抱歉，${errorMsg}，请稍后再试。`
+        };
+        
+        this.setData({
+            messages: [...this.data.messages, errorMessage],
+            isLoading: false
+        });
+        
+        // 显示错误提示
         wx.showToast({
-            title: '开始录音',
-            icon: 'none'
+            title: errorMsg,
+            icon: 'none',
+            duration: 2000
         });
     },
 
-    addIngredient() {
-        const { currentIngredient, ingredients } = this.data;
-        if (!currentIngredient) {
-            wx.showToast({
-                title: '请输入食材名称',
-                icon: 'none'
-            });
-            return;
-        }
-
-        this.setData({
-            ingredients: [...ingredients, { name: currentIngredient }],
-            currentIngredient: ''
-        });
-
-        // 保存到本地存储
-        this.saveIngredients();
+    // 保存聊天历史
+    saveChatHistory() {
+        wx.setStorageSync('chatHistory', this.data.messages);
     },
 
-    deleteIngredient(e: WechatMiniprogram.TouchEvent) {
-        const index = e.currentTarget.dataset.index;
-        const ingredients = this.data.ingredients;
-        ingredients.splice(index, 1);
-        this.setData({ ingredients });
-        this.saveIngredients();
-    },
-
-    // 健康信息相关方法
-    onAgeInput(e: WechatMiniprogram.Input) {
-        this.setData({
-            'healthInfo.age': parseInt(e.detail.value) || 0
-        });
-    },
-
-    onWeightInput(e: WechatMiniprogram.Input) {
-        this.setData({
-            'healthInfo.weight': parseFloat(e.detail.value) || 0
-        });
-    },
-
-    saveHealthInfo() {
-        const { age, weight } = this.data.healthInfo;
-        if (!age || !weight) {
-            wx.showToast({
-                title: '请填写完整信息',
-                icon: 'none'
-            });
-            return;
-        }
-
-        // 保存到本地存储
-        wx.setStorageSync('healthInfo', this.data.healthInfo);
-        wx.showToast({
-            title: '保存成功',
-            icon: 'success'
-        });
-    },
-
-    // 生成菜谱
-    generateRecipe() {
-        if (this.data.ingredients.length === 0) {
-            wx.showToast({
-                title: '请先添加食材',
-                icon: 'none'
-            });
-            return;
-        }
-
-        // TODO: 调用AI API生成菜谱
-        wx.showLoading({
-            title: '生成中...'
-        });
-    },
-
-    // 数据持久化
-    loadSavedData() {
+    // 加载聊天历史
+    loadChatHistory() {
         try {
-            const ingredients = wx.getStorageSync('ingredients') || [];
-            const healthInfo = wx.getStorageSync('healthInfo') || {
-                age: 0,
-                weight: 0
-            };
-            this.setData({ ingredients, healthInfo });
+            const chatHistory = wx.getStorageSync('chatHistory');
+            if (chatHistory && chatHistory.length) {
+                this.setData({ messages: chatHistory });
+                this.scrollToBottom();
+            }
         } catch (e) {
-            console.error('加载本地数据失败:', e);
+            console.error('加载聊天历史失败:', e);
         }
     },
 
-    saveIngredients() {
-        wx.setStorageSync('ingredients', this.data.ingredients);
+    // 清空聊天历史
+    clearChatHistory() {
+        wx.showModal({
+            title: '确认清空',
+            content: '确定要清空所有聊天记录吗？',
+            success: (res) => {
+                if (res.confirm) {
+                    this.setData({ messages: [] });
+                    wx.removeStorageSync('chatHistory');
+                    wx.showToast({
+                        title: '已清空聊天记录',
+                        icon: 'success'
+                    });
+                }
+            }
+        });
     }
 }); 
