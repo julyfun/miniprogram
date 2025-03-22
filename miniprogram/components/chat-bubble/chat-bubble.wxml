@@ -1,0 +1,44 @@
+<view class="bubble-container {{isSelf ? 'self' : 'other'}}">
+    <!-- 头像 -->
+    <view wx:if="{{showAvatar && !isSelf}}" class="avatar-container" bindtap="onTapAvatar">
+        <image class="avatar" src="{{avatarUrl || '/assets/default-avatar.png'}}" mode="aspectFill"></image>
+    </view>
+    <!-- 气泡内容 -->
+    <view class="bubble {{isSelf ? 'self-bubble' : 'other-bubble'}}" bindtap="onTapMessage" bindlongpress="onLongPressMessage">
+        <!-- 文本消息 -->
+        <block wx:if="{{type === 'text'}}">
+            <view class="text-content">{{content}}</view>
+        </block>
+        <!-- 图片消息 -->
+        <block wx:elif="{{type === 'image'}}">
+            <image class="image-content" src="{{imageUrl}}" mode="widthFix" binderror="onImageError"></image>
+        </block>
+        <!-- 语音消息 -->
+        <block wx:elif="{{type === 'voice'}}">
+            <view class="voice-content">
+                <view class="voice-icon"></view>
+                <text class="voice-duration">{{voiceDuration}}"</text>
+            </view>
+        </block>
+        <!-- 文件消息 -->
+        <block wx:elif="{{type === 'file'}}">
+            <view class="file-content">
+                <view class="file-icon"></view>
+                <view class="file-info">
+                    <view class="file-name">{{fileName}}</view>
+                    <view class="file-size">{{fileSize}}</view>
+                </view>
+            </view>
+        </block>
+        <!-- 代码块消息 -->
+        <block wx:elif="{{type === 'code'}}">
+            <view class="code-content">
+                <text>{{content}}</text>
+            </view>
+        </block>
+    </view>
+    <!-- 右侧头像 -->
+    <view wx:if="{{showAvatar && isSelf}}" class="avatar-container" bindtap="onTapAvatar">
+        <image class="avatar" src="{{avatarUrl || '/assets/default-avatar.png'}}" mode="aspectFill"></image>
+    </view>
+</view>

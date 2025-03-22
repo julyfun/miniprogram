@@ -1,0 +1,14 @@
+.timestamp {
+    display: flex;
+    justify-content: center;
+    padding: 16rpx 0;
+    box-sizing: border-box;
+}
+
+.timestamp text {
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(0, 0, 0, 0.12);
+    border-radius: 8rpx;
+    padding: 4rpx 12rpx;
+}

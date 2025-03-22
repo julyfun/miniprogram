@@ -1,0 +1,105 @@
+.nav-bar {
+    width: 100%;
+    background-color: #f6f6f6;
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.nav-bar-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    padding: 0 12px;
+    position: relative;
+}
+
+/* 返回按钮样式 */
+.nav-back {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.nav-back-icon {
+    width: 12px;
+    height: 24px;
+    position: relative;
+}
+
+.nav-back-icon::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-left: 2px solid #07c160;
+    border-bottom: 2px solid #07c160;
+    transform: rotate(45deg);
+    left: 6px;
+}
+
+/* 标题区域样式 */
+.nav-title {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.contact-name {
+    font-size: 18px;
+    color: #000;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.title {
+    font-size: 16px;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 更多菜单按钮样式 */
+.nav-more {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.nav-more-icon {
+    display: flex;
+    flex-direction: column;
+    height: 16px;
+    justify-content: space-between;
+}
+
+.nav-more-dot {
+    width: 4px;
+    height: 4px;
+    background-color: #07c160;
+    border-radius: 50%;
+}
+
+/* 未读消息指示器 */
+.unread-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #ff3b30;
+    border-radius: 50%;
+}

@@ -1,6 +1,10 @@
 interface Message {
+    _id: string;
     role: 'user' | 'assistant';
     content: string;
+    timestamp: number;
+    type?: 'text' | 'image' | 'voice' | 'system';
+    status?: 'sending' | 'success' | 'failed' | 'read';
 }
 
 interface IPageData {
@@ -28,8 +32,10 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         if (this.data.messages.length === 0) {
             this.setData({
                 messages: [{
+                    _id: 'welcome_' + Date.now(),
                     role: 'assistant',
-                    content: '你好！很高兴见到你，有什么我可以帮忙的吗？'
+                    content: '你好！很高兴见到你，有什么我可以帮忙的吗？',
+                    timestamp: Date.now()
                 }]
             });
         }
@@ -53,8 +59,10 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
         // 添加用户消息
         const userMessage: Message = {
+            _id: 'user_' + Date.now(),
             role: 'user',
-            content: inputMessage
+            content: inputMessage,
+            timestamp: Date.now()
         };
 
         this.setData({
@@ -69,8 +77,10 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
         // 创建临时的助手消息（空内容）用于显示打字效果
         const tempAssistantMessage: Message = {
+            _id: 'assistant_' + Date.now(),
             role: 'assistant',
-            content: ''
+            content: '',
+            timestamp: Date.now()
         };
 
         this.setData({
@@ -186,8 +196,10 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         } else {
             // 添加错误消息
             updatedMessages.push({
+                _id: 'error_' + Date.now(),
                 role: 'assistant',
-                content: `抱歉，${errorMsg}，请稍后再试。`
+                content: `抱歉，${errorMsg}，请稍后再试。`,
+                timestamp: Date.now()
             });
         }
 

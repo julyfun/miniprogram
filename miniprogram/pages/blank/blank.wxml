@@ -1,12 +1,23 @@
-<!-- 空白页面 -->
-<view class="blank-container">
-    <view class="header">
-        <view class="back-button" bindtap="navigateBack">
-            <view class="back-icon"></view>
+<!-- 微信聊天页面 -->
+<view class="chat-page">
+    <!-- 导航栏 -->
+    <navigation-bar title="杨博文" back="{{true}}" delta="1" bindback="handleBack">
+        <view slot="right">
+            <view class="nav-more" bind:tap="handleMore">
+                <view class="nav-more-icon">
+                    <view class="nav-more-dot"></view>
+                    <view class="nav-more-dot"></view>
+                    <view class="nav-more-dot"></view>
+                </view>
+                <view wx:if="{{hasUnread}}" class="unread-indicator"></view>
+            </view>
         </view>
-        <text class="title">新建页面</text>
+    </navigation-bar>
+    <!-- 内容区域 -->
+    <view class="chat-content" style="padding-top: {{statusBarHeight + 44}}px;">
+        <!-- 聊天容器 -->
+        <chat-container messages="{{messages}}" selfAvatar="{{userInfo.avatarUrl}}" otherAvatar="{{contactInfo.avatarUrl}}" scrollIntoView="{{scrollToView}}" bindtapmessage="handleTapMessage" bindlongpressmessage="handleLongPressMessage" bindtapavatar="handleTapAvatar" bindscrolltobottom="handleScrollToBottom" />
     </view>
-    <view class="content">
-        <!-- 空白内容区域 -->
-    </view>
+    <!-- 底部输入区域 -->
+    <input-bar value="{{inputMessage}}" placeholder="发送消息" bindinput="handleInput" bindsend="handleSend" bindmore="handleMoreFunction" bindrecordstart="handleRecordStart" bindrecordend="handleRecordEnd" bindrecordcancel="handleRecordCancel" bindselectemoji="handleSelectEmoji" binddeleteemoji="handleDeleteEmoji" />
 </view>

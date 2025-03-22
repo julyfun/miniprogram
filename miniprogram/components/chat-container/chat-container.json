@@ -1,0 +1,8 @@
+{
+    "component": true,
+    "usingComponents": {
+        "chat-bubble": "/components/chat-bubble/chat-bubble",
+        "time-stamp": "/components/time-stamp/time-stamp",
+        "message-item": "/components/message-item/message-item"
+    }
+}

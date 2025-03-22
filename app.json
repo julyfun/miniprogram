@@ -23,7 +23,7 @@
                 "selectedIconPath": "assets/icons/home-active.png"
             },
             {
-                "pagePath": "pages/home/blank",
+                "pagePath": "pages/blank/blank",
                 "text": "聊天",
                 "iconPath": "assets/icons/home.png",
                 "selectedIconPath": "assets/icons/home-active.png"

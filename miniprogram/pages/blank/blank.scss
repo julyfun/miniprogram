@@ -1,75 +1,72 @@
-/* 空白页面样式 */
-.blank-container {
+/* 聊天页面样式 */
+.chat-page {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    background-color: #000000;
-    color: #ffffff;
+    height: 100vh;
+    background-color: #f5f5f5;
+    color: #333;
     width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    position: relative;
 }
 
-/* 顶部标题 */
-.header {
+/* 自定义导航栏右侧区域 */
+.nav-more {
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
-    padding: 30rpx 30rpx 15rpx;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    justify-content: center;
     position: relative;
+}
 
-    .title {
-        flex: 1;
-        text-align: center;
-        font-size: 32rpx;
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.9);
-    }
+.nav-more-icon {
+    display: flex;
+    flex-direction: column;
+    height: 16px;
+    justify-content: space-between;
+}
 
-    .back-button {
-        width: 60rpx;
-        height: 60rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        left: 20rpx;
-        top: 20rpx;
+.nav-more-dot {
+    width: 4px;
+    height: 4px;
+    background-color: #07c160;
+    border-radius: 50%;
+}
 
-        .back-icon {
-            width: 24rpx;
-            height: 24rpx;
-            position: relative;
-
-            &:before {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 0;
-                width: 20rpx;
-                height: 2rpx;
-                background-color: white;
-                transform: translateY(-50%);
-            }
-
-            &:after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 0;
-                width: 10rpx;
-                height: 10rpx;
-                border-top: 2rpx solid white;
-                border-left: 2rpx solid white;
-                transform: translateY(-50%) rotate(-45deg);
-            }
-        }
-    }
+/* 未读消息指示器 */
+.unread-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #ff3b30;
+    border-radius: 50%;
 }
 
 /* 内容区域 */
-.content {
+.chat-content {
     flex: 1;
-    padding: 30rpx;
+    position: relative;
+    overflow: hidden;
+    background-color: #f5f5f5;
+
+    /* 自定义背景 - 可选 */
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0.04;
+        background-size: 100rpx 100rpx;
+        background-image: radial-gradient(#333 2px, transparent 0);
+        z-index: 0;
+    }
 }
+
+/* 输入栏样式将由组件实现 */

@@ -1,0 +1,3 @@
+<view class="avatar {{shape === 'circle' ? 'circle' : 'square'}}" style="width: {{size}}rpx; height: {{size}}rpx; border: {{borderWidth}}rpx solid {{borderColor}};" bindtap="onTap">
+    <image class="avatar-image {{shape === 'circle' ? 'circle' : 'square'}}" src="{{loadError ? fallbackSrc : (src || fallbackSrc)}}" mode="aspectFill" binderror="onError"></image>
+</view>

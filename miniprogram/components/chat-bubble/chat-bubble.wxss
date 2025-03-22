@@ -1,0 +1,168 @@
+.bubble-container {
+    display: flex;
+    margin: 16rpx 0;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 自己发送的消息靠右 */
+.self {
+    flex-direction: row-reverse;
+    padding-left: 60rpx;
+    padding-right: 20rpx;
+}
+
+/* 他人发送的消息靠左 */
+.other {
+    flex-direction: row;
+    padding-right: 60rpx;
+    padding-left: 20rpx;
+}
+
+/* 头像容器 */
+.avatar-container {
+    flex-shrink: 0;
+    margin: 0 12rpx;
+}
+
+/* 头像样式 */
+.avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 8rpx;
+    background-color: #e6e6e6;
+}
+
+/* 气泡基本样式 */
+.bubble {
+    max-width: 70%;
+    border-radius: 10rpx;
+    word-break: break-word;
+    position: relative;
+}
+
+/* 自己发送的气泡样式 */
+.self-bubble {
+    background-color: #95ec69;
+    color: #000000;
+    margin-right: 12rpx;
+    padding: 16rpx 24rpx;
+    border-radius: 16rpx 0 16rpx 16rpx;
+}
+
+/* 三角形指示 */
+.self-bubble:after {
+    content: '';
+    position: absolute;
+    right: -20rpx;
+    top: 20rpx;
+    width: 0;
+    height: 0;
+    border-left: 20rpx solid #95ec69;
+    border-top: 12rpx solid transparent;
+    border-bottom: 12rpx solid transparent;
+}
+
+/* 他人发送的气泡样式 */
+.other-bubble {
+    background-color: #ffffff;
+    color: #000000;
+    margin-left: 12rpx;
+    padding: 16rpx 24rpx;
+    border-radius: 0 16rpx 16rpx 16rpx;
+}
+
+/* 三角形指示 */
+.other-bubble:before {
+    content: '';
+    position: absolute;
+    left: -20rpx;
+    top: 20rpx;
+    width: 0;
+    height: 0;
+    border-right: 20rpx solid #ffffff;
+    border-top: 12rpx solid transparent;
+    border-bottom: 12rpx solid transparent;
+}
+
+/* 文本内容 */
+.text-content {
+    font-size: 32rpx;
+    line-height: 1.4;
+}
+
+/* 图片内容 */
+.image-content {
+    max-width: 100%;
+    border-radius: 8rpx;
+}
+
+/* 语音消息样式 */
+.voice-content {
+    display: flex;
+    align-items: center;
+    padding: 16rpx 0;
+    min-width: 80rpx;
+}
+
+.voice-icon {
+    width: 32rpx;
+    height: 32rpx;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEwIDEzLjVjMS45MyAwIDMuNS0xLjU3IDMuNS0zLjVWNS41YzAtMS45My0xLjU3LTMuNS0zLjUtMy41UzYuNSAzLjU3IDYuNSA1LjV2NC41YzAgMS45MyAxLjU3IDMuNSAzLjUgMy41em01LjUtMy41YzAgMy4wMy0yLjQ3IDUuNS01LjUgNS41cy01LjUtMi40Ny01LjUtNS41SDNjMCAzLjkgMy4wMSA3LjEyIDYuODUgNy40NVYyMGgyLjN2LTIuNTVDMTUuOTkgMTcuMTIgMTkgMTMuOSAxOSAxMGgtMS41eiIgZmlsbD0iIzQyNDI0MiIgZmlsbC1ydWxlPSJub256ZXJvIi8+PC9zdmc+');
+    background-size: cover;
+    margin-right: 12rpx;
+}
+
+.voice-duration {
+    font-size: 28rpx;
+    color: #8a8a8a;
+}
+
+/* 文件消息样式 */
+.file-content {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 8rpx;
+    padding: 16rpx;
+}
+
+.file-icon {
+    width: 48rpx;
+    height: 48rpx;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTYgMkMyLjY5IDIgMCA0LjY5IDAgOHYxMmMwIDEuMSAwLjkgMiAyIDJoMTZjMS4xIDAgMi0wLjkgMi0yVjZjMC0xLjEtMC45LTItMi0yaC0xMGMtMS4xIDAtMi0wLjktMi0ySDZ6bTggNmgyVjZoMnYyaDJ2MmgtMnYyaC0ydi0yaC0yVjh6IiBmaWxsPSIjOTA5MDkwIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4=');
+    background-size: cover;
+    margin-right: 16rpx;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-name {
+    font-size: 28rpx;
+    font-weight: 500;
+    margin-bottom: 4rpx;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400rpx;
+}
+
+.file-size {
+    font-size: 24rpx;
+    color: #8a8a8a;
+}
+
+/* 代码块样式 */
+.code-content {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 16rpx;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    font-size: 26rpx;
+    overflow-x: auto;
+    white-space: pre;
+    color: #333;
+    border-radius: 8rpx;
+}

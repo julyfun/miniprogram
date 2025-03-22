@@ -1,0 +1,38 @@
+<view class="input-bar">
+    <view class="input-container">
+        <!-- 语音/键盘切换按钮 -->
+        <view class="voice-switch" bind:tap="toggleVoiceMode">
+            <image class="icon" src="/assets/icons/{{voiceMode ? 'keyboard' : 'voice'}}.svg" mode="aspectFit" />
+        </view>
+        <!-- 文本输入框 - 在非语音模式下显示 -->
+        <input wx:if="{{!voiceMode}}" class="text-input" value="{{value}}" placeholder="{{placeholder}}" placeholder-class="placeholder" disabled="{{disabled}}" bind:input="onInput" confirm-type="send" bind:confirm="onSend" />
+        <!-- 语音按钮 - 在语音模式下显示 -->
+        <view wx:else class="voice-button {{holding ? 'holding' : ''}}" bind:touchstart="onHoldVoiceButton" bind:touchend="onReleaseVoiceButton" bind:touchmove="onTouchMoveVoiceButton">
+            {{holding ? '松开发送' : '按住说话'}}
+        </view>
+        <!-- 表情按钮 -->
+        <view class="emoji-button" bind:tap="onEmojiButton">
+            <image class="icon" src="/assets/icons/emoji.svg" mode="aspectFit" />
+        </view>
+        <!-- 发送/更多按钮 -->
+        <view class="{{value.trim() ? 'send-button' : 'more-button'}}" bind:tap="{{value.trim() ? 'onSend' : 'onMoreFunction'}}">
+            <block wx:if="{{value.trim()}}">
+                <text>发送</text>
+            </block>
+            <block wx:else>
+                <image class="icon" src="/assets/icons/more.svg" mode="aspectFit" />
+            </block>
+        </view>
+    </view>
+    <!-- 表情面板 -->
+    <view class="emoji-panel" wx:if="{{showEmojiPanel}}">
+        <view class="emoji-list">
+            <view wx:for="{{emojiList}}" wx:key="*this" class="emoji-item" bind:tap="selectEmoji" data-emoji="{{item}}">
+                {{item}}
+            </view>
+        </view>
+        <view class="emoji-actions">
+            <view class="delete-button" bind:tap="deleteEmoji">删除</view>
+        </view>
+    </view>
+</view>

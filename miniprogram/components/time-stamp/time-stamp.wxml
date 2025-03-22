@@ -1,0 +1,3 @@
+<view class="timestamp">
+    <text>{{formattedTime}}</text>
+</view>

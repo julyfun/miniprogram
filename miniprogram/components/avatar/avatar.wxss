@@ -1,0 +1,27 @@
+.avatar {
+    overflow: hidden;
+    background-color: #e0e0e0;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.avatar.circle {
+    border-radius: 50%;
+}
+
+.avatar.square {
+    border-radius: 8rpx;
+}
+
+.avatar-image {
+    width: 100%;
+    height: 100%;
+}
+
+.avatar-image.circle {
+    border-radius: 50%;
+}
+
+.avatar-image.square {
+    border-radius: 6rpx;
+}

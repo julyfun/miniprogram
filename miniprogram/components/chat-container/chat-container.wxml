@@ -1,0 +1,9 @@
+<scroll-view class="chat-container" scroll-y="true" enhanced="true" show-scrollbar="false" scroll-into-view="{{scrollIntoView}}" bindscrolltolower="scrollToBottom">
+    <view class="message-list">
+        <block wx:for="{{messages}}" wx:key="_id">
+            <message-item id="{{item._id}}" type="{{item.type || 'text'}}" content="{{item.content}}" isSelf="{{item.role === 'user'}}" status="{{item.status}}" timestamp="{{item.timestamp}}" showTimestamp="{{showTimestamp && shouldShowTimestamp(index)}}" avatar="{{item.role === 'user' ? selfAvatar : otherAvatar}}" nickname="{{item.role === 'user' ? '我' : '助手'}}" showName="{{true}}" duration="{{item.duration}}" selectable="{{true}}" data-index="{{index}}" bindmessagetap="onTapBubble" bindmessagelongpress="onLongPressBubble" bindavatartap="onTapAvatar" />
+        </block>
+        <!-- 底部占位区域，用于自动滚动 -->
+        <view id="message-bottom" style="height: 20rpx;"></view>
+    </view>
+</scroll-view>

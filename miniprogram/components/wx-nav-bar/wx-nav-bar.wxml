@@ -1,0 +1,23 @@
+<view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-content">
+        <view wx:if="{{back}}" class="nav-back" bind:tap="onBack">
+            <view class="nav-back-icon"></view>
+        </view>
+        <view class="nav-title">
+            <block wx:if="{{contactName}}">
+                <view class="contact-name">{{contactName}}</view>
+            </block>
+            <block wx:else>
+                <view class="title">{{title}}</view>
+            </block>
+        </view>
+        <view wx:if="{{showMoreMenu}}" class="nav-more" bind:tap="onMore">
+            <view class="nav-more-icon">
+                <view class="nav-more-dot"></view>
+                <view class="nav-more-dot"></view>
+                <view class="nav-more-dot"></view>
+            </view>
+            <view wx:if="{{hasUnread}}" class="unread-indicator"></view>
+        </view>
+    </view>
+</view>

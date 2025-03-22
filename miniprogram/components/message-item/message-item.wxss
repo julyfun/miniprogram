@@ -1,0 +1,148 @@
+.message-item {
+    display: flex;
+    flex-direction: column;
+    margin: 8rpx 0;
+    padding: 0 24rpx;
+}
+
+/* 时间戳样式 */
+.time-stamp {
+    font-size: 24rpx;
+    color: #999;
+    text-align: center;
+    margin: 16rpx 0;
+}
+
+/* 消息内容布局 */
+.message-item.other {
+    align-items: flex-start;
+}
+
+.message-item.self {
+    align-items: flex-end;
+}
+
+/* 内容容器 */
+.content-container {
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8rpx;
+}
+
+.message-item.other .content-container {
+    margin-left: 16rpx;
+    align-items: flex-start;
+}
+
+.message-item.self .content-container {
+    margin-right: 16rpx;
+    align-items: flex-end;
+}
+
+/* 头像 */
+.avatar-container {
+    margin-top: 8rpx;
+}
+
+.avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 8rpx;
+    background-color: #f5f5f5;
+}
+
+/* 用户昵称 */
+.nickname {
+    font-size: 24rpx;
+    color: #999;
+    margin-bottom: 4rpx;
+}
+
+/* 气泡通用样式 */
+.message-bubble {
+    border-radius: 8rpx;
+    padding: 16rpx 24rpx;
+    max-width: 100%;
+    word-break: break-all;
+}
+
+/* 文本气泡 */
+.message-bubble.text {
+    font-size: 28rpx;
+    line-height: 1.5;
+}
+
+.message-item.other .message-bubble.text {
+    background-color: #fff;
+    color: #333;
+}
+
+.message-item.self .message-bubble.text {
+    background-color: #07C160;
+    color: #fff;
+}
+
+/* 图片气泡 */
+.message-bubble.image {
+    padding: 8rpx;
+    background-color: transparent;
+}
+
+.message-bubble.image image {
+    max-width: 100%;
+    border-radius: 8rpx;
+}
+
+/* 语音气泡 */
+.message-bubble.voice {
+    min-width: 80rpx;
+    max-width: 400rpx;
+}
+
+.message-item.other .message-bubble.voice {
+    background-color: #fff;
+    color: #333;
+}
+
+.message-item.self .message-bubble.voice {
+    background-color: #07C160;
+    color: #fff;
+}
+
+.voice-inner {
+    display: flex;
+    align-items: center;
+}
+
+.voice-icon {
+    width: 40rpx;
+    height: 40rpx;
+    margin-right: 8rpx;
+}
+
+.message-item.self .voice-inner {
+    flex-direction: row-reverse;
+}
+
+.message-item.self .voice-icon {
+    margin-right: 0;
+    margin-left: 8rpx;
+    transform: scaleX(-1);
+}
+
+/* 系统消息 */
+.system-message {
+    font-size: 24rpx;
+    color: #999;
+    text-align: center;
+    padding: 16rpx 0;
+    width: 100%;
+}
+
+/* 消息状态 */
+.message-status {
+    font-size: 24rpx;
+    color: #999;
+    margin-top: 4rpx;
+}
