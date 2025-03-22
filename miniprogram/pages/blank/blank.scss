@@ -1,0 +1,75 @@
+/* 空白页面样式 */
+.blank-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #000000;
+    color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* 顶部标题 */
+.header {
+    display: flex;
+    align-items: center;
+    padding: 30rpx 30rpx 15rpx;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+
+    .title {
+        flex: 1;
+        text-align: center;
+        font-size: 32rpx;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .back-button {
+        width: 60rpx;
+        height: 60rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        left: 20rpx;
+        top: 20rpx;
+
+        .back-icon {
+            width: 24rpx;
+            height: 24rpx;
+            position: relative;
+
+            &:before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                width: 20rpx;
+                height: 2rpx;
+                background-color: white;
+                transform: translateY(-50%);
+            }
+
+            &:after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                width: 10rpx;
+                height: 10rpx;
+                border-top: 2rpx solid white;
+                border-left: 2rpx solid white;
+                transform: translateY(-50%) rotate(-45deg);
+            }
+        }
+    }
+}
+
+/* 内容区域 */
+.content {
+    flex: 1;
+    padding: 30rpx;
+}

@@ -1,0 +1,12 @@
+<!-- 空白页面 -->
+<view class="blank-container">
+    <view class="header">
+        <view class="back-button" bindtap="navigateBack">
+            <view class="back-icon"></view>
+        </view>
+        <text class="title">新建页面</text>
+    </view>
+    <view class="content">
+        <!-- 空白内容区域 -->
+    </view>
+</view>

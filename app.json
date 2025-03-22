@@ -8,8 +8,8 @@
     "window": {
         "backgroundTextStyle": "light",
         "navigationBarBackgroundColor": "#fff",
-        "navigationBarTitleText": "今天做什么",
-        "navigationBarTextStyle": "black"
+        "navigationBarTitleText": "AI 老年人助手",
+        "navigationBarTextStyle": "white"
     },
     "tabBar": {
         "color": "#999999",
@@ -19,6 +19,12 @@
             {
                 "pagePath": "pages/home/index",
                 "text": "首页",
+                "iconPath": "assets/icons/home.png",
+                "selectedIconPath": "assets/icons/home-active.png"
+            },
+            {
+                "pagePath": "pages/home/blank",
+                "text": "聊天",
                 "iconPath": "assets/icons/home.png",
                 "selectedIconPath": "assets/icons/home-active.png"
             },

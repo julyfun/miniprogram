@@ -2,14 +2,21 @@
 <view class="container">
   <!-- 顶部标题 -->
   <view class="header">
-    <text class="title">AI 助手</text>
+    <text class="title">用户与助理初次问候</text>
   </view>
-
   <!-- 聊天内容区域 -->
-  <scroll-view class="chat-container" scroll-y scroll-into-view="{{scrollToView}}">
+  <scroll-view class="chat-container" scroll-y="true" enhanced="true" show-scrollbar="false" scroll-into-view="{{scrollToView}}">
     <block wx:if="{{messages.length > 0}}">
-      <view wx:for="{{messages}}" wx:key="index" class="message-item {{item.role === 'user' ? 'user-message' : 'ai-message'}}">
-        <view class="message-content">{{item.content}}</view>
+      <view wx:for="{{messages}}" wx:key="index" class="message-wrapper {{item.role === 'user' ? 'user-wrapper' : 'ai-wrapper'}}">
+        <!-- AI消息带头像 -->
+        <block wx:if="{{item.role === 'assistant'}}">
+          <view class="avatar-container">
+            <view class="ai-avatar"></view>
+          </view>
+        </block>
+        <view class="message-item {{item.role === 'user' ? 'user-message' : 'ai-message'}}">
+          <view class="message-content">{{item.content}}</view>
+        </view>
       </view>
     </block>
     <block wx:else>
@@ -27,20 +34,29 @@
     <!-- 用于自动滚动到底部的锚点 -->
     <view id="message-bottom"></view>
   </scroll-view>
-
   <!-- 底部输入区域 -->
   <view class="input-container">
-    <input 
-      class="message-input" 
-      type="text" 
-      confirm-type="send"
-      placeholder="输入您的问题..."
-      value="{{inputMessage}}"
-      bindinput="onMessageInput"
-      bindconfirm="sendMessage"
-    />
-    <view class="send-button" bindtap="sendMessage">
-      <view class="send-icon"></view>
+    <input class="message-input" type="text" confirm-type="send" placeholder="给 DeepSeek 发送消息" value="{{inputMessage}}" bindinput="onMessageInput" bindconfirm="sendMessage" />
+  </view>
+  <!-- 功能按钮栏 -->
+  <view class="function-bar">
+    <view class="function-left">
+      <view class="function-button selected" bindtap="activateDeepThinking">
+        <view class="radio-dot"></view>
+        <text>深度思考 (R1)</text>
+      </view>
+      <view class="function-button" bindtap="activateWebSearch">
+        <view class="radio-dot"></view>
+        <text>联网搜索</text>
+      </view>
+    </view>
+    <view class="function-right">
+      <view class="plus-button" bindtap="navigateToNewPage">
+        <view class="plus-icon"></view>
+      </view>
+      <view class="send-button" bindtap="sendMessage">
+        <view class="arrow-icon"></view>
+      </view>
     </view>
   </view>
 </view>

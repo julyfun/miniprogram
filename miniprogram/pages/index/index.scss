@@ -5,63 +5,117 @@
     min-height: 100vh;
     background-color: #000000;
     color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* 顶部标题 */
 .header {
-    padding: 40rpx 30rpx 20rpx;
+    padding: 30rpx 30rpx 15rpx;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
     .title {
-        font-size: 36rpx;
-        font-weight: 500;
-        color: #ffffff;
+        font-size: 32rpx;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.9);
     }
 }
 
 /* 聊天内容区域 */
 .chat-container {
     flex: 1;
-    padding: 30rpx;
+    padding: 30rpx 0 140rpx 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 消息包装器 */
+.message-wrapper {
+    width: 100%;
+    display: flex;
+    margin-bottom: 40rpx;
+    align-items: flex-start;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.user-wrapper {
+    justify-content: flex-end;
+    padding-left: 60rpx;
+    padding-right: 20rpx;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.ai-wrapper {
+    justify-content: flex-start;
+    padding-right: 60rpx;
+    padding-left: 20rpx;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* AI头像 */
+.avatar-container {
+    margin-right: 15rpx;
+    flex-shrink: 0;
+}
+
+.ai-avatar {
+    width: 50rpx;
+    height: 50rpx;
+    border-radius: 50%;
+    background-color: #4169E1;
+    /* 蓝色圆形头像 */
+}
+
+.avatar-image {
+    width: 60%;
+    height: 60%;
 }
 
 /* 消息项 */
 .message-item {
-    margin-bottom: 30rpx;
-    max-width: 80%;
-    clear: both;
-    
-    .message-content {
-        padding: 20rpx 24rpx;
-        border-radius: 18rpx;
-        font-size: 30rpx;
-        line-height: 1.5;
-        word-wrap: break-word;
-    }
+    margin-bottom: 0;
+    max-width: 85%;
+    box-sizing: border-box;
+}
+
+.message-content {
+    padding: 20rpx 24rpx;
+    border-radius: 20rpx;
+    font-size: 30rpx;
+    line-height: 1.5;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+    max-width: 100%;
 }
 
 /* 用户消息样式 */
 .user-message {
-    float: right;
-    
     .message-content {
-        background-color: #0A84FF;
+        background-color: #4169E1;
         color: #ffffff;
-        border-radius: 18rpx 4rpx 18rpx 18rpx;
+        border-radius: 20rpx;
+        word-break: break-word;
     }
 }
 
 /* AI消息样式 */
 .ai-message {
-    float: left;
-    
     .message-content {
         background-color: #2C2C2E;
         color: #ffffff;
-        border-radius: 4rpx 18rpx 18rpx 18rpx;
+        border-radius: 20rpx;
+        word-break: break-word;
     }
 }
 
@@ -73,18 +127,18 @@
     justify-content: center;
     height: 70vh;
     position: relative;
-    
+
     &::after {
         content: '';
         position: absolute;
         width: 450rpx;
         height: 450rpx;
-        background: radial-gradient(circle, rgba(20,20,20,0.7) 0%, rgba(0,0,0,0) 70%);
+        background: radial-gradient(circle, rgba(20, 20, 20, 0.7) 0%, rgba(0, 0, 0, 0) 70%);
         border-radius: 50%;
         z-index: -1;
         filter: blur(20rpx);
     }
-    
+
     .welcome-text {
         font-size: 32rpx;
         color: rgba(255, 255, 255, 0.7);
@@ -102,7 +156,7 @@
     width: 300rpx;
     height: 100rpx;
     position: relative;
-    
+
     .voice-dot {
         height: 60rpx;
         width: 60rpx;
@@ -114,7 +168,7 @@
         opacity: 0.92;
         position: relative;
         filter: blur(1rpx);
-        
+
         &::after {
             content: '';
             position: absolute;
@@ -122,28 +176,28 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%);
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.7) 100%);
             border-radius: 40rpx;
         }
-        
+
         &:nth-child(1) {
             animation-delay: 0.4s;
             height: 65rpx;
             border-radius: 32.5rpx;
         }
-        
+
         &:nth-child(2) {
             animation-delay: 0.1s;
             height: 85rpx;
             border-radius: 42.5rpx;
         }
-        
+
         &:nth-child(3) {
             animation-delay: 0.7s;
             height: 85rpx;
             border-radius: 42.5rpx;
         }
-        
+
         &:nth-child(4) {
             animation-delay: 0.2s;
             height: 65rpx;
@@ -157,14 +211,17 @@
         transform: scaleY(0.8);
         opacity: 0.9;
     }
+
     30% {
         transform: scaleY(1.2);
         opacity: 1;
     }
+
     60% {
         transform: scaleY(0.9);
         opacity: 0.92;
     }
+
     100% {
         transform: scaleY(0.8);
         opacity: 0.9;
@@ -175,41 +232,160 @@
 .input-container {
     display: flex;
     align-items: center;
-    padding: 20rpx 30rpx;
-    background-color: #121212;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    position: sticky;
-    bottom: 0;
-    
+    padding: 12rpx 24rpx;
+    background-color: #0D0D0D;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    position: fixed;
+    bottom: 89rpx;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 1000;
+
     .message-input {
         flex: 1;
-        height: 80rpx;
-        background-color: #2C2C2E;
+        height: 76rpx;
+        background-color: #202124;
         border-radius: 40rpx;
         padding: 0 30rpx;
-        font-size: 30rpx;
+        font-size: 28rpx;
         color: #ffffff;
+        box-shadow: none;
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    
-    .send-button {
-        width: 80rpx;
-        height: 80rpx;
-        background-color: #0A84FF;
-        border-radius: 40rpx;
-        margin-left: 20rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
-        .send-icon {
-            width: 0;
-            height: 0;
-            border-top: 15rpx solid transparent;
-            border-bottom: 15rpx solid transparent;
-            border-left: 24rpx solid #ffffff;
-            margin-left: 8rpx;
+}
+
+/* 功能按钮栏 */
+.function-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 12rpx 24rpx;
+    background-color: #0D0D0D;
+    border-top: none;
+    z-index: 1000;
+    gap: 10rpx;
+}
+
+/* 功能区容器 - 左侧 */
+.function-left {
+    display: flex;
+    gap: 20rpx;
+}
+
+/* 功能区容器 - 右侧 */
+.function-right {
+    display: flex;
+    gap: 16rpx;
+}
+
+/* 发送按钮 - 移到底部 */
+.send-button {
+    width: 64rpx;
+    height: 64rpx;
+    background-color: #4169E1;
+    border-radius: 32rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    transition: all 0.2s ease;
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    .arrow-icon {
+        width: 28rpx;
+        height: 28rpx;
+        position: relative;
+
+        &:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 20rpx;
+            height: 2rpx;
+            background-color: white;
+            transform: translateY(-50%);
+        }
+
+        &:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 10rpx;
+            height: 10rpx;
+            border-top: 2rpx solid white;
+            border-right: 2rpx solid white;
+            transform: translateY(-50%) rotate(45deg);
         }
     }
+}
+
+/* 新增加号按钮 */
+.plus-button {
+    width: 64rpx;
+    height: 64rpx;
+    background-color: #2C2C2E;
+    border-radius: 32rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    transition: all 0.2s ease;
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    .plus-icon {
+        position: relative;
+        width: 24rpx;
+        height: 24rpx;
+
+        &:before,
+        &:after {
+            content: '';
+            position: absolute;
+            background-color: white;
+        }
+
+        &:before {
+            left: 50%;
+            top: 0;
+            width: 2rpx;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+
+        &:after {
+            top: 50%;
+            left: 0;
+            height: 2rpx;
+            width: 100%;
+            transform: translateY(-50%);
+        }
+    }
+}
+
+/* 删除不需要的图标样式 */
+.icon-thinking,
+.icon-search {
+    display: none;
+}
+
+.icon-thinking:before,
+.icon-thinking:after,
+.icon-search:before,
+.icon-search:after {
+    display: none;
 }
 
 /* 通用部分样式 */
@@ -346,4 +522,50 @@
     justify-content: center;
     margin: 32rpx 0;
     box-shadow: 0 4rpx 16rpx rgba(255, 79, 79, 0.3);
+}
+
+/* 功能按钮 */
+.function-button {
+    display: flex;
+    align-items: center;
+    background-color: #1A1A1A;
+    border-radius: 40rpx;
+    padding: 10rpx 20rpx;
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.8);
+    position: relative;
+
+    text {
+        margin-left: 16rpx;
+    }
+
+    .radio-dot {
+        width: 20rpx;
+        height: 20rpx;
+        border-radius: 50%;
+        border: 2rpx solid #444;
+        box-sizing: border-box;
+    }
+
+    &.selected {
+        color: #ffffff;
+
+        .radio-dot {
+            border-color: #4169E1;
+            background-color: #4169E1;
+            position: relative;
+
+            &::after {
+                content: "";
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 6rpx;
+                height: 6rpx;
+                background-color: #fff;
+                border-radius: 50%;
+            }
+        }
+    }
 }
