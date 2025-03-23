@@ -49,116 +49,117 @@ Component({
      * 组件的初始数据
      */
     data: {
-        // 是否正在使用语音输入
-        voiceMode: false,
-        // 是否正在按住语音按钮
-        holding: false,
-        // 是否显示更多功能面板
-        showMorePanel: false,
-        // 触摸开始Y坐标，用于判断滑动取消
-        startY: 0,
-        // 是否取消录音
-        isCancelling: false,
-        // 常用表情列表
-        emojiList: ['😊', '😂', '🤣', '❤️', '👍', '🎉', '🔥', '😁', '😘', '🙏',
-            '😍', '😒', '👌', '😢', '😭', '😅', '😳', '😏', '🤔', '🙄']
+        voiceMode: false, // 是否处于语音输入模式
+        holding: false, // 是否按住语音按钮
+        emojiList: ['😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', '😋', '😎', '😍', '😘', '😗', '😙', '😚', '🙂', '🤗', '🤔', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '😬', '😰', '😱', '😳', '😵', '😡', '😠', '😇', '🤠', '🤡', '🤥', '😷', '🤒', '🤕', '🤢', '🤧', '😈', '👿', '👹', '👺', '💀', '👻', '👽', '🤖', '💩', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'],
+        showFeaturePanel: false, // 是否显示功能面板
+        touchStartY: 0, // 触摸开始的Y坐标
+        isCancelled: false // 是否取消录音
     },
 
+    /**
+     * 组件的方法列表
+     */
     methods: {
-        // 切换语音输入模式
+        // 切换语音/键盘模式
         toggleVoiceMode() {
+            const voiceMode = !this.data.voiceMode;
             this.setData({
-                voiceMode: !this.data.voiceMode,
+                voiceMode,
                 showEmojiPanel: false,
-                showMorePanel: false
+                showFeaturePanel: false
             });
         },
 
-        // 切换表情面板
+        // 处理表情按钮点击
         onEmojiButton() {
+            const showEmojiPanel = !this.data.showEmojiPanel;
             this.setData({
-                showEmojiPanel: !this.data.showEmojiPanel,
-                voiceMode: false
+                showEmojiPanel,
+                showFeaturePanel: false
             });
         },
 
-        // 点击更多功能按钮
+        // 处理更多功能按钮点击
         onMoreFunction() {
+            const showFeaturePanel = !this.data.showFeaturePanel;
             this.setData({
-                showMorePanel: !this.data.showMorePanel,
+                showFeaturePanel,
                 showEmojiPanel: false
             });
             this.triggerEvent('more');
         },
 
-        // 输入事件
-        onInput(e: WechatMiniprogram.Input) {
-            this.triggerEvent('input', { value: e.detail.value });
+        // 处理功能项点击
+        handleFeature(e: WechatMiniprogram.TouchEvent) {
+            const feature = e.currentTarget.dataset.feature;
+            this.triggerEvent('feature', { feature });
+
+            // 关闭功能面板
+            this.setData({ showFeaturePanel: false });
         },
 
-        // 按下发送按钮
+        // 处理输入框输入
+        onInput(e: WechatMiniprogram.Input) {
+            this.triggerEvent('input', e.detail);
+        },
+
+        // 处理发送按钮点击
         onSend() {
-            if (!this.properties.value.trim() && !this.data.voiceMode) return;
             this.triggerEvent('send');
         },
 
-        // 选择表情
+        // 处理选择表情
         selectEmoji(e: WechatMiniprogram.TouchEvent) {
             const emoji = e.currentTarget.dataset.emoji;
             this.triggerEvent('selectemoji', { emoji });
         },
 
-        // 点击删除按钮
+        // 处理删除表情
         deleteEmoji() {
             this.triggerEvent('deleteemoji');
         },
 
-        // 处理录音按钮按下
+        // 处理按下语音按钮
         onHoldVoiceButton(e: WechatMiniprogram.TouchEvent) {
             this.setData({
                 holding: true,
-                isRecording: true,
-                startY: e.touches[0].clientY,
-                isCancelling: false
+                touchStartY: e.touches[0].clientY,
+                isCancelled: false
             });
-            this.triggerEvent('recordstart');
+            // 开始录音
+            this.triggerEvent('recordstart', e.touches[0]);
         },
 
-        // 处理录音按钮释放
+        // 处理释放语音按钮
         onReleaseVoiceButton() {
-            if (this.data.holding) {
-                const isCancelled = this.data.isCancelling;
+            if (!this.data.holding) return;
 
-                this.setData({
-                    holding: false,
-                    isRecording: false,
-                    isCancelling: false
-                });
+            this.setData({ holding: false });
 
-                if (isCancelled) {
-                    this.triggerEvent('recordcancel');
-                } else {
-                    this.triggerEvent('recordend');
-                }
+            if (this.data.isCancelled) {
+                // 取消录音
+                this.triggerEvent('recordcancel');
+                this.setData({ isCancelled: false });
+            } else {
+                // 结束录音
+                this.triggerEvent('recordend');
             }
         },
 
-        // 处理录音按钮触摸移动
+        // 处理触摸移动语音按钮
         onTouchMoveVoiceButton(e: WechatMiniprogram.TouchEvent) {
-            if (!this.data.holding || !this.data.isRecording) return;
+            if (!this.data.holding) return;
 
-            const moveY = e.touches[0].clientY;
-            const diffY = this.data.startY - moveY;
+            // 上滑取消发送
+            const touchMoveY = e.touches[0].clientY;
+            const moveDistance = this.data.touchStartY - touchMoveY;
 
-            // 上滑超过50像素，判断为取消
-            if (diffY > 50) {
-                this.setData({
-                    isCancelling: true
-                });
+            // 如果上滑超过50px，视为取消
+            if (moveDistance > 50) {
+                this.setData({ isCancelled: true });
             } else {
-                this.setData({
-                    isCancelling: false
-                });
+                this.setData({ isCancelled: false });
             }
         }
     }

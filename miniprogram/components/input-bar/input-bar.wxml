@@ -20,7 +20,7 @@
                 <text>发送</text>
             </block>
             <block wx:else>
-                <image class="icon" src="/assets/icons/more.svg" mode="aspectFit" />
+                <text class="plus-icon">+</text>
             </block>
         </view>
     </view>
@@ -33,6 +33,61 @@
         </view>
         <view class="emoji-actions">
             <view class="delete-button" bind:tap="deleteEmoji">删除</view>
+        </view>
+    </view>
+    <!-- 功能面板 -->
+    <view class="feature-panel" wx:if="{{showFeaturePanel}}">
+        <view class="feature-grid">
+            <!-- 第一行 -->
+            <view class="feature-item" bind:tap="handleFeature" data-feature="album">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">相册</view>
+            </view>
+            <view class="feature-item" bind:tap="handleFeature" data-feature="camera">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">拍摄</view>
+            </view>
+            <view class="feature-item" bind:tap="handleFeature" data-feature="video">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">视频通话</view>
+            </view>
+            <view class="feature-item" bind:tap="handleFeature" data-feature="location">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">位置</view>
+            </view>
+            <!-- 第二行 -->
+            <view class="feature-item" bind:tap="handleFeature" data-feature="redpacket">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">红包</view>
+            </view>
+            <view class="feature-item" bind:tap="handleFeature" data-feature="gift">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">礼物</view>
+            </view>
+            <view class="feature-item" bind:tap="handleFeature" data-feature="transfer">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">转账</view>
+            </view>
+            <view class="feature-item" bind:tap="handleFeature" data-feature="voice">
+                <view class="feature-icon">
+                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                </view>
+                <view class="feature-name">语音输入</view>
+            </view>
         </view>
     </view>
 </view>

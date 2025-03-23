@@ -1,38 +1,45 @@
 <view class="message-item {{isSelf ? 'self' : 'other'}}">
     <!-- 时间显示 -->
     <view class="time-stamp" wx:if="{{showTimestamp}}">{{formatTime}}</view>
-    <!-- 头像 -->
-    <view class="avatar-container" wx:if="{{!isSelf || alwaysShowAvatar}}">
-        <image class="avatar" src="{{avatar || '/assets/icons/default-avatar.svg'}}" mode="aspectFill" bind:tap="onAvatarTap"></image>
-    </view>
-    <!-- 消息内容 -->
-    <view class="content-container">
-        <!-- 用户名称 -->
-        <view class="nickname" wx:if="{{showName && (!isSelf || alwaysShowName)}}">
-            {{nickname || '用户'}}
+    <!-- 消息主体容器 - 改为row布局 -->
+    <view class="message-row">
+        <!-- 头像 -->
+        <view class="avatar-container" wx:if="{{!isSelf || alwaysShowAvatar}}">
+            <image class="avatar" src="{{avatar || '/assets/icons/default-avatar.svg'}}" mode="aspectFill" bind:tap="onAvatarTap"></image>
         </view>
-        <!-- 文本消息 -->
-        <view wx:if="{{type === 'text'}}" class="message-bubble text" bind:tap="onMessageTap" bind:longpress="onMessageLongPress">
-            <text selectable="{{selectable}}">{{content}}</text>
-        </view>
-        <!-- 图片消息 -->
-        <view wx:elif="{{type === 'image'}}" class="message-bubble image" bind:tap="onImageTap" bind:longpress="onMessageLongPress">
-            <image src="{{content}}" mode="widthFix" lazy-load="true"></image>
-        </view>
-        <!-- 语音消息 -->
-        <view wx:elif="{{type === 'voice'}}" class="message-bubble voice" bind:tap="onVoiceTap" bind:longpress="onMessageLongPress">
-            <view class="voice-inner">
-                <image class="voice-icon" src="/assets/icons/voice-wave.svg" mode="aspectFit"></image>
-                <text>{{duration}}''</text>
+        <!-- 消息内容 -->
+        <view class="content-container">
+            <!-- 用户名称 -->
+            <view class="nickname" wx:if="{{showName && (!isSelf || alwaysShowName)}}">
+                {{nickname || '用户'}}
+            </view>
+            <!-- 文本消息 -->
+            <view wx:if="{{type === 'text'}}" class="message-bubble text" bind:tap="onMessageTap" bind:longpress="onMessageLongPress">
+                <text selectable="{{selectable}}">{{content}}</text>
+            </view>
+            <!-- 图片消息 -->
+            <view wx:elif="{{type === 'image'}}" class="message-bubble image" bind:tap="onImageTap" bind:longpress="onMessageLongPress">
+                <image src="{{content}}" mode="widthFix" lazy-load="true"></image>
+            </view>
+            <!-- 语音消息 -->
+            <view wx:elif="{{type === 'voice'}}" class="message-bubble voice" bind:tap="onVoiceTap" bind:longpress="onMessageLongPress">
+                <view class="voice-inner">
+                    <image class="voice-icon" src="/assets/icons/voice-wave.svg" mode="aspectFit"></image>
+                    <text>{{duration}}''</text>
+                </view>
+            </view>
+            <!-- 系统消息 -->
+            <view wx:elif="{{type === 'system'}}" class="system-message">{{content}}</view>
+            <!-- 消息状态 -->
+            <view class="message-status" wx:if="{{isSelf && status}}">
+                <text wx:if="{{status === 'sending'}}">发送中...</text>
+                <text wx:elif="{{status === 'failed'}}">发送失败</text>
+                <text wx:elif="{{status === 'read'}}">已读</text>
             </view>
         </view>
-        <!-- 系统消息 -->
-        <view wx:elif="{{type === 'system'}}" class="system-message">{{content}}</view>
-        <!-- 消息状态 -->
-        <view class="message-status" wx:if="{{isSelf && status}}">
-            <text wx:if="{{status === 'sending'}}">发送中...</text>
-            <text wx:elif="{{status === 'failed'}}">发送失败</text>
-            <text wx:elif="{{status === 'read'}}">已读</text>
+        <!-- 右侧头像（用于自己发送的消息） -->
+        <view class="avatar-container" wx:if="{{isSelf && !alwaysShowAvatar}}">
+            <image class="avatar" src="{{avatar || '/assets/icons/default-avatar.svg'}}" mode="aspectFill" bind:tap="onAvatarTap"></image>
         </view>
     </view>
 </view>

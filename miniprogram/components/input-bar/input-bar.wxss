@@ -89,6 +89,14 @@
     justify-content: center;
 }
 
+/* 加号图标 */
+.plus-icon {
+    font-size: 28px;
+    font-weight: bold;
+    color: #000;
+    line-height: 1;
+}
+
 /* 图标样式 */
 .icon {
     width: 24px;
@@ -134,4 +142,46 @@
     align-items: center;
     justify-content: center;
     font-size: 14px;
+}
+
+/* 功能面板 */
+.feature-panel {
+    background-color: #f6f6f6;
+    padding: 15px 10px;
+    border-top: 1px solid #e6e6e6;
+    box-sizing: border-box;
+}
+
+.feature-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.feature-item {
+    width: 25%;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.feature-icon image {
+    width: 32px;
+    height: 32px;
+}
+
+.feature-name {
+    font-size: 12px;
+    color: #333;
 }

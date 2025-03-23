@@ -13,13 +13,20 @@
     margin: 16rpx 0;
 }
 
-/* 消息内容布局 */
-.message-item.other {
-    align-items: flex-start;
+/* 消息行布局 */
+.message-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
 }
 
-.message-item.self {
-    align-items: flex-end;
+/* 消息内容布局 */
+.message-item.other .message-row {
+    justify-content: flex-start;
+}
+
+.message-item.self .message-row {
+    justify-content: flex-end;
 }
 
 /* 内容容器 */
@@ -27,17 +34,17 @@
     max-width: 70%;
     display: flex;
     flex-direction: column;
-    margin-top: 8rpx;
+    margin: 0 12rpx;
 }
 
 .message-item.other .content-container {
-    margin-left: 16rpx;
     align-items: flex-start;
+    margin-top: 8rpx;
 }
 
 .message-item.self .content-container {
-    margin-right: 16rpx;
     align-items: flex-end;
+    margin-top: 8rpx;
 }
 
 /* 头像 */
@@ -61,7 +68,7 @@
 
 /* 气泡通用样式 */
 .message-bubble {
-    border-radius: 8rpx;
+    border-radius: 12rpx;
     padding: 16rpx 24rpx;
     max-width: 100%;
     word-break: break-all;
@@ -76,11 +83,13 @@
 .message-item.other .message-bubble.text {
     background-color: #fff;
     color: #333;
+    border-top-left-radius: 4rpx;
 }
 
 .message-item.self .message-bubble.text {
     background-color: #07C160;
     color: #fff;
+    border-top-right-radius: 4rpx;
 }
 
 /* 图片气泡 */

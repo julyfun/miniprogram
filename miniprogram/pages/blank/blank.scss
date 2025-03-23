@@ -10,6 +10,8 @@
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     position: relative;
+    padding-bottom: 52px;
+    /* Add padding for input bar height */
 }
 
 /* 自定义导航栏右侧区域 */
@@ -53,6 +55,13 @@
     position: relative;
     overflow: hidden;
     background-color: #f5f5f5;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin-top: 44px;
+    /* Fixed height for navigation bar */
+    height: calc(100vh - 44px - 52px);
+    /* Subtract nav height and input bar height */
 
     /* 自定义背景 - 可选 */
     &::before {

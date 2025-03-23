@@ -88,6 +88,24 @@ Component({
         // 滚动到底部
         scrollToBottom() {
             this.triggerEvent('scrolltobottom');
+
+            // Ensure the scroll to bottom event is fired
+            if (this.properties.scrollIntoView) {
+                setTimeout(() => {
+                    wx.createSelectorQuery()
+                        .in(this)
+                        .select('#' + this.properties.scrollIntoView)
+                        .boundingClientRect((rect) => {
+                            if (rect) {
+                                wx.pageScrollTo({
+                                    scrollTop: rect.top,
+                                    duration: 0
+                                });
+                            }
+                        })
+                        .exec();
+                }, 100);
+            }
         }
     }
 }) 

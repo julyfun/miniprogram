@@ -14,10 +14,10 @@
         </view>
     </navigation-bar>
     <!-- 内容区域 -->
-    <view class="chat-content" style="padding-top: {{statusBarHeight + 44}}px;">
+    <view class="chat-content">
         <!-- 聊天容器 -->
         <chat-container messages="{{messages}}" selfAvatar="{{userInfo.avatarUrl}}" otherAvatar="{{contactInfo.avatarUrl}}" scrollIntoView="{{scrollToView}}" bindtapmessage="handleTapMessage" bindlongpressmessage="handleLongPressMessage" bindtapavatar="handleTapAvatar" bindscrolltobottom="handleScrollToBottom" />
     </view>
     <!-- 底部输入区域 -->
-    <input-bar value="{{inputMessage}}" placeholder="发送消息" bindinput="handleInput" bindsend="handleSend" bindmore="handleMoreFunction" bindrecordstart="handleRecordStart" bindrecordend="handleRecordEnd" bindrecordcancel="handleRecordCancel" bindselectemoji="handleSelectEmoji" binddeleteemoji="handleDeleteEmoji" />
+    <input-bar value="{{inputMessage}}" placeholder="发送消息" bindinput="handleInput" bindsend="handleSend" bindmore="handleMoreFunction" bindfeature="handleFeature" bindrecordstart="handleRecordStart" bindrecordend="handleRecordEnd" bindrecordcancel="handleRecordCancel" bindselectemoji="handleSelectEmoji" binddeleteemoji="handleDeleteEmoji" />
 </view>

@@ -239,6 +239,15 @@ Page({
         console.log('已滚动到底部');
     },
 
+    // 确保所有消息加载后滚动到底部
+    onReady() {
+        setTimeout(() => {
+            this.setData({
+                scrollToView: this.data.messages[this.data.messages.length - 1]?._id || ''
+            });
+        }, 300);
+    },
+
     // 处理输入框内容变化
     handleInput(e: any) {
         this.setData({
@@ -267,6 +276,9 @@ Page({
             scrollToView: userMessage._id
         });
 
+        // 滚动到底部
+        this.ensureScrollToBottom(userMessage._id);
+
         // 模拟发送成功
         setTimeout(() => {
             const updatedMessages = this.data.messages.map(msg => {
@@ -293,28 +305,61 @@ Page({
                     messages: [...this.data.messages, assistantMessage],
                     scrollToView: assistantMessage._id
                 });
+
+                // 滚动到底部
+                this.ensureScrollToBottom(assistantMessage._id);
             }, 1000);
         }, 500);
     },
 
+    // 确保滚动到底部
+    ensureScrollToBottom(messageId: string) {
+        this.setData({ scrollToView: messageId });
+
+        // 双重保险：延迟再次滚动确保视图已更新
+        setTimeout(() => {
+            this.setData({ scrollToView: messageId });
+        }, 200);
+    },
+
     // 处理更多功能点击
     handleMoreFunction() {
-        wx.showActionSheet({
-            itemList: ['发送图片', '发送文件', '位置'],
-            success: (res) => {
-                switch (res.tapIndex) {
-                    case 0: // 发送图片
-                        this.chooseAndSendImage();
-                        break;
-                    case 1: // 发送文件
-                        wx.showToast({ title: '发送文件功能暂未实现', icon: 'none' });
-                        break;
-                    case 2: // 发送位置
-                        wx.showToast({ title: '发送位置功能暂未实现', icon: 'none' });
-                        break;
-                }
-            }
-        });
+        // 这个方法不再需要显示操作表，由 input-bar 组件内部处理
+        console.log('点击了更多功能按钮');
+    },
+
+    // 处理功能项点击
+    handleFeature(e: any) {
+        const { feature } = e.detail;
+
+        switch (feature) {
+            case 'album':
+                this.chooseAndSendImage();
+                break;
+            case 'camera':
+                this.captureAndSendImage();
+                break;
+            case 'video':
+                this.handleVideoCall();
+                break;
+            case 'location':
+                this.handleSendLocation();
+                break;
+            case 'redpacket':
+                this.handleSendRedPacket();
+                break;
+            case 'gift':
+                this.handleSendGift();
+                break;
+            case 'transfer':
+                this.handleTransfer();
+                break;
+            case 'voice':
+                this.handleVoiceInput();
+                break;
+            default:
+                console.log('未处理的功能:', feature);
+        }
     },
 
     // 选择并发送图片
@@ -352,6 +397,92 @@ Page({
                     this.setData({ messages: updatedMessages });
                 }, 1000);
             }
+        });
+    },
+
+    // 拍照并发送图片
+    captureAndSendImage() {
+        wx.chooseImage({
+            count: 1,
+            sourceType: ['camera'],
+            success: (res) => {
+                const tempFilePath = res.tempFilePaths[0];
+
+                // 添加图片消息
+                const imageMessage: Message = {
+                    _id: 'user_img_' + Date.now(),
+                    role: 'user',
+                    content: tempFilePath,
+                    timestamp: Date.now(),
+                    type: 'image',
+                    status: 'sending'
+                };
+
+                this.setData({
+                    messages: [...this.data.messages, imageMessage],
+                    scrollToView: imageMessage._id
+                });
+
+                // 模拟发送成功
+                setTimeout(() => {
+                    const updatedMessages = this.data.messages.map(msg => {
+                        if (msg._id === imageMessage._id) {
+                            return { ...msg, status: 'success' as const };
+                        }
+                        return msg;
+                    });
+
+                    this.setData({ messages: updatedMessages });
+                }, 1000);
+            }
+        });
+    },
+
+    // 视频通话
+    handleVideoCall() {
+        wx.showToast({
+            title: '视频通话功能暂未实现',
+            icon: 'none'
+        });
+    },
+
+    // 发送位置
+    handleSendLocation() {
+        wx.showToast({
+            title: '发送位置功能暂未实现',
+            icon: 'none'
+        });
+    },
+
+    // 发送红包
+    handleSendRedPacket() {
+        wx.showToast({
+            title: '发送红包功能暂未实现',
+            icon: 'none'
+        });
+    },
+
+    // 发送礼物
+    handleSendGift() {
+        wx.showToast({
+            title: '发送礼物功能暂未实现',
+            icon: 'none'
+        });
+    },
+
+    // 转账
+    handleTransfer() {
+        wx.showToast({
+            title: '转账功能暂未实现',
+            icon: 'none'
+        });
+    },
+
+    // 语音输入
+    handleVoiceInput() {
+        wx.showToast({
+            title: '语音输入功能暂未实现',
+            icon: 'none'
         });
     },
 
