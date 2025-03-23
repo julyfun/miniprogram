@@ -242,8 +242,13 @@ Page({
     // 确保所有消息加载后滚动到底部
     onReady() {
         setTimeout(() => {
+            // 替换可选链操作符(?.)为兼容的方式
+            const lastMessage = this.data.messages.length > 0 ?
+                this.data.messages[this.data.messages.length - 1] : null;
+            const scrollId = lastMessage ? lastMessage._id : '';
+
             this.setData({
-                scrollToView: this.data.messages[this.data.messages.length - 1]?._id || ''
+                scrollToView: scrollId
             });
         }, 300);
     },
