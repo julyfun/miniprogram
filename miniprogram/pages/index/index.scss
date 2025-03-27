@@ -307,24 +307,18 @@
         &:before {
             content: '';
             position: absolute;
-            left: 0;
+            left: 50%;
             top: 50%;
-            width: 20rpx;
-            height: 2rpx;
-            background-color: white;
-            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 8rpx 0 8rpx 16rpx;
+            border-color: transparent transparent transparent white;
+            transform: translate(-40%, -50%);
         }
 
         &:after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            width: 10rpx;
-            height: 10rpx;
-            border-top: 2rpx solid white;
-            border-right: 2rpx solid white;
-            transform: translateY(-50%) rotate(45deg);
+            display: none;
         }
     }
 }

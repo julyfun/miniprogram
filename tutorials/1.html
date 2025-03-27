@@ -1,1 +1,293 @@
-<p> my first </p>
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 基础教程</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header id="page-header">
+        <h1>HTML、CSS 和 JavaScript 入门教程</h1>
+        <p class="subtitle">适合初学者的 Web 前端开发基础</p>
+    </header>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="#html-section">HTML 基础</a></li>
+            <li><a href="#css-section">CSS 样式</a></li>
+            <li><a href="#js-section">JavaScript 交互</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="html-section" class="tutorial-section">
+            <h2>HTML 基础元素</h2>
+            <p>HTML（超文本标记语言）是网页的基础结构，下面是一些常用的 HTML 元素：</p>
+
+            <article class="example-block">
+                <h3>标题元素</h3>
+                <div class="example">
+                    <h1>这是一级标题 &lt;h1&gt;</h1>
+                    <h2>这是二级标题 &lt;h2&gt;</h2>
+                    <h3>这是三级标题 &lt;h3&gt;</h3>
+                    <h4>这是四级标题 &lt;h4&gt;</h4>
+                    <h5>这是五级标题 &lt;h5&gt;</h5>
+                    <h6>这是六级标题 &lt;h6&gt;</h6>
+                </div>
+                <div class="explanation">
+                    <p>标题标签从 &lt;h1&gt; 到 &lt;h6&gt;，表示不同级别的标题，h1 最重要，h6 最不重要。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>段落和文本格式</h3>
+                <div class="example">
+                    <p>这是一个段落。段落用 &lt;p&gt; 标签定义。</p>
+                    <p>这是另一个段落，包含 <strong>加粗文本</strong> 和 <em>斜体文本</em>。</p>
+                    <p>这里有一个 <a href="https://www.example.com">链接</a> 到示例网站。</p>
+                </div>
+                <div class="explanation">
+                    <p>&lt;p&gt; 定义段落，&lt;strong&gt; 定义重要文本，&lt;em&gt; 定义强调文本，&lt;a&gt; 定义超链接。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>列表</h3>
+                <div class="example">
+                    <h4>无序列表</h4>
+                    <ul>
+                        <li>项目 1</li>
+                        <li>项目 2</li>
+                        <li>项目 3</li>
+                    </ul>
+
+                    <h4>有序列表</h4>
+                    <ol>
+                        <li>第一步</li>
+                        <li>第二步</li>
+                        <li>第三步</li>
+                    </ol>
+
+                    <h4>定义列表</h4>
+                    <dl>
+                        <dt>HTML</dt>
+                        <dd>超文本标记语言，用于创建网页结构</dd>
+                        <dt>CSS</dt>
+                        <dd>层叠样式表，用于设计网页样式</dd>
+                    </dl>
+                </div>
+                <div class="explanation">
+                    <p>&lt;ul&gt; 定义无序列表，&lt;ol&gt; 定义有序列表，&lt;li&gt; 定义列表项。&lt;dl&gt; 定义定义列表，&lt;dt&gt; 定义术语，&lt;dd&gt;
+                        定义描述。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>图像</h3>
+                <div class="example">
+                    <img src="https://via.placeholder.com/300x200" alt="示例图片" class="demo-image">
+                </div>
+                <div class="explanation">
+                    <p>&lt;img&gt; 用于插入图像。src 属性指定图像的 URL，alt 属性提供图像的替代文本。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>表格</h3>
+                <div class="example">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>年龄</th>
+                                <th>城市</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>张三</td>
+                                <td>25</td>
+                                <td>北京</td>
+                            </tr>
+                            <tr>
+                                <td>李四</td>
+                                <td>30</td>
+                                <td>上海</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="explanation">
+                    <p>&lt;table&gt; 定义表格，&lt;tr&gt; 定义行，&lt;th&gt; 定义表头单元格，&lt;td&gt; 定义数据单元格。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>表单</h3>
+                <div class="example">
+                    <form action="#" method="post" id="demo-form">
+                        <div class="form-group">
+                            <label for="name">姓名：</label>
+                            <input type="text" id="name" name="name" placeholder="请输入姓名">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">邮箱：</label>
+                            <input type="email" id="email" name="email" placeholder="请输入邮箱">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">密码：</label>
+                            <input type="password" id="password" name="password" placeholder="请输入密码">
+                        </div>
+
+                        <div class="form-group">
+                            <label>性别：</label>
+                            <label class="radio-label">
+                                <input type="radio" name="gender" value="male"> 男
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="gender" value="female"> 女
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>爱好：</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="hobby" value="reading"> 阅读
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="hobby" value="sports"> 运动
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="hobby" value="music"> 音乐
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="city">城市：</label>
+                            <select id="city" name="city">
+                                <option value="">请选择</option>
+                                <option value="beijing">北京</option>
+                                <option value="shanghai">上海</option>
+                                <option value="guangzhou">广州</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">留言：</label>
+                            <textarea id="message" name="message" rows="4" placeholder="请输入留言"></textarea>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="submit" class="btn btn-primary">提交</button>
+                            <button type="reset" class="btn">重置</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="explanation">
+                    <p>&lt;form&gt; 定义表单，&lt;input&gt; 定义输入字段，&lt;label&gt; 定义标签，&lt;select&gt; 和 &lt;option&gt;
+                        定义下拉列表，&lt;textarea&gt; 定义多行文本输入。</p>
+                </div>
+            </article>
+        </section>
+
+        <section id="css-section" class="tutorial-section">
+            <h2>CSS 样式</h2>
+            <p>CSS（层叠样式表）用于设置 HTML 元素的样式和布局。本页面的 CSS 样式定义在 <code>style.css</code> 文件中。</p>
+
+            <article class="example-block">
+                <h3>颜色和背景</h3>
+                <div class="example">
+                    <div class="color-demo">文本颜色</div>
+                    <div class="bg-demo">背景颜色</div>
+                    <div class="border-demo">边框样式</div>
+                </div>
+                <div class="explanation">
+                    <p>CSS 可以控制元素的颜色、背景和边框等视觉属性。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>布局</h3>
+                <div class="example">
+                    <div class="flex-container">
+                        <div class="flex-item">项目 1</div>
+                        <div class="flex-item">项目 2</div>
+                        <div class="flex-item">项目 3</div>
+                    </div>
+                </div>
+                <div class="explanation">
+                    <p>Flexbox 是 CSS 中用于创建灵活布局的强大工具。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>动画效果</h3>
+                <div class="example">
+                    <div class="animation-demo">悬停我</div>
+                </div>
+                <div class="explanation">
+                    <p>CSS 可以创建动画和过渡效果，增强用户体验。</p>
+                </div>
+            </article>
+        </section>
+
+        <section id="js-section" class="tutorial-section">
+            <h2>JavaScript 交互</h2>
+            <p>JavaScript 是一种编程语言，用于创建网页上的交互功能。本页面的 JavaScript 代码定义在 <code>script.js</code> 文件中。</p>
+
+            <article class="example-block">
+                <h3>点击事件</h3>
+                <div class="example">
+                    <button id="click-btn" class="btn">点击我</button>
+                    <p id="click-result"></p>
+                </div>
+                <div class="explanation">
+                    <p>JavaScript 可以响应用户的点击事件，并执行相应的操作。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>表单验证</h3>
+                <div class="example">
+                    <form id="validation-form">
+                        <div class="form-group">
+                            <label for="username">用户名：</label>
+                            <input type="text" id="username" name="username">
+                            <span id="username-error" class="error-message"></span>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn btn-primary">验证</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="explanation">
+                    <p>JavaScript 可以在提交表单之前验证用户输入，确保数据的有效性。</p>
+                </div>
+            </article>
+
+            <article class="example-block">
+                <h3>动态内容</h3>
+                <div class="example">
+                    <div id="time-display">当前时间将显示在这里</div>
+                    <button id="update-time-btn" class="btn">更新时间</button>
+                </div>
+                <div class="explanation">
+                    <p>JavaScript 可以动态更新页面内容，无需重新加载整个页面。</p>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 HTML、CSS 和 JavaScript 教程 | 学习前端开发</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
