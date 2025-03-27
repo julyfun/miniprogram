@@ -107,7 +107,7 @@ Component({
             try {
                 // 从数据工具加载
                 const dataUtils = require('../../data/data_utils');
-                const data = dataUtils.getDataById(source);
+                const data = dataUtils.getDataModule(source);
 
                 if (data) {
                     this.processData(data);

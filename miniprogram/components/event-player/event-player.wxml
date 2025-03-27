@@ -27,7 +27,6 @@
                 <view class="message-bubble">
                     <text>{{item.content}}</text>
                 </view>
-                <!-- 自己的消息不需要头像 -->
             </view>
         </block>
         <!-- 底部占位 -->

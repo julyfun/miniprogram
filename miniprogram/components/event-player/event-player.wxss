@@ -61,21 +61,38 @@
 .more-icon {
     width: 20px;
     height: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
+    position: relative;
 }
 
 .more-icon:before,
-.more-icon:after,
-.more-icon span {
+.more-icon:after {
     content: '';
+    position: absolute;
     width: 4px;
     height: 4px;
     background-color: #333;
     border-radius: 50%;
+}
+
+.more-icon:before {
+    top: 7px;
+    left: 8px;
+}
+
+.more-icon:after {
+    top: 7px;
+    left: 16px;
+}
+
+.more-icon:first-child:after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background-color: #333;
+    border-radius: 50%;
+    top: 15px;
+    left: 12px;
 }
 
 /* 消息列表样式 */
@@ -103,6 +120,8 @@
     display: flex;
     margin-bottom: 16px;
     position: relative;
+    max-width: 100%;
+    width: 100%;
 }
 
 .message-item.opponent {
@@ -118,6 +137,7 @@
     height: 40px;
     border-radius: 4px;
     margin-right: 10px;
+    flex-shrink: 0;
 }
 
 .message-bubble {
@@ -128,6 +148,7 @@
     word-wrap: break-word;
     line-height: 1.4;
     font-size: 16px;
+    text-align: left;
 }
 
 .opponent .message-bubble {
@@ -163,12 +184,43 @@
     justify-content: center;
 }
 
-.voice-icon,
+.voice-icon {
+    width: 24px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 50%;
+    position: relative;
+}
+
+.voice-icon:before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background-color: #fff;
+    border-radius: 4px;
+    top: 6px;
+    left: 8px;
+}
+
 .emoji-icon {
     width: 24px;
     height: 24px;
     background-color: #ccc;
     border-radius: 50%;
+    position: relative;
+}
+
+.emoji-icon:before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    top: 4px;
+    left: 4px;
+    box-sizing: border-box;
 }
 
 .message-input {

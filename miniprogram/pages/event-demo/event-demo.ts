@@ -15,7 +15,9 @@ Page({
         // 是否自动播放
         autoPlay: true,
         // 是否允许用户交互
-        interactionMode: false
+        interactionMode: false,
+        // 场景元数据
+        metadata: null
     },
 
     /**
@@ -27,11 +29,17 @@ Page({
         const currentPage = pages[pages.length - 1];
         const options = currentPage.options;
 
+        let dataId = 'demo_chat';
+
         if (options.id) {
+            dataId = options.id;
             this.setData({
-                dataSource: options.id
+                dataSource: dataId
             });
         }
+
+        // 加载场景元数据
+        this.loadMetadata(dataId);
 
         if (options.speed) {
             this.setData({
@@ -49,6 +57,22 @@ Page({
             this.setData({
                 interactionMode: options.interaction === 'true'
             });
+        }
+    },
+
+    /**
+     * 加载场景元数据
+     */
+    loadMetadata(dataId: string) {
+        try {
+            const dataModule = dataUtils.getDataModule(dataId);
+            if (dataModule && dataModule.metadata) {
+                this.setData({
+                    metadata: dataModule.metadata
+                });
+            }
+        } catch (error) {
+            console.error('加载元数据失败:', error);
         }
     },
 
@@ -101,4 +125,4 @@ Page({
             path: '/pages/event-demo/event-demo'
         };
     }
-}); 
+});

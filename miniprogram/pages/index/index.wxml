@@ -2,7 +2,7 @@
 <view class="container">
   <!-- 顶部标题 -->
   <view class="header">
-    <text class="title">用户与助理初次问候</text>
+    <text class="title">聊天场景演示</text>
   </view>
   <!-- 聊天内容区域 -->
   <scroll-view class="chat-container" scroll-y="true" enhanced="true" show-scrollbar="false" scroll-into-view="{{scrollToView}}">
@@ -52,7 +52,7 @@
     </view>
     <view class="function-right">
       <view class="plus-button" bindtap="navigateToNewPage">
-        <text class="fang-text">防</text>
+        <text class="plus-text">+</text>
       </view>
       <view class="send-button" bindtap="sendMessage">
         <view class="arrow-icon"></view>

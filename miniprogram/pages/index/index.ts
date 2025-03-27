@@ -272,20 +272,43 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         // 这里可以添加联网搜索的实际逻辑
     },
 
-    // 新增页面导航
+    /**
+     * 导航到新页面，展示不同场景
+     */
     navigateToNewPage() {
-        wx.navigateTo({
-            url: '/pages/event-demo/event-demo',
-            success: () => {
-                console.log('成功导航到事件演示页面');
-            },
-            fail: (error) => {
-                console.error('导航失败:', error);
-                wx.showToast({
-                    title: '页面跳转失败',
-                    icon: 'none',
-                    duration: 2000
+        // 获取可用的对话数据列表
+        const dataUtils = require('../../data/data_utils');
+        const dataList = dataUtils.getAvailableDataList();
+
+        // 构建场景选项
+        const items = dataList.map((item: { title: string }) => `${item.title}`);
+
+        // 显示选择对话框
+        wx.showActionSheet({
+            itemList: items,
+            success: (res) => {
+                // 用户选择了某个场景
+                const selectedIndex = res.tapIndex;
+                const selectedDataId = dataList[selectedIndex].id;
+
+                // 导航到事件演示页面，并传递选择的数据ID
+                wx.navigateTo({
+                    url: `/pages/event-demo/event-demo?id=${selectedDataId}`,
+                    success: () => {
+                        console.log('成功导航到演示页面');
+                    },
+                    fail: (err) => {
+                        console.error('导航失败:', err);
+                        wx.showToast({
+                            title: '导航失败',
+                            icon: 'none'
+                        });
+                    }
                 });
+            },
+            fail: () => {
+                // 用户取消选择
+                console.log('用户取消了选择');
             }
         });
     }
