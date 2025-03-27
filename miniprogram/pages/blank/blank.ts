@@ -18,7 +18,7 @@ Page({
             avatarUrl: '/assets/icons/default-avatar.svg'
         },
         contactInfo: {
-            avatarUrl: '/assets/icons/default-avatar.svg'
+            avatarUrl: '/assets/icons/customer-service1.png'
         },
         scrollToView: '',
         inputMessage: '',

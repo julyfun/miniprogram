@@ -70,8 +70,8 @@
     width: 50rpx;
     height: 50rpx;
     border-radius: 50%;
-    background-color: #4169E1;
-    /* 蓝色圆形头像 */
+    background-color: transparent;
+    overflow: hidden;
 }
 
 .avatar-image {
@@ -339,33 +339,11 @@
         transform: scale(0.95);
     }
 
-    .plus-icon {
-        position: relative;
-        width: 24rpx;
-        height: 24rpx;
-
-        &:before,
-        &:after {
-            content: '';
-            position: absolute;
-            background-color: white;
-        }
-
-        &:before {
-            left: 50%;
-            top: 0;
-            width: 2rpx;
-            height: 100%;
-            transform: translateX(-50%);
-        }
-
-        &:after {
-            top: 50%;
-            left: 0;
-            height: 2rpx;
-            width: 100%;
-            transform: translateY(-50%);
-        }
+    .fang-text {
+        color: white;
+        font-size: 28rpx;
+        font-weight: 500;
+        line-height: 1;
     }
 }
 

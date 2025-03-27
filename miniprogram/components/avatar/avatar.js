@@ -28,7 +28,7 @@ Component({
         // 加载失败时显示的图片
         fallbackSrc: {
             type: String,
-            value: '/assets/default-avatar.png'
+            value: '/assets/icons/default-avatar.svg'
         }
     },
 

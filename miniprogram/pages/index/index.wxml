@@ -11,7 +11,7 @@
         <!-- AI消息带头像 -->
         <block wx:if="{{item.role === 'assistant'}}">
           <view class="avatar-container">
-            <view class="ai-avatar"></view>
+            <image class="ai-avatar" src="/assets/icons/deepseek.png" mode="aspectFill"></image>
           </view>
         </block>
         <view class="message-item {{item.role === 'user' ? 'user-message' : 'ai-message'}}">
@@ -52,7 +52,7 @@
     </view>
     <view class="function-right">
       <view class="plus-button" bindtap="navigateToNewPage">
-        <view class="plus-icon"></view>
+        <text class="fang-text">防</text>
       </view>
       <view class="send-button" bindtap="sendMessage">
         <view class="arrow-icon"></view>

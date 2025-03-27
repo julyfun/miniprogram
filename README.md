@@ -10,3 +10,8 @@
 ## 开发文档
 
 - 微信小程序官方： https://developers.weixin.qq.com/ebook?action=get_post_info&docid=0004eec99acc808b00861a5bd5280a
+
+## Prompts
+
+- 首页添加语音识别功能：（找找相关 API）
+    - 添加一个“说”按钮，点击后开始录音，

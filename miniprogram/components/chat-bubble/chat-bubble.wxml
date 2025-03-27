@@ -1,7 +1,7 @@
 <view class="bubble-container {{isSelf ? 'self' : 'other'}}">
     <!-- 头像 -->
     <view wx:if="{{showAvatar && !isSelf}}" class="avatar-container" bindtap="onTapAvatar">
-        <image class="avatar" src="{{avatarUrl || '/assets/default-avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar" src="{{avatarUrl || '/assets/icons/default-avatar.svg'}}" mode="aspectFill"></image>
     </view>
     <!-- 气泡内容 -->
     <view class="bubble {{isSelf ? 'self-bubble' : 'other-bubble'}}" bindtap="onTapMessage" bindlongpress="onLongPressMessage">
@@ -39,6 +39,6 @@
     </view>
     <!-- 右侧头像 -->
     <view wx:if="{{showAvatar && isSelf}}" class="avatar-container" bindtap="onTapAvatar">
-        <image class="avatar" src="{{avatarUrl || '/assets/default-avatar.png'}}" mode="aspectFill"></image>
+        <image class="avatar" src="{{avatarUrl || '/assets/icons/default-avatar.svg'}}" mode="aspectFill"></image>
     </view>
 </view>
