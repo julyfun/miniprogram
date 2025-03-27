@@ -1,0 +1,6 @@
+{
+    "navigationStyle": "custom",
+    "usingComponents": {
+        "event-player": "/components/event-player/event-player"
+    }
+}

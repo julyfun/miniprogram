@@ -275,9 +275,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     // 新增页面导航
     navigateToNewPage() {
         wx.navigateTo({
-            url: '/pages/blank/blank',
+            url: '/pages/event-demo/event-demo',
             success: () => {
-                console.log('成功导航到空白页面');
+                console.log('成功导航到事件演示页面');
             },
             fail: (error) => {
                 console.error('导航失败:', error);
