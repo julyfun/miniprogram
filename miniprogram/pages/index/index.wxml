@@ -76,4 +76,23 @@
       </view>
     </view>
   </view>
+  <view class="title">AI助手防骗训练</view>
+  <view class="demo-cards">
+    <navigator url="/pages/event-demo/event-demo?id=demo_chat" class="demo-card">
+      <view class="card-title">智能助手示例对话</view>
+      <view class="card-desc">展示与AI智能助手的基础对话流程</view>
+    </navigator>
+    <navigator url="/pages/event-demo/event-demo?id=phishing_chat" class="demo-card">
+      <view class="card-title">网络钓鱼防范示例</view>
+      <view class="card-desc">演示常见网络钓鱼诈骗场景的对话流程</view>
+    </navigator>
+    <navigator url="/pages/event-demo/event-demo?id=graph_demo" class="demo-card highlighted">
+      <view class="card-title">条件图形化示例</view>
+      <view class="card-desc">演示基于条件分支的对话流程</view>
+      <view class="card-badge">新</view>
+    </navigator>
+  </view>
+  <view class="footer">
+    <text>防骗小技巧: 不要随意点击陌生链接，不要向陌生人转账</text>
+  </view>
 </view>

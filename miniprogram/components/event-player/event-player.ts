@@ -1,40 +1,68 @@
 // 事件类型定义
 interface EventMessage {
-    type: string; // 事件类型，如 'message' 或 'assessment'
-    role: string; // 角色，'self' 或 'opponent'
-    content: string; // 内容
-    timestamp: number; // 时间戳，单位毫秒
-    options?: string[]; // 选项，用于assessment事件
+    id: string;           // 事件唯一标识符
+    type: string;         // 事件类型，如 'message' 或 'assessment'
+    role: string;         // 角色，'self' 或 'opponent'
+    content: string;      // 内容
+    timestamp: number;    // 时间戳，单位毫秒
+    options?: string[];   // 选项，用于assessment事件
     correctAnswer?: string; // 正确答案，用于assessment事件
-    explanation?: string; // 解释，用于assessment事件
+    explanation?: string;   // 解释，用于assessment事件
+    transitions?: EventTransition[]; // 过渡条件，用于有向图跳转
+    nextId?: string;      // 简单跳转的下一个事件ID (用于没有条件的转换)
+}
+
+// 过渡条件定义
+interface EventTransition {
+    targetId: string;     // 目标事件ID
+    conditions: EventCondition[]; // 跳转条件列表
+}
+
+// 条件定义
+interface EventCondition {
+    type: string;         // 条件类型，如 'correctAnswer', 'messageCount', 'custom'
+    param?: string;       // 额外参数
+    value: any;           // 条件值
+    operator: string;     // 运算符: '==', '!=', '>', '<', '>=', '<='
 }
 
 // 格式化后的消息类型（适配chat-container组件）
 interface FormattedMessage {
-    _id: string; // 消息ID，格式为 msg-{index}
-    type: string; // 消息类型，如 'text'
-    content: string; // 内容
-    role: string; // 角色，'user' 或 'assistant'
-    timestamp: number; // 时间戳
+    _id: string;          // 消息ID，格式为 msg-{index}
+    type: string;         // 消息类型，如 'text'
+    content: string;      // 内容
+    role: string;         // 角色，'user' 或 'assistant'
+    timestamp: number;    // 时间戳
 }
 
 // 元数据定义
 interface Metadata {
-    title: string; // 对话标题
-    description: string; // 描述
+    title: string;        // 对话标题
+    description: string;  // 描述
     opponent: {
         nickname: string; // 对方昵称
-        avatarUrl: string; // 对方头像
+        avatarUrl: string;// 对方头像
     };
-    createdAt: string; // 创建时间
-    updatedAt: string; // 更新时间
-    tags: string[]; // 标签
+    createdAt: string;    // 创建时间
+    updatedAt: string;    // 更新时间
+    tags: string[];       // 标签
+    startId?: string;     // 开始事件ID（用于有向图的起点）
 }
 
 // 事件数据定义
 interface EventData {
     metadata: Metadata;
     events: EventMessage[];
+}
+
+// 条件状态数据结构
+interface ConditionState {
+    messageCount: number;           // 用户消息计数
+    correctAnswerCount: number;     // 正确回答计数
+    wrongAnswerCount: number;       // 错误回答计数
+    lastEventId: string | null;     // 最后一个事件ID
+    userAnswers: Record<string, string>; // 用户答案，key是事件ID
+    customFlags: Record<string, any>; // 自定义标志
 }
 
 Component({
@@ -83,16 +111,21 @@ Component({
             },
             createdAt: '',
             updatedAt: '',
-            tags: [] as string[]
-        },
+            tags: [] as string[],
+            startId: undefined
+        } as Metadata,
         // 原始事件数据
         allEvents: [] as EventMessage[],
+        // 事件索引查询表
+        eventMap: {} as Record<string, EventMessage>,
         // 已显示的消息
         messages: [] as EventMessage[],
         // 格式化后的消息，用于chat-container
         formattedMessages: [] as FormattedMessage[],
         // 当前事件索引
         currentEventIndex: 0,
+        // 当前事件ID
+        currentEventId: '',
         // 是否正在播放
         isPlaying: false,
         // 是否完成播放
@@ -112,7 +145,16 @@ Component({
         // 用户选择的答案
         userAnswer: '',
         // 是否已显示结果
-        showAssessmentResult: false
+        showAssessmentResult: false,
+        // 条件状态
+        conditionState: {
+            messageCount: 0,
+            correctAnswerCount: 0,
+            wrongAnswerCount: 0,
+            lastEventId: null,
+            userAnswers: {},
+            customFlags: {}
+        } as ConditionState
     },
 
     /**
@@ -160,13 +202,36 @@ Component({
                 return;
             }
 
+            // 构建事件映射表
+            const eventMap: Record<string, EventMessage> = {};
+            data.events.forEach(event => {
+                // 如果没有ID，生成一个唯一ID
+                if (!event.id) {
+                    event.id = `event-${Math.random().toString(36).substring(2, 9)}`;
+                }
+                eventMap[event.id] = event;
+            });
+
+            // 初始化条件状态
+            const conditionState: ConditionState = {
+                messageCount: 0,
+                correctAnswerCount: 0,
+                wrongAnswerCount: 0,
+                lastEventId: null,
+                userAnswers: {},
+                customFlags: {}
+            };
+
             this.setData({
                 metadata: data.metadata,
                 allEvents: data.events,
+                eventMap,
                 messages: [],
                 formattedMessages: [],
                 currentEventIndex: 0,
+                currentEventId: data.metadata.startId || data.events[0]?.id || '',
                 isComplete: false,
+                conditionState,
                 startTimeText: this.formatTimeText(new Date())
             });
 
@@ -206,24 +271,105 @@ Component({
             this.playNextEvent();
         },
 
+        // 评估条件是否满足
+        evaluateCondition(condition: EventCondition): boolean {
+            const { type, param, value, operator } = condition;
+            const { conditionState } = this.data;
+
+            let leftValue;
+
+            // 获取条件左侧值
+            switch (type) {
+                case 'messageCount':
+                    leftValue = conditionState.messageCount;
+                    break;
+                case 'correctAnswerCount':
+                    leftValue = conditionState.correctAnswerCount;
+                    break;
+                case 'wrongAnswerCount':
+                    leftValue = conditionState.wrongAnswerCount;
+                    break;
+                case 'correctAnswer':
+                    const eventId = param || conditionState.lastEventId;
+                    leftValue = eventId ? conditionState.userAnswers[eventId] === this.data.eventMap[eventId]?.correctAnswer : false;
+                    break;
+                case 'custom':
+                    leftValue = param ? conditionState.customFlags[param] : undefined;
+                    break;
+                default:
+                    return false;
+            }
+
+            // 评估条件
+            switch (operator) {
+                case '==':
+                    return leftValue == value;
+                case '!=':
+                    return leftValue != value;
+                case '>':
+                    return leftValue > value;
+                case '<':
+                    return leftValue < value;
+                case '>=':
+                    return leftValue >= value;
+                case '<=':
+                    return leftValue <= value;
+                default:
+                    return false;
+            }
+        },
+
+        // 确定下一个事件
+        getNextEventId(event: EventMessage): string | null {
+            // 如果有直接指定的nextId，优先使用
+            if (event.nextId) {
+                return event.nextId;
+            }
+
+            // 如果有transitions，处理条件转换
+            if (event.transitions && event.transitions.length > 0) {
+                for (const transition of event.transitions) {
+                    if (!transition.conditions || transition.conditions.length === 0) {
+                        // 没有条件，直接使用
+                        return transition.targetId;
+                    }
+
+                    // 检查所有条件是否满足
+                    const allConditionsMet = transition.conditions.every(condition =>
+                        this.evaluateCondition(condition)
+                    );
+
+                    if (allConditionsMet) {
+                        return transition.targetId;
+                    }
+                }
+            }
+
+            // 没有下一个事件
+            return null;
+        },
+
         // 播放下一个事件
         playNextEvent() {
-            const { currentEventIndex, allEvents, isPlaying } = this.data;
+            const { currentEventId, eventMap, isPlaying } = this.data;
 
-            // 如果暂停或已完成，则不继续
-            if (!isPlaying || currentEventIndex >= allEvents.length) {
-                if (currentEventIndex >= allEvents.length) {
-                    this.setData({
-                        isComplete: true,
-                        isPlaying: false
-                    });
-                    this.triggerEvent('complete');
-                }
+            // 如果暂停则不继续
+            if (!isPlaying) {
+                return;
+            }
+
+            // 如果没有当前事件ID，则结束
+            if (!currentEventId || !eventMap[currentEventId]) {
+                this.setData({
+                    isComplete: true,
+                    isPlaying: false
+                });
+                this.triggerEvent('complete');
                 return;
             }
 
             // 获取当前事件
-            const event = allEvents[currentEventIndex];
+            const event = eventMap[currentEventId];
 
             // 根据事件类型处理
             if (event.type === 'message') {
@@ -234,23 +380,34 @@ Component({
                 this.setData({
                     messages,
                     formattedMessages,
-                    currentEventIndex: currentEventIndex + 1,
                     scrollToView: `msg-${messages.length - 1}`
                 });
 
-                // 计算下一条消息的延迟
-                const nextEvent = allEvents[currentEventIndex + 1];
-                if (nextEvent) {
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+                conditionState.lastEventId = event.id;
+
+                // 更新到数据
+                this.setData({ conditionState });
+
+                // 获取下一个事件ID
+                const nextEventId = this.getNextEventId(event);
+
+                if (nextEventId) {
                     // 基于消息长度和播放速度计算延迟
                     const content = event.content;
                     const baseDelay = content.length * 100; // 每个字符大约需要100毫秒
                     const adjustedDelay = Math.max(500, Math.min(3000, baseDelay)) / this.properties.playbackSpeed;
 
+                    this.setData({
+                        currentEventId: nextEventId
+                    });
+
                     setTimeout(() => {
                         this.playNextEvent();
                     }, adjustedDelay);
                 } else {
-                    // 已经是最后一条消息
+                    // 没有下一个事件，结束播放
                     this.setData({
                         isComplete: true,
                         isPlaying: false,
@@ -267,23 +424,65 @@ Component({
                     showAssessmentResult: false,
                     isPlaying: false
                 });
+            } else if (event.type === 'task_complete') {
+                // 处理任务完成事件
+                wx.showToast({
+                    title: event.content || '任务完成！',
+                    icon: 'success',
+                    duration: 2000
+                });
+
+                // 获取下一个事件ID
+                const nextEventId = this.getNextEventId(event);
+
+                if (nextEventId) {
+                    this.setData({
+                        currentEventId: nextEventId
+                    });
+
+                    setTimeout(() => {
+                        this.playNextEvent();
+                    }, 2000);
+                } else {
+                    // 没有下一个事件，结束播放
+                    this.setData({
+                        isComplete: true,
+                        isPlaying: false
+                    });
+                    this.triggerEvent('complete');
+                }
             } else {
                 // 其他类型的事件可以在这里处理
-                // 暂时直接跳到下一个
-                this.setData({
-                    currentEventIndex: currentEventIndex + 1
-                });
-                setTimeout(() => {
-                    this.playNextEvent();
-                }, 0);
+                // 暂时直接获取下一个
+                const nextEventId = this.getNextEventId(event);
+
+                if (nextEventId) {
+                    this.setData({
+                        currentEventId: nextEventId
+                    });
+
+                    setTimeout(() => {
+                        this.playNextEvent();
+                    }, 0);
+                } else {
+                    // 没有下一个事件，结束播放
+                    this.setData({
+                        isComplete: true,
+                        isPlaying: false
+                    });
+                    this.triggerEvent('complete');
+                }
             }
         },
 
         // 暂停播放
         pausePlayback() {
+            if (!this.data.isPlaying) return;
+
             this.setData({
                 isPlaying: false
             });
+
             this.triggerEvent('playPause');
         },
 
@@ -296,49 +495,62 @@ Component({
             }
         },
 
-        // 重新开始播放
+        // 重新开始事件序列
         onRestart() {
-            wx.showModal({
-                title: '提示',
-                content: '确定要重新开始演示吗？',
-                success: (res) => {
-                    if (res.confirm) {
-                        // 重置所有消息和状态
-                        this.setData({
-                            messages: [],
-                            formattedMessages: [],
-                            currentEventIndex: 0,
-                            isComplete: false,
-                            isPlaying: false,
-                            inputText: '',
-                            allowInput: false,
-                            scrollToView: 'message-bottom'
-                        });
-
-                        // 如果自动播放或者之前正在播放，则开始播放
-                        if (this.properties.autoPlay) {
-                            setTimeout(() => {
-                                this.startPlayback();
-                            }, 500);
-                        }
-                    }
-                }
+            wx.showLoading({
+                title: '重新开始...',
             });
+
+            try {
+                // 重置状态
+                const conditionState: ConditionState = {
+                    messageCount: 0,
+                    correctAnswerCount: 0,
+                    wrongAnswerCount: 0,
+                    lastEventId: null,
+                    userAnswers: {},
+                    customFlags: {}
+                };
+
+                this.setData({
+                    messages: [],
+                    formattedMessages: [],
+                    isComplete: false,
+                    isPlaying: false,
+                    showAssessment: false,
+                    currentAssessment: null,
+                    currentEventId: this.data.metadata.startId || this.data.allEvents[0]?.id || '',
+                    conditionState
+                });
+
+                this.triggerEvent('restart');
+
+                // 如果设置了自动播放，则开始播放
+                if (this.properties.autoPlay) {
+                    this.startPlayback();
+                }
+            } catch (e) {
+                console.error('Failed to restart:', e);
+                wx.showToast({
+                    title: '重新开始失败',
+                    icon: 'none'
+                });
+            } finally {
+                wx.hideLoading();
+            }
         },
 
-        // 跳到下一条消息
+        // 跳过当前事件
         onSkipNext() {
-            if (this.data.currentEventIndex < this.data.allEvents.length) {
-                this.playNextEvent();
-            }
+            if (!this.data.isPlaying) this.startPlayback();
         },
 
         // 返回上一页
         onBack() {
-            this.triggerEvent('back');
+            wx.navigateBack();
         },
 
-        // 处理输入变化
+        // 处理输入变更
         onInputChange(e: WechatMiniprogram.Input) {
             this.setData({
                 inputText: e.detail.value
@@ -347,83 +559,123 @@ Component({
 
         // 发送消息
         onSendMessage() {
-            const { inputText, allowInput } = this.data;
+            if (!this.data.inputText.trim()) return;
 
-            // 如果不允许输入或输入内容为空，则不处理
-            if (!allowInput || !inputText.trim()) {
-                return;
-            }
+            const content = this.data.inputText.trim();
+            const now = new Date().getTime();
 
-            // 创建新消息
-            const selfMessage: EventMessage = {
+            // 创建一条新消息
+            const newMessage: EventMessage = {
+                id: `user-msg-${now}`,
                 type: 'message',
                 role: 'self',
-                content: inputText.trim(),
-                timestamp: Date.now()
+                content,
+                timestamp: now
             };
 
             // 添加到消息列表
-            const messages = [...this.data.messages, selfMessage];
+            const messages = [...this.data.messages, newMessage];
             const formattedMessages = this.formatMessages(messages);
 
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.messageCount++;
+            conditionState.lastEventId = newMessage.id;
+
+            // 清空输入框并更新消息列表
             this.setData({
+                inputText: '',
                 messages,
                 formattedMessages,
-                inputText: '',
+                conditionState,
                 scrollToView: `msg-${messages.length - 1}`
             });
 
-            // 触发发送消息事件
-            this.triggerEvent('sendMessage', {
-                message: selfMessage
-            });
+            // 触发自定义发送消息事件
+            this.triggerEvent('messageSent', { message: newMessage });
+
+            // 如果当前是评估对话框，关闭它
+            if (this.data.showAssessment) {
+                this.setData({
+                    showAssessment: false,
+                    currentAssessment: null
+                });
+            }
         },
 
-        // 添加处理评估的方法
+        // 处理评估选项
         handleAssessmentOption(e: WechatMiniprogram.TouchEvent) {
+            const option = e.currentTarget.dataset.option;
             this.setData({
-                userAnswer: e.currentTarget.dataset.option
+                userAnswer: option
             });
         },
 
+        // 提交评估答案
         submitAssessment() {
-            const { currentAssessment, userAnswer } = this.data;
-            if (!currentAssessment || !userAnswer) return;
+            if (!this.data.userAnswer || !this.data.currentAssessment) return;
 
+            const { currentAssessment, userAnswer } = this.data;
             const isCorrect = userAnswer === currentAssessment.correctAnswer;
 
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+
+            // 记录用户答案
+            if (currentAssessment.id) {
+                conditionState.userAnswers[currentAssessment.id] = userAnswer;
+            }
+
+            // 更新正确/错误答案计数
+            if (isCorrect) {
+                conditionState.correctAnswerCount++;
+            } else {
+                conditionState.wrongAnswerCount++;
+            }
+
+            conditionState.lastEventId = currentAssessment.id;
+
+            // 显示结果
             this.setData({
-                showAssessmentResult: true
+                showAssessmentResult: true,
+                conditionState
             });
 
-            // 延迟关闭评估对话框，继续播放
+            // 延迟关闭评估对话框并继续播放
             setTimeout(() => {
                 this.setData({
                     showAssessment: false,
-                    currentAssessment: null,
-                    currentEventIndex: this.data.currentEventIndex + 1,
-                    isPlaying: true
+                    currentAssessment: null
                 });
 
-                // 触发评估结果事件
-                this.triggerEvent('assessmentCompleted', {
-                    isCorrect,
-                    userAnswer,
-                    correctAnswer: currentAssessment.correctAnswer
-                });
+                // 获取下一个事件ID
+                const nextEventId = this.getNextEventId(currentAssessment);
 
-                this.playNextEvent();
-            }, 3000);
+                if (nextEventId) {
+                    this.setData({
+                        currentEventId: nextEventId,
+                        isPlaying: true
+                    });
+
+                    this.playNextEvent();
+                } else {
+                    // 没有下一个事件，结束播放
+                    this.setData({
+                        isComplete: true
+                    });
+                    this.triggerEvent('complete');
+                }
+            }, 2000);
         },
 
-        // 组件生命周期函数
+        // 组件挂载
         attached() {
-            // 在这里可以初始化一些东西
+            // 可以在这里进行初始化操作
         },
 
-        // 组件卸载时清理资源
+        // 组件卸载
         detached() {
-            // 清理资源
+            // 可以在这里进行清理操作
         }
     }
 }); 

@@ -3,11 +3,13 @@
 // 导入所有对话数据模块
 const demo_chat = require('./demo_chat');
 const phishing_chat = require('./phishing_chat');
+const graph_demo = require('./graph_demo');
 
 // 所有可用的对话数据映射表
 const dataMap = {
     'demo_chat': demo_chat,
-    'phishing_chat': phishing_chat
+    'phishing_chat': phishing_chat,
+    'graph_demo': graph_demo
     // 添加更多数据模块时，在此处注册
 };
 
@@ -46,6 +48,12 @@ function getAvailableDataList() {
             title: '网络钓鱼防范示例',
             description: '演示常见网络钓鱼诈骗场景的对话流程',
             tags: ['网络钓鱼', '安全意识', '演示']
+        },
+        {
+            id: 'graph_demo',
+            title: '条件图形化示例',
+            description: '演示基于条件分支的对话流程',
+            tags: ['诈骗防范', '安全意识', '演示', '图形结构']
         }
         // 添加更多数据模块时，在此处添加相应的描述
     ];
