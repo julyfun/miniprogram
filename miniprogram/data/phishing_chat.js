@@ -5,7 +5,7 @@ module.exports = {
         "description": "演示常见网络钓鱼诈骗场景的对话流程",
         "opponent": {
             "nickname": "客服小张",
-            "avatarUrl": "/assets/icons/deepseek.png"
+            "avatarUrl": "/assets/icons/customer-service1.png"
         },
         "createdAt": "2023-03-28T10:00:00.000Z",
         "updatedAt": "2023-03-28T10:00:00.000Z",
