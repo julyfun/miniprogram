@@ -1,3 +1,124 @@
+/* 聊天页面样式 */
+.chat-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f5f5f5;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    position: relative;
+    padding-bottom: 52px;
+    /* Add padding for input bar height */
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+}
+
+/* 自定义导航栏右侧区域 */
+.nav-more {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.nav-more-icon {
+    display: flex;
+    flex-direction: column;
+    height: 16px;
+    justify-content: space-between;
+}
+
+.nav-more-dot {
+    width: 4px;
+    height: 4px;
+    background-color: #07c160;
+    border-radius: 50%;
+}
+
+/* 更加具体的选择器来确保内容区域占满宽度 */
+.chat-content.full-width-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: #f5f5f5;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin-top: 44px;
+    /* Fixed height for navigation bar */
+    height: calc(100vh - 44px - 52px - 52px);
+    /* Subtract nav height, input bar height, and control bar height */
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    max-width: none;
+}
+
+/* 自定义背景样式 */
+.chat-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.04;
+    background-size: 100rpx 100rpx;
+    background-image: radial-gradient(#333 2px, transparent 0);
+    z-index: 0;
+}
+
+/* 更精确地针对聊天容器组件 */
+.chat-page .full-width-content chat-container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 控制栏样式 */
+.control-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 16px;
+    background-color: #f7f7f7;
+    border-top: 1px solid #e6e6e6;
+    height: 52px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.control-button {
+    padding: 8px 16px;
+    background-color: #ffffff;
+    color: #07C160;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.control-button.play {
+    background-color: #07C160;
+    color: #ffffff;
+}
+
+.control-button.pause {
+    background-color: #ff9800;
+    color: #ffffff;
+}
+
+.control-button.disabled {
+    background-color: #f2f2f2;
+    color: #999;
+}
+
 /* 聊天容器样式 */
 .chat-container {
     display: flex;
@@ -248,38 +369,4 @@
 .send-button.active {
     background-color: #07C160;
     color: #ffffff;
-}
-
-/* 控制条样式 */
-.control-bar {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 16px;
-    background-color: #f1f1f1;
-    border-top: 1px solid #e6e6e6;
-}
-
-.control-button {
-    padding: 8px 16px;
-    background-color: #ffffff;
-    color: #07C160;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 14px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.control-button.play {
-    background-color: #07C160;
-    color: #ffffff;
-}
-
-.control-button.pause {
-    background-color: #ff9800;
-    color: #ffffff;
-}
-
-.control-button.disabled {
-    background-color: #f2f2f2;
-    color: #999;
 }

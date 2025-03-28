@@ -1,4 +1,4 @@
-<scroll-view class="chat-container" scroll-y="{{true}}" enhanced="{{true}}" bounces="{{true}}" show-scrollbar="{{false}}" scroll-into-view="{{scrollIntoView}}" bindscrolltolower="scrollToBottom" enable-flex="{{true}}">
+<scroll-view class="chat-container full-width-container" scroll-y="{{true}}" enhanced="{{true}}" bounces="{{true}}" show-scrollbar="{{false}}" scroll-into-view="{{scrollIntoView}}" bindscrolltolower="scrollToBottom" enable-flex="{{true}}">
     <view class="message-list">
         <block wx:for="{{messages}}" wx:key="_id">
             <message-item id="{{item._id}}" type="{{item.type || 'text'}}" content="{{item.content}}" isSelf="{{item.role === 'user'}}" status="{{item.status}}" timestamp="{{item.timestamp}}" showTimestamp="{{showTimestamp && shouldShowTimestamp(index)}}" avatar="{{item.role === 'user' ? selfAvatar : otherAvatar}}" nickname="{{item.role === 'user' ? '我' : '助手'}}" showName="{{true}}" duration="{{item.duration}}" selectable="{{true}}" data-index="{{index}}" bindmessagetap="onTapBubble" bindmessagelongpress="onLongPressBubble" bindavatartap="onTapAvatar" />

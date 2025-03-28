@@ -6,6 +6,15 @@ interface EventMessage {
     timestamp: number; // 时间戳，单位毫秒
 }
 
+// 格式化后的消息类型（适配chat-container组件）
+interface FormattedMessage {
+    _id: string; // 消息ID，格式为 msg-{index}
+    type: string; // 消息类型，如 'text'
+    content: string; // 内容
+    role: string; // 角色，'user' 或 'assistant'
+    timestamp: number; // 时间戳
+}
+
 // 元数据定义
 interface Metadata {
     title: string; // 对话标题
@@ -77,6 +86,8 @@ Component({
         allEvents: [] as EventMessage[],
         // 已显示的消息
         messages: [] as EventMessage[],
+        // 格式化后的消息，用于chat-container
+        formattedMessages: [] as FormattedMessage[],
         // 当前事件索引
         currentEventIndex: 0,
         // 是否正在播放
@@ -142,6 +153,7 @@ Component({
                 metadata: data.metadata,
                 allEvents: data.events,
                 messages: [],
+                formattedMessages: [],
                 currentEventIndex: 0,
                 isComplete: false,
                 startTimeText: this.formatTimeText(new Date())
@@ -151,6 +163,17 @@ Component({
             if (this.properties.autoPlay) {
                 this.startPlayback();
             }
+        },
+
+        // 格式化消息，将原始消息格式转换为chat-container所需的格式
+        formatMessages(messages: EventMessage[]): FormattedMessage[] {
+            return messages.map((msg, index) => ({
+                _id: `msg-${index}`,
+                type: 'text', // 默认为文本类型
+                content: msg.content,
+                role: msg.role === 'self' ? 'user' : 'assistant', // 将self转为user，将opponent转为assistant
+                timestamp: msg.timestamp
+            }));
         },
 
         // 格式化时间显示
@@ -195,39 +218,44 @@ Component({
             if (event.type === 'message') {
                 // 添加消息
                 const messages = [...this.data.messages, event];
+                const formattedMessages = this.formatMessages(messages);
 
                 this.setData({
                     messages,
+                    formattedMessages,
                     currentEventIndex: currentEventIndex + 1,
                     scrollToView: `msg-${messages.length - 1}`
                 });
 
-                // 如果是用户消息且启用了交互模式，等待用户输入
-                if (event.role === 'self' && this.properties.interactionMode) {
+                // 计算下一条消息的延迟
+                const nextEvent = allEvents[currentEventIndex + 1];
+                if (nextEvent) {
+                    // 基于消息长度和播放速度计算延迟
+                    const content = event.content;
+                    const baseDelay = content.length * 100; // 每个字符大约需要100毫秒
+                    const adjustedDelay = Math.max(500, Math.min(3000, baseDelay)) / this.properties.playbackSpeed;
+
+                    setTimeout(() => {
+                        this.playNextEvent();
+                    }, adjustedDelay);
+                } else {
+                    // 已经是最后一条消息
                     this.setData({
+                        isComplete: true,
                         isPlaying: false,
-                        allowInput: true
+                        allowInput: this.properties.interactionMode
                     });
-                    return;
+                    this.triggerEvent('complete');
                 }
-
-                // 获取下一个事件的延迟时间
-                let nextDelay = 1000; // 默认1秒
-                if (currentEventIndex < allEvents.length - 1) {
-                    const nextEvent = allEvents[currentEventIndex + 1];
-                    nextDelay = Math.max(500, (nextEvent.timestamp - event.timestamp) / this.properties.playbackSpeed);
-                }
-
-                // 设置定时器播放下一个事件
-                setTimeout(() => {
-                    this.playNextEvent();
-                }, nextDelay);
             } else {
-                // 其他类型的事件（未来扩展）
+                // 其他类型的事件可以在这里处理
+                // 暂时直接跳到下一个
                 this.setData({
                     currentEventIndex: currentEventIndex + 1
                 });
-                this.playNextEvent();
+                setTimeout(() => {
+                    this.playNextEvent();
+                }, 0);
             }
         },
 
@@ -239,7 +267,7 @@ Component({
             this.triggerEvent('playPause');
         },
 
-        // 切换播放/暂停
+        // 切换播放状态
         onTogglePlay() {
             if (this.data.isPlaying) {
                 this.pausePlayback();
@@ -248,90 +276,97 @@ Component({
             }
         },
 
-        // 重新开始
+        // 重新开始播放
         onRestart() {
-            this.setData({
-                messages: [],
-                currentEventIndex: 0,
-                isPlaying: false,
-                isComplete: false,
-                inputText: '',
-                allowInput: false,
-                scrollToView: 'message-bottom'
+            wx.showModal({
+                title: '提示',
+                content: '确定要重新开始演示吗？',
+                success: (res) => {
+                    if (res.confirm) {
+                        // 重置所有消息和状态
+                        this.setData({
+                            messages: [],
+                            formattedMessages: [],
+                            currentEventIndex: 0,
+                            isComplete: false,
+                            isPlaying: false,
+                            inputText: '',
+                            allowInput: false,
+                            scrollToView: 'message-bottom'
+                        });
+
+                        // 如果自动播放或者之前正在播放，则开始播放
+                        if (this.properties.autoPlay) {
+                            setTimeout(() => {
+                                this.startPlayback();
+                            }, 500);
+                        }
+                    }
+                }
             });
-
-            // 触发重新开始事件
-            this.triggerEvent('restart');
-
-            // 如果设置了自动播放，则开始播放
-            if (this.properties.autoPlay) {
-                setTimeout(() => {
-                    this.startPlayback();
-                }, 500);
-            }
         },
 
-        // 跳过到下一个事件
+        // 跳到下一条消息
         onSkipNext() {
             if (this.data.currentEventIndex < this.data.allEvents.length) {
                 this.playNextEvent();
             }
         },
 
-        // 返回
+        // 返回上一页
         onBack() {
             this.triggerEvent('back');
         },
 
-        // 输入框变化
+        // 处理输入变化
         onInputChange(e: WechatMiniprogram.Input) {
             this.setData({
                 inputText: e.detail.value
             });
         },
 
-        // 发送消息（用于交互模式）
+        // 发送消息
         onSendMessage() {
-            if (!this.data.inputText.trim() || !this.data.allowInput) return;
+            const { inputText, allowInput } = this.data;
 
-            // 添加用户输入的消息
-            const userMessage = {
+            // 如果不允许输入或输入内容为空，则不处理
+            if (!allowInput || !inputText.trim()) {
+                return;
+            }
+
+            // 创建新消息
+            const selfMessage: EventMessage = {
                 type: 'message',
                 role: 'self',
-                content: this.data.inputText,
+                content: inputText.trim(),
                 timestamp: Date.now()
             };
 
-            const messages = [...this.data.messages, userMessage];
+            // 添加到消息列表
+            const messages = [...this.data.messages, selfMessage];
+            const formattedMessages = this.formatMessages(messages);
 
             this.setData({
                 messages,
+                formattedMessages,
                 inputText: '',
-                allowInput: false,
-                isPlaying: true,
                 scrollToView: `msg-${messages.length - 1}`
             });
 
-            // 继续播放下一个事件
-            setTimeout(() => {
-                this.playNextEvent();
-            }, 1000);
-        }
-    },
-
-    /**
-     * 组件生命周期
-     */
-    lifetimes: {
-        attached() {
-            // 如果有设置数据源，则加载数据
-            if (this.properties.dataSource) {
-                this.loadData(this.properties.dataSource);
-            }
+            // 触发发送消息事件
+            this.triggerEvent('sendMessage', {
+                message: selfMessage
+            });
         },
+
+        // 组件生命周期函数
+        attached() {
+            // 在这里可以初始化一些东西
+        },
+
+        // 组件卸载时清理资源
         detached() {
-            // 组件销毁时，确保暂停播放
-            this.pausePlayback();
+            // 清理资源
         }
     }
 }); 

@@ -1,51 +1,25 @@
 <!-- 聊天界面容器 -->
-<view class="chat-container">
+<view class="chat-page" style="width:100%; margin:0; padding:0;">
     <!-- 顶部标题栏 -->
-    <view class="chat-header">
-        <view class="back-button" bindtap="onBack">
-            <view class="back-icon"></view>
-        </view>
-        <view class="title">{{metadata.opponent.nickname}}</view>
-        <view class="more-button">
-            <view class="more-icon"></view>
-        </view>
-    </view>
-    <!-- 聊天内容区域 -->
-    <scroll-view class="message-list" scroll-y="true" scroll-into-view="{{scrollToView}}" scroll-with-animation="true">
-        <!-- 消息时间提示 -->
-        <view class="time-divider" wx:if="{{messages.length > 0}}">
-            <text>{{startTimeText}}</text>
-        </view>
-        <!-- 消息列表 -->
-        <block wx:for="{{messages}}" wx:key="index">
-            <view id="msg-{{index}}" class="message-item {{item.role === 'self' ? 'self' : 'opponent'}}">
-                <!-- 对方消息头像 -->
-                <block wx:if="{{item.role === 'opponent'}}">
-                    <image class="avatar" src="{{metadata.opponent.avatarUrl}}" mode="aspectFill"></image>
-                </block>
-                <!-- 消息气泡 -->
-                <view class="message-bubble">
-                    <text>{{item.content}}</text>
+    <navigation-bar title="{{metadata.opponent.nickname}}" back="{{true}}" delta="1" bindback="onBack">
+        <view slot="right">
+            <view class="nav-more">
+                <view class="nav-more-icon">
+                    <view class="nav-more-dot"></view>
+                    <view class="nav-more-dot"></view>
+                    <view class="nav-more-dot"></view>
                 </view>
             </view>
-        </block>
-        <!-- 底部占位 -->
-        <view class="message-list-bottom" id="message-bottom"></view>
-    </scroll-view>
-    <!-- 底部输入区域 -->
-    <view class="input-area">
-        <view class="voice-button">
-            <view class="voice-icon"></view>
         </view>
-        <input class="message-input" placeholder="输入消息..." disabled="{{!allowInput}}" value="{{inputText}}" bindinput="onInputChange" confirm-type="send" bindconfirm="onSendMessage" />
-        <view class="emoji-button">
-            <view class="emoji-icon"></view>
-        </view>
-        <view class="send-button {{inputText ? 'active' : ''}}" bindtap="onSendMessage">
-            <text>发送</text>
-        </view>
+    </navigation-bar>
+    <!-- 内容区域 -->
+    <view class="chat-content full-width-content">
+        <!-- 使用chat-container组件 -->
+        <chat-container messages="{{formattedMessages}}" selfAvatar="/assets/icons/default-avatar.svg" otherAvatar="{{metadata.opponent.avatarUrl || '/assets/icons/default-avatar.svg'}}" scrollIntoView="{{scrollToView}}" />
     </view>
-    <!-- 控制条 -->
+    <!-- 底部输入区域 -->
+    <input-bar value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" />
+    <!-- 控制栏 -->
     <view class="control-bar">
         <view class="control-button" bindtap="onRestart">
             <text>重新开始</text>

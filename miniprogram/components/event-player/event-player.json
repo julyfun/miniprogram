@@ -1,4 +1,8 @@
 {
     "component": true,
-    "usingComponents": {}
+    "usingComponents": {
+        "navigation-bar": "/components/navigation-bar/navigation-bar",
+        "chat-container": "/components/chat-container/chat-container",
+        "input-bar": "/components/input-bar/input-bar"
+    }
 }
