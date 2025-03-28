@@ -34,4 +34,29 @@
             <text>已完成</text>
         </view>
     </view>
+    <!-- 评估对话框 -->
+    <view class="assessment-overlay" wx:if="{{showAssessment}}">
+        <view class="assessment-dialog">
+            <view class="assessment-title">评估</view>
+            <view class="assessment-content">{{currentAssessment.content}}</view>
+            <view class="assessment-options">
+                <view class="assessment-option {{userAnswer === option ? 'selected' : ''}}" wx:for="{{currentAssessment.options}}" wx:for-item="option" wx:key="*this" bindtap="handleAssessmentOption" data-option="{{option}}">
+                    <view class="option-checkbox {{userAnswer === option ? 'checked' : ''}}"></view>
+                    <text>{{option}}</text>
+                </view>
+            </view>
+            <view class="assessment-result" wx:if="{{showAssessmentResult}}">
+                <view class="result-icon {{userAnswer === currentAssessment.correctAnswer ? 'correct' : 'incorrect'}}"></view>
+                <view class="result-text">
+                    {{userAnswer === currentAssessment.correctAnswer ? '正确' : '错误'}}
+                </view>
+                <view class="result-explanation">{{currentAssessment.explanation}}</view>
+            </view>
+            <view class="assessment-actions">
+                <button class="submit-button" bindtap="submitAssessment" disabled="{{!userAnswer}}">
+                    提交
+                </button>
+            </view>
+        </view>
+    </view>
 </view>

@@ -117,6 +117,17 @@ Page({
     },
 
     /**
+     * 评估完成回调
+     */
+    onAssessmentCompleted(e: WechatMiniprogram.CustomEvent) {
+        const { isCorrect, userAnswer, correctAnswer } = e.detail;
+        console.log('评估完成:', isCorrect ? '正确' : '错误', userAnswer, correctAnswer);
+
+        // 记录用户的评估结果
+        // 可以在这里添加上报数据的逻辑
+    },
+
+    /**
      * 用户点击右上角分享
      */
     onShareAppMessage() {

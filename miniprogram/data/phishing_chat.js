@@ -59,6 +59,15 @@ module.exports = {
             "role": "self",
             "content": "我已拨打银行官方客服电话核实，他们确认这是诈骗信息。请不要再联系我。",
             "timestamp": 15000
+        },
+        {
+            "type": "assessment",
+            "role": "system",
+            "content": "以上对话是否属于钓鱼诈骗？",
+            "options": ["是", "否"],
+            "correctAnswer": "是",
+            "explanation": "这是典型的钓鱼诈骗手法。真正的银行不会通过短信要求点击链接验证信息，也不会要求您提供完整的银行卡号和密码。遇到此类情况，应直接联系银行官方客服确认。",
+            "timestamp": 17000
         }
     ]
 } 

@@ -1,3 +1,3 @@
 <view class="container" style="width:100%; padding:0; margin:0;">
-    <event-player dataSource="{{dataSource}}" playbackSpeed="{{playbackSpeed}}" autoPlay="{{autoPlay}}" interactionMode="{{interactionMode}}" bind:back="onBack" bind:playStart="onPlayStart" bind:playPause="onPlayPause" bind:restart="onRestart" bind:complete="onComplete" style="width:100%;"></event-player>
+    <event-player dataSource="{{dataSource}}" playbackSpeed="{{playbackSpeed}}" autoPlay="{{autoPlay}}" interactionMode="{{interactionMode}}" bind:back="onBack" bind:playStart="onPlayStart" bind:playPause="onPlayPause" bind:restart="onRestart" bind:complete="onComplete" bind:assessmentCompleted="onAssessmentCompleted" style="width:100%;"></event-player>
 </view>

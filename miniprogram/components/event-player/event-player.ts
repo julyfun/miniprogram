@@ -1,9 +1,12 @@
 // 事件类型定义
 interface EventMessage {
-    type: string; // 事件类型，如 'message'
+    type: string; // 事件类型，如 'message' 或 'assessment'
     role: string; // 角色，'self' 或 'opponent'
     content: string; // 内容
     timestamp: number; // 时间戳，单位毫秒
+    options?: string[]; // 选项，用于assessment事件
+    correctAnswer?: string; // 正确答案，用于assessment事件
+    explanation?: string; // 解释，用于assessment事件
 }
 
 // 格式化后的消息类型（适配chat-container组件）
@@ -101,7 +104,15 @@ Component({
         // 滚动视图ID
         scrollToView: 'message-bottom',
         // 开始时间文本
-        startTimeText: '今天 12:00'
+        startTimeText: '今天 12:00',
+        // 评估对话框
+        showAssessment: false,
+        // 当前评估事件
+        currentAssessment: null as EventMessage | null,
+        // 用户选择的答案
+        userAnswer: '',
+        // 是否已显示结果
+        showAssessmentResult: false
     },
 
     /**
@@ -247,6 +258,15 @@ Component({
                     });
                     this.triggerEvent('complete');
                 }
+            } else if (event.type === 'assessment') {
+                // 处理评估事件
+                this.setData({
+                    showAssessment: true,
+                    currentAssessment: event,
+                    userAnswer: '',
+                    showAssessmentResult: false,
+                    isPlaying: false
+                });
             } else {
                 // 其他类型的事件可以在这里处理
                 // 暂时直接跳到下一个
@@ -357,6 +377,43 @@ Component({
             this.triggerEvent('sendMessage', {
                 message: selfMessage
             });
+        },
+
+        // 添加处理评估的方法
+        handleAssessmentOption(e: WechatMiniprogram.TouchEvent) {
+            this.setData({
+                userAnswer: e.currentTarget.dataset.option
+            });
+        },
+
+        submitAssessment() {
+            const { currentAssessment, userAnswer } = this.data;
+            if (!currentAssessment || !userAnswer) return;
+
+            const isCorrect = userAnswer === currentAssessment.correctAnswer;
+
+            this.setData({
+                showAssessmentResult: true
+            });
+
+            // 延迟关闭评估对话框，继续播放
+            setTimeout(() => {
+                this.setData({
+                    showAssessment: false,
+                    currentAssessment: null,
+                    currentEventIndex: this.data.currentEventIndex + 1,
+                    isPlaying: true
+                });
+
+                // 触发评估结果事件
+                this.triggerEvent('assessmentCompleted', {
+                    isCorrect,
+                    userAnswer,
+                    correctAnswer: currentAssessment.correctAnswer
+                });
+
+                this.playNextEvent();
+            }, 3000);
         },
 
         // 组件生命周期函数
