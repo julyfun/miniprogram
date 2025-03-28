@@ -13,6 +13,9 @@ interface IPageData {
     scrollToView: string;
     isLoading: boolean;
     currentAssistantMessage: string;
+    isRecording: boolean;
+    cancelRecord: boolean;
+    startY: number;
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
@@ -21,10 +24,19 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         inputMessage: '',
         scrollToView: 'message-bottom',
         isLoading: false,
-        currentAssistantMessage: ''
+        currentAssistantMessage: '',
+        isRecording: false,
+        cancelRecord: false,
+        startY: 0
     },
 
+    // 录音管理器
+    recorderManager: null as WechatMiniprogram.RecorderManager | null,
+
     onLoad() {
+        // 初始化录音管理器
+        this.initRecorderManager();
+
         // 加载历史聊天记录
         this.loadChatHistory();
 
@@ -39,6 +51,185 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 }]
             });
         }
+    },
+
+    // 初始化录音管理器
+    initRecorderManager() {
+        this.recorderManager = wx.getRecorderManager();
+
+        // 设置录音相关事件处理
+        this.recorderManager.onStart(() => {
+            console.log('录音开始');
+        });
+
+        this.recorderManager.onStop((res: WechatMiniprogram.OnStopCallbackResult) => {
+            console.log('录音结束', res);
+
+            // 如果取消录音，则不处理
+            if (this.data.cancelRecord) {
+                console.log('录音已取消');
+                this.setData({
+                    isRecording: false,
+                    cancelRecord: false
+                });
+                return;
+            }
+
+            // 显示加载中
+            wx.showLoading({
+                title: '语音识别中...'
+            });
+
+            // 将录音文件传给语音识别接口
+            this.recognizeSpeech(res.tempFilePath);
+        });
+
+        this.recorderManager.onError((error: { errMsg: string }) => {
+            console.error('录音错误:', error);
+            wx.showToast({
+                title: '录音失败: ' + error.errMsg,
+                icon: 'none',
+                duration: 2000
+            });
+            this.setData({
+                isRecording: false,
+                cancelRecord: false
+            });
+        });
+
+        this.recorderManager.onInterruptionBegin(() => {
+            console.log('录音被中断');
+            if (this.data.isRecording) {
+                this.setData({
+                    isRecording: false
+                });
+                wx.showToast({
+                    title: '录音被中断',
+                    icon: 'none'
+                });
+            }
+        });
+    },
+
+    // 切换录音状态
+    toggleVoiceRecording() {
+        if (this.data.isRecording) {
+            // 如果正在录音，则停止录音
+            this.endRecording();
+        } else {
+            // 如果未录音，则开始录音
+            this.startRecording();
+        }
+    },
+
+    // 开始录音
+    startRecording() {
+        console.log('开始录音');
+        // 初始化录音状态
+        this.setData({
+            isRecording: true
+        });
+
+        // 设置录音参数
+        if (this.recorderManager) {
+            console.log('调用recorder.start()');
+            this.recorderManager.start({
+                duration: 60000, // 最长录音时间，单位ms
+                sampleRate: 16000, // 采样率
+                numberOfChannels: 1, // 录音通道数
+                encodeBitRate: 48000, // 编码码率
+                format: 'mp3', // 音频格式
+                frameSize: 50 // 指定帧大小，单位KB
+            });
+        } else {
+            console.error('录音管理器未初始化');
+            wx.showToast({
+                title: '录音功能初始化失败',
+                icon: 'none'
+            });
+            this.setData({
+                isRecording: false
+            });
+        }
+    },
+
+    // 结束录音
+    endRecording() {
+        console.log('结束录音');
+        if (!this.data.isRecording) return;
+
+        // 停止录音
+        if (this.recorderManager) {
+            console.log('调用recorder.stop()');
+            this.recorderManager.stop();
+        } else {
+            console.error('录音管理器未初始化');
+            // 手动重置状态
+            this.setData({
+                isRecording: false
+            });
+        }
+    },
+
+    // 取消录音
+    cancelVoiceRecording() {
+        console.log('取消录音');
+        // 设置取消标志
+        this.setData({
+            cancelRecord: true
+        });
+
+        // 停止录音
+        if (this.recorderManager) {
+            this.recorderManager.stop();
+        }
+
+        // 重置状态
+        setTimeout(() => {
+            this.setData({
+                isRecording: false,
+                cancelRecord: false
+            });
+        }, 100);
+    },
+
+    // 语音识别
+    recognizeSpeech(filePath: string) {
+        // 如果取消录音，则不进行识别
+        if (this.data.cancelRecord) {
+            console.log('录音已取消，不进行识别');
+            this.setData({
+                isRecording: false,
+                cancelRecord: false
+            });
+            return;
+        }
+
+        // 隐藏加载中
+        wx.hideLoading();
+
+        // 重置录音状态
+        this.setData({
+            isRecording: false
+        });
+
+        // 提示用户
+        wx.showModal({
+            title: '语音识别功能说明',
+            content: '实际应用中需要配置服务端接口来处理语音识别。语音已成功录制，文件路径：' + filePath,
+            showCancel: false,
+            success: () => {
+                console.log('用户已了解语音识别需要服务端支持');
+
+                // 演示用途：使用静态文本模拟语音识别结果
+                this.setData({
+                    inputMessage: '这是语音识别的模拟结果文本。在真实环境中，这里会是语音转文字的实际内容。'
+                });
+
+                // 由于这是演示，自动发送这个模拟的识别结果
+                this.sendMessage();
+            }
+        });
     },
 
     // 输入消息处理

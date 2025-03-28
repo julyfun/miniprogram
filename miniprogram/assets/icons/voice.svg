@@ -1,6 +1,8 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M19 11C19 14.87 15.87 18 12 18C8.13 18 5 14.87 5 11" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M12 18V22" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M8 22H16" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Voice Icon</title>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M12,2 C13.6568542,2 15,3.34314575 15,5 L15,13 C15,14.6568542 13.6568542,16 12,16 C10.3431458,16 9,14.6568542 9,13 L9,5 C9,3.34314575 10.3431458,2 12,2 Z" fill="#4169E1"></path>
+        <path d="M16,10 L16,13 C16,15.2091391 14.2091391,17 12,17 C9.790861,17 8,15.2091391 8,13 L8,10 L6,10 L6,13 C6,16.1576473 8.28237328,18.7276881 11.3333333,18.9776884 L11.3333333,22 L12.6666667,22 L12.6666667,18.9776884 C15.7176267,18.7276881 18,16.1576473 18,13 L18,10 L16,10 Z" fill="#4169E1"></path>
+    </g>
 </svg> 

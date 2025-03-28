@@ -243,17 +243,127 @@
     box-sizing: border-box;
     z-index: 1000;
 
+    .voice-input-wrapper {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
     .message-input {
         flex: 1;
         height: 76rpx;
         background-color: #ffffff;
         border-radius: 40rpx;
+        border: 1px solid rgba(0, 0, 0, 0.05);
         padding: 0 30rpx;
+        margin-right: 20rpx;
         font-size: 28rpx;
-        color: #000000;
-        box-shadow: none;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        color: #333;
+        box-sizing: border-box;
     }
+
+    .voice-button {
+        width: 76rpx;
+        height: 76rpx;
+        border-radius: 50%;
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 10rpx;
+        box-shadow: 0 2rpx 5rpx rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+
+        &.recording {
+            background-color: #e6e6e6;
+        }
+
+        .voice-icon {
+            width: 44rpx;
+            height: 44rpx;
+        }
+    }
+}
+
+/* 语音录制覆盖层 */
+.voice-recording-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.voice-recording-container {
+    width: 300rpx;
+    height: 300rpx;
+    background-color: #fff;
+    border-radius: 20rpx;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.2);
+
+    &.cancel {
+        background-color: #f44336;
+
+        .voice-recording-text {
+            color: #fff;
+        }
+    }
+}
+
+.voice-wave-animation {
+    position: relative;
+    width: 140rpx;
+    height: 140rpx;
+    margin-bottom: 20rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.voice-wave {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 6rpx solid #4169E1;
+    border-radius: 50%;
+    opacity: 0;
+    animation: voiceWave 2s infinite;
+
+    &:nth-child(2) {
+        animation-delay: 0.5s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 1s;
+    }
+}
+
+@keyframes voiceWave {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.voice-recording-text {
+    font-size: 28rpx;
+    color: #333;
+    margin-top: 10rpx;
 }
 
 /* 功能按钮栏 */
@@ -540,4 +650,13 @@
             }
         }
     }
+}
+
+.voice-cancel-button {
+    margin-top: 20rpx;
+    padding: 10rpx 20rpx;
+    background-color: #f44336;
+    color: #fff;
+    border-radius: 10rpx;
+    font-size: 24rpx;
 }

@@ -22,5 +22,13 @@
   },
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "requiredBackgroundModes": [
+    "audio"
+  ],
+  "permission": {
+    "scope.record": {
+      "desc": "您的录音权限将用于语音输入功能"
+    }
+  }
 }

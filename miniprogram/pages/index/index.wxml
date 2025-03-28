@@ -36,7 +36,24 @@
   </scroll-view>
   <!-- 底部输入区域 -->
   <view class="input-container">
-    <input class="message-input" type="text" confirm-type="send" placeholder="给 DeepSeek 发送消息" value="{{inputMessage}}" bindinput="onMessageInput" bindconfirm="sendMessage" />
+    <view class="voice-input-wrapper">
+      <input class="message-input" type="text" confirm-type="send" placeholder="给 DeepSeek 发送消息" value="{{inputMessage}}" bindinput="onMessageInput" bindconfirm="sendMessage" />
+      <view class="voice-button {{isRecording ? 'recording' : ''}}" bindtap="toggleVoiceRecording">
+        <image class="voice-icon" src="/assets/icons/{{isRecording ? 'recording' : 'voice'}}.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+  </view>
+  <!-- 语音录制提示 -->
+  <view class="voice-recording-overlay" wx:if="{{isRecording}}">
+    <view class="voice-recording-container">
+      <view class="voice-wave-animation">
+        <view class="voice-wave"></view>
+        <view class="voice-wave"></view>
+        <view class="voice-wave"></view>
+      </view>
+      <text class="voice-recording-text">正在录音，点击麦克风图标结束</text>
+      <view class="voice-cancel-button" bindtap="cancelVoiceRecording">取消录音</view>
+    </view>
   </view>
   <!-- 功能按钮栏 -->
   <view class="function-bar">
