@@ -88,6 +88,9 @@ Component({
                 showEmojiPanel: false
             });
             this.triggerEvent('more');
+
+            // 触发加号按钮点击事件
+            this.triggerEvent('plusclick');
         },
 
         // 处理功能项点击
@@ -97,6 +100,9 @@ Component({
 
             // 关闭功能面板
             this.setData({ showFeaturePanel: false });
+
+            // 触发特定功能按钮点击事件
+            this.triggerEvent('featureclick', { feature });
         },
 
         // 处理输入框输入

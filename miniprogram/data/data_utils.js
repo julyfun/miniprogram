@@ -5,13 +5,15 @@ const demo_chat = require('./demo_chat');
 const phishing_chat = require('./phishing_chat');
 const graph_demo = require('./graph_demo');
 const subscriber_demo = require('./subscriber_demo');
+const redpacket_tutorial = require('./redpacket_tutorial');
 
 // 所有可用的对话数据映射表
 const dataMap = {
     'demo_chat': demo_chat,
     'phishing_chat': phishing_chat,
     'graph_demo': graph_demo,
-    'subscriber_demo': subscriber_demo
+    'subscriber_demo': subscriber_demo,
+    'redpacket_tutorial': redpacket_tutorial
     // 添加更多数据模块时，在此处注册
 };
 
@@ -62,6 +64,12 @@ function getAvailableDataList() {
             title: '事件订阅模式示例',
             description: '演示基于事件订阅的交互式对话流程',
             tags: ['事件系统', '订阅模式', '交互式', '演示']
+        },
+        {
+            id: 'redpacket_tutorial',
+            title: '微信红包发送教学',
+            description: '交互式教程：如何在微信中发送红包',
+            tags: ['教学', '红包', '微信功能', '新手指引']
         }
         // 添加更多数据模块时，在此处添加相应的描述
     ];

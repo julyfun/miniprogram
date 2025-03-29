@@ -11,6 +11,7 @@ interface EventMessage {
     nextId?: string;      // 简单跳转的下一个事件ID (用于没有条件的转换)
     delay?: number;       // 可选的延迟时间（毫秒），控制事件显示间隔
     setFlags?: Record<string, any>; // 用于设置自定义标志
+    highlightTarget?: string; // 高亮目标元素
 }
 
 // 过渡条件定义
@@ -169,7 +170,11 @@ Component({
         // 播放开始时间戳
         playbackStartTime: 0,
         // 事件订阅映射
-        _eventSubscriptions: {} as Record<string, EventSubscription[]>
+        _eventSubscriptions: {} as Record<string, EventSubscription[]>,
+        // UI高亮相关
+        showHighlight: false,       // 是否显示高亮
+        highlightTarget: '',        // 要高亮的目标元素
+        highlightRectPosition: {}   // 高亮区域的位置信息
     },
 
     /**
@@ -506,6 +511,10 @@ Component({
                     this.handleWaitingForInputEvent(event);
                     break;
 
+                case 'ui_highlight':
+                    this.handleUIHighlightEvent(event);
+                    break;
+
                 default:
                     console.warn(`未知事件类型: ${event.type}`);
                     // 未知类型的事件也尝试转到下一个
@@ -663,7 +672,7 @@ Component({
 
         // 评估条件是否满足
         evaluateCondition(condition: EventCondition): boolean {
-            const { type, param, value, operator } = condition;
+            const { type, param, value, operator = '==' } = condition;
             const { conditionState } = this.data;
 
             let leftValue;
@@ -683,10 +692,17 @@ Component({
                     const eventId = param || conditionState.lastEventId;
                     leftValue = eventId ? conditionState.userAnswers[eventId] === (this.data.eventMap[eventId] && this.data.eventMap[eventId].correctAnswer) : false;
                     break;
+                case 'flag':
+                    if (condition.key) {
+                        leftValue = conditionState.customFlags[condition.key];
+                        console.log(`评估标志 ${condition.key}:`, leftValue, '与', value);
+                    }
+                    break;
                 case 'custom':
                     leftValue = param ? conditionState.customFlags[param] : undefined;
                     break;
                 default:
+                    console.warn('未知条件类型:', type);
                     return false;
             }
 
@@ -705,7 +721,7 @@ Component({
                 case '<=':
                     return leftValue <= value;
                 default:
-                    return false;
+                    return leftValue === value; // 默认使用严格相等
             }
         },
 
@@ -936,60 +952,34 @@ Component({
 
         // 分析用户消息并设置相应的标志
         analyzeUserMessage(content: string, conditionState: ConditionState) {
-            // 转为小写以进行不区分大小写的匹配
+            // 将消息内容转为小写，便于分析
             const lowerContent = content.toLowerCase();
 
             console.log(`分析用户消息内容: ${lowerContent}`);
 
-            // 检测主题选择 - 用于subscriber_demo示例
-            if (
-                lowerContent.includes('1') ||
-                lowerContent.includes('网络') ||
-                lowerContent.includes('安全') ||
-                lowerContent.includes('cyber')
-            ) {
+            // 解析用户选择的主题
+            if (lowerContent.includes('网络') || lowerContent.includes('安全') || lowerContent.includes('网安') || lowerContent.includes('1') || lowerContent.includes('一')) {
                 console.log('用户选择了网络安全主题');
-                conditionState.customFlags['userSelectedTopic'] = 'cyber';
-            } else if (
-                lowerContent.includes('2') ||
-                lowerContent.includes('健康') ||
-                lowerContent.includes('health')
-            ) {
+                conditionState.customFlags.userSelectedTopic = 'cyber';
+            } else if (lowerContent.includes('健康') || lowerContent.includes('生活') || lowerContent.includes('2') || lowerContent.includes('二')) {
                 console.log('用户选择了健康建议主题');
-                conditionState.customFlags['userSelectedTopic'] = 'health';
-            } else if (
-                lowerContent.includes('3') ||
-                lowerContent.includes('金融') ||
-                lowerContent.includes('财务') ||
-                lowerContent.includes('finance')
-            ) {
+                conditionState.customFlags.userSelectedTopic = 'health';
+            } else if (lowerContent.includes('财务') || lowerContent.includes('金融') || lowerContent.includes('财经') || lowerContent.includes('3') || lowerContent.includes('三')) {
                 console.log('用户选择了金融知识主题');
-                conditionState.customFlags['userSelectedTopic'] = 'finance';
+                conditionState.customFlags.userSelectedTopic = 'finance';
             }
 
-            // 检测最终选择 - 用于决定是继续选择主题还是结束演示
-            if (
-                lowerContent.includes('1') ||
-                lowerContent.includes('继续') ||
-                lowerContent.includes('其他') ||
-                lowerContent.includes('主题') ||
-                lowerContent.includes('continue')
-            ) {
+            // 解析用户最终选择
+            if (lowerContent.includes('继续') || lowerContent.includes('yes') || lowerContent.includes('是') || lowerContent.includes('好')) {
                 console.log('用户选择继续浏览其他主题');
-                conditionState.customFlags['userFinalChoice'] = 'continue';
-            } else if (
-                lowerContent.includes('2') ||
-                lowerContent.includes('结束') ||
-                lowerContent.includes('完成') ||
-                lowerContent.includes('退出') ||
-                lowerContent.includes('end') ||
-                lowerContent.includes('exit')
-            ) {
+                conditionState.customFlags.userFinalChoice = 'continue';
+            } else if (lowerContent.includes('结束') || lowerContent.includes('no') || lowerContent.includes('否') || lowerContent.includes('退出')) {
                 console.log('用户选择结束演示');
-                conditionState.customFlags['userFinalChoice'] = 'end';
+                conditionState.customFlags.userFinalChoice = 'end';
             }
 
-            return conditionState;
+            // 更新条件状态
+            this.setData({ conditionState });
         },
 
         // 处理评估选项
@@ -1063,13 +1053,58 @@ Component({
             const conditionState = { ...this.data.conditionState };
             conditionState.lastEventId = event.id;
 
-            // 确保用户可以输入
+            // 设置自定义标志
+            if (event.setFlags && typeof event.setFlags === 'object') {
+                console.log(`设置自定义标志:`, event.setFlags);
+                for (const [key, value] of Object.entries(event.setFlags)) {
+                    conditionState.customFlags[key] = value;
+                }
+            }
+
+            // 更新状态
             this.setData({
                 conditionState,
-                allowInput: true
+                allowInput: true // 确保用户可以输入
             });
 
-            // 不设置定时器，等待用户输入
+            // 等待用户输入的事件不会自动转到下一个事件，需要用户交互触发
+        },
+
+        // 处理UI高亮事件
+        handleUIHighlightEvent(event: EventMessage) {
+            console.log(`处理UI高亮事件: ${event.id}`);
+
+            // 获取要高亮的目标元素
+            const targetElement = event.highlightTarget;
+            console.log(`要高亮的目标元素: ${targetElement}`);
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.lastEventId = event.id;
+
+            // 设置高亮状态
+            this.setData({
+                highlightTarget: targetElement,
+                showHighlight: true,
+                conditionState
+            });
+
+            // 延迟转到下一个事件
+            const delay = event.delay || 500;
+            if (delay > 0) {
+                const adjustedDelay = delay / this.properties.playbackSpeed;
+                const timerId = setTimeout(() => {
+                    this.transitionToNextEvent(event);
+                }, adjustedDelay);
+
+                // 添加到活动计时器列表
+                this.setData({
+                    activeTimers: [...this.data.activeTimers, timerId]
+                });
+            } else {
+                // 立即转到下一个事件
+                this.transitionToNextEvent(event);
+            }
         },
 
         // 组件挂载
@@ -1085,6 +1120,127 @@ Component({
             // 清除所有计时器和订阅
             this.clearAllTimers();
             this.clearAllSubscriptions();
+        },
+
+        // 处理加号按钮点击
+        onPlusClick() {
+            console.log('用户点击了加号按钮');
+            console.log('当前高亮状态:', {
+                highlightTarget: this.data.highlightTarget,
+                showHighlight: this.data.showHighlight
+            });
+
+            // 检查是否在等待用户点击加号
+            if (this.data.highlightTarget === 'more-button' && this.data.showHighlight) {
+                console.log('检测到加号点击，更新标志状态');
+
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+                conditionState.customFlags = conditionState.customFlags || {};
+                conditionState.customFlags.userClickedPlus = true;
+
+                console.log('新的条件状态:', conditionState);
+
+                // 更新状态并隐藏高亮
+                this.setData({
+                    conditionState,
+                    showHighlight: false
+                }, () => {
+                    // 在状态更新完成后检查转换
+                    console.log('状态已更新，检查转换');
+                    this.checkAndTransitionBasedOnFlags();
+                });
+            } else {
+                console.log('加号点击，但不在等待点击状态');
+            }
+        },
+
+        // 处理功能按钮点击
+        onFeatureClick(e: WechatMiniprogram.CustomEvent) {
+            const feature = e.detail.feature;
+            console.log('用户点击了功能按钮:', feature);
+            console.log('当前高亮状态:', {
+                highlightTarget: this.data.highlightTarget,
+                showHighlight: this.data.showHighlight
+            });
+
+            // 检查是否在等待用户点击红包按钮
+            if (feature === 'redpacket' && this.data.highlightTarget === 'redpacket' && this.data.showHighlight) {
+                console.log('检测到红包按钮点击，更新标志状态');
+
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+                conditionState.customFlags = conditionState.customFlags || {};
+                conditionState.customFlags.userClickedRedPacket = true;
+
+                console.log('新的条件状态:', conditionState);
+
+                // 更新状态并隐藏高亮
+                this.setData({
+                    conditionState,
+                    showHighlight: false
+                }, () => {
+                    // 在状态更新完成后检查转换
+                    console.log('状态已更新，检查转换');
+                    this.checkAndTransitionBasedOnFlags();
+                });
+            } else {
+                console.log('功能按钮点击，但不是等待中的红包按钮');
+            }
+        },
+
+        // 检查标志并根据条件转到下一个事件
+        checkAndTransitionBasedOnFlags() {
+            const { conditionState, currentEventId } = this.data;
+            const currentEvent = this.data.eventMap[currentEventId];
+
+            console.log('检查标志并转换:', {
+                currentEventId,
+                flags: conditionState.customFlags,
+                hasUserClickedPlus: conditionState.customFlags.userClickedPlus
+            });
+
+            if (!currentEvent) {
+                console.error('当前事件不存在:', currentEventId);
+                return;
+            }
+
+            // 检查是否有转换
+            if (currentEvent.transitions && currentEvent.transitions.length > 0) {
+                console.log(`事件 ${currentEventId} 有 ${currentEvent.transitions.length} 个可能的转换`);
+
+                // 查找匹配条件的转换
+                for (const transition of currentEvent.transitions) {
+                    if (!transition.conditions || transition.conditions.length === 0) {
+                        // 无条件转换
+                        console.log(`找到无条件转换到 ${transition.targetId}`);
+                        this.processEvent(transition.targetId);
+                        return;
+                    }
+
+                    // 检查所有条件是否满足
+                    const conditionResults = transition.conditions.map(condition => {
+                        const result = this.evaluateCondition(condition);
+                        console.log(`条件检查 ${condition.type} ${condition.key || ''}: ${result}`);
+                        return result;
+                    });
+
+                    const allConditionsMet = conditionResults.every(result => result === true);
+
+                    if (allConditionsMet) {
+                        // 条件满足，转到目标事件
+                        console.log(`所有条件满足，转换到 ${transition.targetId}`);
+                        this.processEvent(transition.targetId);
+                        return;
+                    } else {
+                        console.log(`条件不满足，不能转换到 ${transition.targetId}`);
+                    }
+                }
+
+                console.log('没有找到满足条件的转换，保持当前状态');
+            } else {
+                console.log(`事件 ${currentEventId} 没有定义任何转换`);
+            }
         }
     }
 }); 
