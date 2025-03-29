@@ -1,0 +1,72 @@
+<!-- 红包发送页面 -->
+<view class="redpacket-page">
+    <!-- 顶部导航栏 -->
+    <view class="nav-bar">
+        <view class="nav-back" bindtap="onBack">
+            <view class="back-icon"></view>
+        </view>
+        <view class="nav-title">发红包</view>
+        <view class="nav-more">
+            <view class="more-dots"></view>
+        </view>
+    </view>
+    <!-- 单个金额输入 -->
+    <view class="amount-section" bindtap="showAmountKeyboard">
+        <view class="amount-label">单个金额</view>
+        <view class="amount-input-container">
+            <text class="currency-symbol">¥</text>
+            <view class="amount-value">{{amount || '0.00'}}</view>
+        </view>
+    </view>
+    <!-- 红包祝福语输入 -->
+    <view class="greeting-section">
+        <input class="greeting-input" type="text" placeholder="恭喜发财，大吉大利" placeholder-class="placeholder" disabled="{{true}}" value="{{greeting}}" bindinput="onGreetingInput" />
+        <view class="emoji-button" bindtap="onEmojiSelect">
+            <image src="/assets/icons/emoji.svg" mode="aspectFit"></image>
+        </view>
+    </view>
+    <!-- 自定义数字键盘 -->
+    <view class="numeric-keyboard {{showAmountKeyboard ? 'keyboard-show' : 'keyboard-hide'}}">
+        <view class="keyboard-header">
+            <view class="keyboard-title">输入金额</view>
+            <view class="keyboard-close" bindtap="hideAmountKeyboard">完成</view>
+        </view>
+        <view class="keyboard-keys">
+            <view class="keyboard-row">
+                <view class="keyboard-key" data-key="1" bindtap="onKeyPress">1</view>
+                <view class="keyboard-key" data-key="2" bindtap="onKeyPress">2</view>
+                <view class="keyboard-key" data-key="3" bindtap="onKeyPress">3</view>
+            </view>
+            <view class="keyboard-row">
+                <view class="keyboard-key" data-key="4" bindtap="onKeyPress">4</view>
+                <view class="keyboard-key" data-key="5" bindtap="onKeyPress">5</view>
+                <view class="keyboard-key" data-key="6" bindtap="onKeyPress">6</view>
+            </view>
+            <view class="keyboard-row">
+                <view class="keyboard-key" data-key="7" bindtap="onKeyPress">7</view>
+                <view class="keyboard-key" data-key="8" bindtap="onKeyPress">8</view>
+                <view class="keyboard-key" data-key="9" bindtap="onKeyPress">9</view>
+            </view>
+            <view class="keyboard-row">
+                <view class="keyboard-key" data-key="." bindtap="onKeyPress">.</view>
+                <view class="keyboard-key" data-key="0" bindtap="onKeyPress">0</view>
+                <view class="keyboard-key keyboard-delete" data-key="delete" bindtap="onKeyPress">
+                    <view class="delete-icon"></view>
+                </view>
+            </view>
+        </view>
+    </view>
+    <!-- 红包封面 -->
+    <!-- <view class="redpacket-cover">
+        <image src="/assets/images/cat-cover.jpg" mode="aspectFill" class="cover-image"></image>
+        <view class="cover-label">红包封面</view>
+        <view class="cover-hint">无故又因了</view>
+    </view> -->
+    <!-- 底部金额显示和发送按钮 -->
+    <view class="redpacket-footer">
+        <view class="total-amount">¥{{amount || '0.00'}}</view>
+        <view class="send-button" bindtap="onSendRedpacket">塞钱进红包</view>
+    </view>
+    <!-- 未领取红包提示 -->
+    <view class="unreceived-hint">可直接使用收到的零钱发红包</view>
+</view>

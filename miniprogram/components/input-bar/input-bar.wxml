@@ -90,4 +90,6 @@
             </view>
         </view>
     </view>
+    <!-- 红包发送页面 -->
+    <redpacket-page wx:if="{{showRedpacketPage}}" visible="{{showRedpacketPage}}" bindclose="onRedpacketPageClose" bindsend="onRedpacketSend" />
 </view>

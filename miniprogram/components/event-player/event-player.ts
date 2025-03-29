@@ -1241,6 +1241,34 @@ Component({
             } else {
                 console.log(`事件 ${currentEventId} 没有定义任何转换`);
             }
+        },
+
+        // 处理红包发送
+        onRedpacketSend(e: WechatMiniprogram.CustomEvent) {
+            console.log('收到红包发送事件', e.detail);
+
+            // 可以在这里处理红包发送后的业务逻辑
+            // 例如添加一条红包消息到聊天中
+            const redpacketData = e.detail;
+
+            // 创建一个新的消息
+            const newMessage: EventMessage = {
+                id: `msg-${Date.now()}`,
+                type: 'redpacket_message',
+                role: 'self',
+                content: `发送了一个红包: ${redpacketData.greeting}`
+            };
+
+            // 添加消息到消息列表
+            const messages = [...this.data.messages, newMessage];
+            const formattedMessages = this.formatMessages(messages);
+
+            // 更新数据
+            this.setData({
+                messages,
+                formattedMessages,
+                scrollToView: `msg-${formattedMessages.length - 1}`
+            });
         }
     }
 }); 
