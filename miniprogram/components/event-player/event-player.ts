@@ -283,7 +283,7 @@ Component({
 
             // 提取元数据
             const metadata = data.metadata || {};
-            const startId = metadata.startId || data.events[0]?.id;
+            const startId = (metadata && metadata.startId) || (data.events[0] && data.events[0].id);
             const defaultDelay = metadata.defaultDelay || 1000;
 
             // 构建事件映射
@@ -375,7 +375,7 @@ Component({
 
             // 获取起始事件ID
             const { metadata, allEvents } = this.data;
-            const startId = metadata?.startId || allEvents[0]?.id;
+            const startId = (metadata && metadata.startId) || (allEvents[0] && allEvents[0].id);
             console.log(`起始事件ID: ${startId}`);
 
             // 重置条件状态
@@ -681,7 +681,7 @@ Component({
                     break;
                 case 'correctAnswer':
                     const eventId = param || conditionState.lastEventId;
-                    leftValue = eventId ? conditionState.userAnswers[eventId] === this.data.eventMap[eventId]?.correctAnswer : false;
+                    leftValue = eventId ? conditionState.userAnswers[eventId] === (this.data.eventMap[eventId] && this.data.eventMap[eventId].correctAnswer) : false;
                     break;
                 case 'custom':
                     leftValue = param ? conditionState.customFlags[param] : undefined;

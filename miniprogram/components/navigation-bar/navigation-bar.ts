@@ -64,11 +64,20 @@ Component({
         success: (res) => {
           const isAndroid = res.platform === 'android'
           const isDevtools = res.platform === 'devtools'
+
+          // 处理顶部安全区域
+          let safeAreaTop = ''
+          if (isDevtools || isAndroid) {
+            // 为安卓平台增加额外空间
+            const topPadding = isAndroid ? res.safeArea.top : res.safeArea.top
+            safeAreaTop = `height: calc(var(--height) + ${topPadding}px); padding-top: ${topPadding}px`
+          }
+
           this.setData({
             ios: !isAndroid,
             innerPaddingRight: `padding-right: ${res.windowWidth - rect.left}px`,
-            leftWidth: `width: ${res.windowWidth - rect.left }px`,
-            safeAreaTop: isDevtools || isAndroid ? `height: calc(var(--height) + ${res.safeArea.top}px); padding-top: ${res.safeArea.top}px` : ``
+            leftWidth: `width: ${res.windowWidth - rect.left}px`,
+            safeAreaTop: safeAreaTop
           })
         }
       })
@@ -82,9 +91,8 @@ Component({
       const animated = this.data.animated
       let displayStyle = ''
       if (animated) {
-        displayStyle = `opacity: ${
-          show ? '1' : '0'
-        };transition:opacity 0.5s;`
+        displayStyle = `opacity: ${show ? '1' : '0'
+          };transition:opacity 0.5s;`
       } else {
         displayStyle = `display: ${show ? '' : 'none'}`
       }
