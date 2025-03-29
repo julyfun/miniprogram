@@ -42,6 +42,16 @@ Component({
         showEmojiPanel: {
             type: Boolean,
             value: false
+        },
+        // 当前高亮的目标元素
+        highlight: {
+            type: String,
+            value: ''
+        },
+        // 是否显示高亮
+        showHighlight: {
+            type: Boolean,
+            value: false
         }
     },
 

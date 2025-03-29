@@ -15,7 +15,7 @@
             <image class="icon" src="/assets/icons/emoji.svg" mode="aspectFit" />
         </view>
         <!-- 发送/更多按钮 -->
-        <view class="{{value.trim() ? 'send-button' : 'more-button'}}" bind:tap="{{value.trim() ? 'onSend' : 'onMoreFunction'}}">
+        <view class="{{value.trim() ? 'send-button' : 'more-button'}} {{highlight === 'more-button' && showHighlight ? 'highlight-active' : ''}}" bind:tap="{{value.trim() ? 'onSend' : 'onMoreFunction'}}">
             <block wx:if="{{value.trim()}}">
                 <text>发送</text>
             </block>
@@ -64,7 +64,7 @@
                 <view class="feature-name">位置</view>
             </view>
             <!-- 第二行 -->
-            <view class="feature-item" bind:tap="handleFeature" data-feature="redpacket">
+            <view class="feature-item {{highlight === 'redpacket' && showHighlight ? 'highlight-active' : ''}}" bind:tap="handleFeature" data-feature="redpacket">
                 <view class="feature-icon">
                     <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
                 </view>
