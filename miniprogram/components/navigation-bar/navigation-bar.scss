@@ -33,6 +33,18 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+/* 新增: 导航栏内容区域，包含返回、用户名和更多按钮 */
+.weui-navigation-bar__content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
 .weui-navigation-bar__left {
   position: relative;
   padding-left: var(--left);
@@ -42,6 +54,8 @@
   height: 100%;
   box-sizing: border-box;
   z-index: 2;
+  min-width: 44px;
+  /* 确保返回按钮区域有足够的宽度 */
 }
 
 .weui-navigation-bar__right {
@@ -53,6 +67,8 @@
   height: 100%;
   box-sizing: border-box;
   z-index: 2;
+  min-width: 44px;
+  /* 确保更多按钮区域有足够的宽度 */
 }
 
 .weui-navigation-bar__btn_goback_wrapper {
@@ -94,11 +110,7 @@
 .weui-navigation-bar__center {
   font-size: 17px;
   text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -106,8 +118,15 @@
   font-weight: bold;
   height: 100%;
   z-index: 1;
-  padding-top: env(safe-area-inset-top);
-  /* 确保标题区域考虑安全区域 */
+  /* 将绝对定位改为flex布局 */
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 安卓平台上的标题字体调整 */
@@ -140,4 +159,48 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 为Home/More按钮添加样式 */
+.weui-navigation-bar__buttons_home {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.weui-navigation-bar__btn_home_wrapper {
+  padding: 16px 18px;
+  margin: -16px -18px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.weui-navigation-bar__btn_home_wrapper.weui-active {
+  opacity: 0.5;
+}
+
+.weui-navigation-bar__btn_home {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  /* 使用更多按钮SVG图标 */
+  -webkit-mask: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z'/%3E%3C/svg%3E") no-repeat 50% 50%;
+  mask: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z'/%3E%3C/svg%3E") no-repeat 50% 50%;
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  background-color: var(--weui-FG-0);
+}
+
+/* 为安卓平台的home/more按钮添加特定样式 */
+.android .weui-navigation-bar__btn_home {
+  width: 26px;
+  /* 稍微增加安卓平台的更多按钮尺寸 */
+  height: 26px;
+}
+
+.android .weui-navigation-bar__btn_home_wrapper {
+  padding: 18px 20px;
+  margin: -18px -20px;
 }
