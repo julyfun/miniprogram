@@ -27,12 +27,12 @@
 /* 文本输入框 */
 .text-input {
     flex: 1;
-    height: 40px;
+    height: 36px;
     background-color: #ffffff;
     border-radius: 6px;
     padding: 0 16px;
-    font-size: 17px;
-    line-height: 40px;
+    font-size: 16px;
+    line-height: 36px;
     margin: 0 10px;
 }
 
@@ -43,7 +43,7 @@
 /* 语音按钮 */
 .voice-button {
     flex: 1;
-    height: 40px;
+    height: 36px;
     background-color: #ffffff;
     border-radius: 6px;
     margin: 0 10px;
@@ -60,8 +60,8 @@
 
 /* 表情按钮 */
 .emoji-button {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -69,15 +69,15 @@
 
 /* 发送按钮 */
 .send-button {
-    width: 60px;
-    height: 40px;
+    width: 56px;
+    height: 36px;
     background-color: #07c160;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 /* 更多按钮 */
@@ -91,7 +91,7 @@
 
 /* 加号图标 */
 .plus-icon {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
     color: #000;
     line-height: 1;
@@ -189,8 +189,8 @@
 /* 新增高亮样式 */
 .highlight-active {
     position: relative;
-    z-index: 100;
-    animation: pulse-highlight 1.5s infinite;
+    z-index: 10;
+    animation: pulse 1.5s infinite;
 }
 
 .more-button.highlight-active {
@@ -200,19 +200,22 @@
 .feature-item.highlight-active .feature-icon {
     position: relative;
     z-index: 100;
-    animation: pulse-highlight 1.5s infinite;
+    animation: pulse 1.5s infinite;
 }
 
-@keyframes pulse-highlight {
+@keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 100, 100, 0.7);
     }
-
+    
     70% {
-        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(255, 100, 100, 0);
     }
-
+    
     100% {
-        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 100, 100, 0);
     }
 }
