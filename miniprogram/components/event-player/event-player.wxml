@@ -18,9 +18,9 @@
         <chat-container messages="{{formattedMessages}}" selfAvatar="/assets/icons/default-avatar.svg" otherAvatar="{{metadata.opponent.avatarUrl || '/assets/icons/default-avatar.svg'}}" scrollIntoView="{{scrollToView}}" />
     </view>
     <!-- 底部输入区域 -->
-    <input-bar value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
-    <!-- 控制栏 -->
-    <view class="control-bar">
+    <input-bar value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
+    <!-- 控制栏 隐藏 -->
+    <view class="control-bar" style="display: none;">
         <view class="control-button" bindtap="onRestart">
             <text>重新开始</text>
         </view>
