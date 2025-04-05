@@ -61,9 +61,9 @@
 }
 
 .avatar {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 8rpx;
+    width: 84rpx;
+    height: 84rpx;
+    border-radius: 50%;
     background-color: #f5f5f5;
 }
 
@@ -76,7 +76,7 @@
 
 /* 气泡通用样式 */
 .message-bubble {
-    border-radius: 4px;
+    border-radius: 8rpx;
     padding: 18rpx 24rpx;
     max-width: 100%;
     word-break: break-all;
@@ -85,14 +85,14 @@
 
 /* 文本气泡 */
 .message-bubble.text {
-    font-size: 34rpx;
+    font-size: 32rpx;
     line-height: 1.4;
     min-width: 40rpx;
 }
 
 .message-item.other .message-bubble.text {
     background-color: #fff;
-    color: #333;
+    color: #000;
     border-top-left-radius: 0;
 }
 

@@ -22,7 +22,7 @@
 .message-list {
     display: flex;
     flex-direction: column;
-    padding: 8rpx 12rpx;
+    padding: 16rpx 24rpx;
     box-sizing: border-box;
     min-height: 100%;
     width: 100%;
