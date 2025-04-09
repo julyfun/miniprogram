@@ -86,10 +86,8 @@ UI 高亮系统用于在教学过程中引导用户点击特定按钮或元素�
 ## 复现本项目
 
 - 记得去 [must, tested] :
-    - 登录阿里云控制台。
-    - 进入 RAM (访问控制) 服务。
+    - 登录阿里云控制台。进入 RAM (访问控制) 服务。(https://ram.console.aliyun.com/overview?activeTab=overview)
     - 找到你的 Access Key (LTAI5tJsnMbCQ2QRHyyyrMiP) 所属的 RAM 用户或 RAM 角色。
     - 编辑该用户/角色的权限策略。
     - 添加与 NLS (智能语音服务) 相关的权限策略。最简单的是直接添加系统策略 AliyunNlsFullAccess（拥有完全权限，适合测试），或者创建一个自定义策略，至少包含 nls:CreateToken 这个权限，以及你可能用到的具体语音服务的权限（例如实时语音识别可能需要 nls-realtime 相关的权限）。
     - 保存策略。
-

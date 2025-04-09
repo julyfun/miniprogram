@@ -2,13 +2,12 @@
 .container {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    background-color: #ffffff;
-    color: #000000;
-    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    height: 100vh;
+    padding: 40rpx 20rpx;
     box-sizing: border-box;
-    overflow-x: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #f8f8f8; // 轻微浅灰色背景
 }
 
 /* 顶部标题 */
@@ -659,4 +658,229 @@
     color: #fff;
     border-radius: 10rpx;
     font-size: 24rpx;
+}
+
+// Debug 区域容器
+.debug-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx; // 盒子之间的间距
+    height: 45%; // 为 debug 盒子分配空间
+}
+
+.debug-box {
+    background-color: #fff;
+    border-radius: 15rpx;
+    padding: 20rpx;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    height: 50%; // 每个盒子占容器高度的一半
+    box-sizing: border-box;
+
+    .debug-title {
+        font-size: 28rpx;
+        color: #666;
+        margin-bottom: 10rpx;
+        font-weight: bold;
+    }
+
+    textarea {
+        width: 100%;
+        height: 100%; // 占用剩余高度
+        font-size: 26rpx;
+        color: #333;
+        background-color: #f9f9f9; // 文本区域稍微不同的背景
+        border: 1px solid #eee;
+        border-radius: 8rpx;
+        padding: 10rpx;
+        box-sizing: border-box;
+    }
+
+    // 为可编辑文本框容器添加样式
+    .input-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+
+        .editable-textarea {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+
+            &:focus {
+                border-color: #2b91ff;
+                outline: none;
+            }
+        }
+
+        .send-button {
+            position: absolute;
+            bottom: 10rpx;
+            right: 10rpx;
+            width: 120rpx;
+            height: 60rpx;
+            line-height: 60rpx;
+            font-size: 26rpx;
+            padding: 0;
+            text-align: center;
+            color: #fff;
+            background-color: #2b91ff;
+            border-radius: 10rpx;
+            z-index: 10;
+
+            &:active {
+                opacity: 0.9;
+            }
+
+            &[disabled] {
+                background-color: #cccccc;
+                color: #999999;
+            }
+        }
+    }
+}
+
+// Orb 容器
+.orb-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1; // 占用剩余垂直空间
+    width: 100%;
+    padding-bottom: 40rpx; // 底部留出一些空间
+}
+
+// Siri 风格的球体
+.orb {
+    width: 240rpx;
+    height: 240rpx;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    background: radial-gradient(circle at 30% 30%, #64e6ff, #2b91ff);
+    box-shadow: 0 8px 30px rgba(43, 145, 255, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    // 内部光晕效果
+    &::after {
+        content: '';
+        position: absolute;
+        top: 15%;
+        left: 15%;
+        width: 30%;
+        height: 30%;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        filter: blur(5rpx);
+    }
+
+    // 静止状态（微小的呼吸动画）
+    &.idle {
+        animation: breathe 4s infinite ease-in-out;
+    }
+
+    // 有声音时的活跃状态（跳动）
+    &.listening-active {
+        animation: activeBounce 0.8s infinite ease-in-out;
+    }
+
+    // 普通监听状态（轻微的上下移动）
+    &.listening {
+        animation: gentleBounce 2s infinite ease-in-out;
+    }
+
+    // 处理中状态（旋转）
+    &.processing {
+        animation: rotate 2s linear infinite;
+    }
+
+    // 按下效果
+    &:active {
+        transform: scale(0.95);
+        box-shadow: 0 4px 15px rgba(43, 145, 255, 0.3);
+    }
+}
+
+.orb-instruction {
+    margin-top: 40rpx;
+    font-size: 30rpx;
+    color: #555;
+    text-align: center;
+}
+
+// 细微呼吸动画（静止状态）
+@keyframes breathe {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 8px 30px rgba(43, 145, 255, 0.4);
+    }
+
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 10px 35px rgba(43, 145, 255, 0.45);
+    }
+}
+
+// 轻微上下移动（监听状态）
+@keyframes gentleBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6rpx);
+    }
+}
+
+// 有声音时的跳动动画（更活跃）
+@keyframes activeBounce {
+
+    0%,
+    100% {
+        transform: scale(1) translateY(0);
+        box-shadow: 0 8px 30px rgba(43, 145, 255, 0.5);
+    }
+
+    40% {
+        transform: scale(1.1) translateY(-10rpx);
+        box-shadow: 0 15px 40px rgba(43, 145, 255, 0.6);
+    }
+
+    60% {
+        transform: scale(1.05) translateY(-5rpx);
+        box-shadow: 0 12px 35px rgba(43, 145, 255, 0.55);
+    }
+}
+
+// 处理中的旋转动画
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// 颜色光芒闪烁
+@keyframes colorPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 30rpx rgba(43, 145, 255, 0.6);
+    }
+
+    50% {
+        box-shadow: 0 0 50rpx rgba(100, 230, 255, 0.8);
+    }
 }

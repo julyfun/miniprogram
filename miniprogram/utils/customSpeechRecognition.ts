@@ -399,8 +399,15 @@ class RealtimeSpeechRecognition {
 
     private setupRecorderManager(): void {
         this.recorderManager.onFrameRecorded((res) => {
+            // Add checks for res and res.frameBuffer
+            if (!res || !res.frameBuffer) {
+                console.warn("[Recorder] onFrameRecorded received invalid data");
+                return;
+            }
             // Add log to check if this callback is firing
             console.log("[Recorder] onFrameRecorded triggered. Frame size:", res.frameBuffer.byteLength);
+
+            // Double-check if still recognizing before sending
             if (this.isRecognizing && this.speechRecognizer) {
                 this.speechRecognizer.sendAudio(res.frameBuffer);
             }
@@ -531,17 +538,31 @@ class RealtimeSpeechRecognition {
             return;
         }
 
-        this.recorderManager.stop();
+        // Stop the recorder manager FIRST to prevent further onFrameRecorded events
+        try {
+            this.recorderManager.stop();
+            console.log("[Recorder] Recorder manager stopped in stop() method.");
+        } catch (e) {
+            console.error("[Recorder] Error stopping recorder manager:", e);
+        }
 
+        // Now, stop the speech recognizer
         if (this.speechRecognizer) {
             try {
                 await this.speechRecognizer.close({});
+                console.log("[SpeechRecognizer] Closed successfully.");
             } catch (error) {
-                console.error('Error closing speech recognizer:', error);
+                // Log specific close error, but don't necessarily re-throw if recorder already stopped
+                console.error('Error closing speech recognizer during stop:', error);
             } finally {
                 this.speechRecognizer = null;
                 this.isRecognizing = false;
+                console.log("[State] Recognition stopped and state reset.");
             }
+        } else {
+            // If speechRecognizer is already null, ensure isRecognizing is false
+            this.isRecognizing = false;
+            console.log("[State] Speech recognizer was already null, ensuring state is stopped.");
         }
     }
 

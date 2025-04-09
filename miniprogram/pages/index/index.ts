@@ -1,127 +1,245 @@
 import SpeechRecognizer from '../../utils/speechRecognition';
+import { DEEPSEEK_SECRETS } from '../../utils/secrets';
 
-interface Message {
-    _id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp: number;
-    type?: 'text' | 'image' | 'voice' | 'system';
-    status?: 'sending' | 'success' | 'failed' | 'read';
-}
+// Define the possible states for the orb animation
+type OrbState = 'idle' | 'listening' | 'listening-active' | 'processing';
 
 interface IPageData {
-    messages: Message[];
-    inputMessage: string;
-    scrollToView: string;
-    isLoading: boolean;
-    currentAssistantMessage: string;
-    isRecording: boolean;
-    cancelRecord: boolean;
-    startY: number;
-    recognizedText: string;
+    debugRecognizedText: string;    // For Debug Box 1
+    debugDeepseekResponse: string;  // For Debug Box 2
+    isRecording: boolean;           // Is microphone active?
+    isWaitingForDeepseek: boolean;  // Waiting for API response? (Used for orb state)
+    orbState: OrbState;             // Controls orb animation
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
     data: {
-        messages: [],
-        inputMessage: '',
-        scrollToView: 'message-bottom',
-        isLoading: false,
-        currentAssistantMessage: '',
+        debugRecognizedText: '',
+        debugDeepseekResponse: '',
         isRecording: false,
-        cancelRecord: false,
-        startY: 0,
-        recognizedText: ''
+        isWaitingForDeepseek: false,
+        orbState: 'idle',
     },
 
-    // 录音管理器
-    recorderManager: null as WechatMiniprogram.RecorderManager | null,
+    // Silence detection timer
+    silenceTimer: null as number | null,
+    // Activity timeout (for bouncing animation)
+    activityTimer: null as number | null,
+    // Store the latest recognized text before sending
+    latestRecognizedText: '',
+    // Last result timestamp to detect activity
+    lastResultTime: 0,
 
-    // 阿里云语音识别
+    // Speech recognizer instance
     speechRecognizer: null as SpeechRecognizer | null,
 
-    onLoad() {
-        // 初始化录音管理器
-        this.initRecorderManager();
+    // Add a flag to prevent rapid duplicate error handling
+    lastErrorTime: 0,
+    minErrorInterval: 500, // Minimum interval in ms between handling errors
 
-        // 初始化阿里云语音识别
+    onLoad: function () {
+        // Only init recognizer here
         this.initSpeechRecognition();
+        // Recorder manager is handled within SpeechRecognizer now
+    },
 
-        // 加载历史聊天记录
-        this.loadChatHistory();
-
-        // 如果没有聊天记录，添加初始欢迎消息
-        if (this.data.messages.length === 0) {
-            this.setData({
-                messages: [{
-                    _id: 'welcome_' + Date.now(),
-                    role: 'assistant',
-                    content: '你好！很高兴见到你，有什么我可以帮忙的吗？',
-                    timestamp: Date.now()
-                }]
-            });
+    onUnload: function () {
+        // Clean up resources
+        if (this.speechRecognizer) {
+            this.speechRecognizer.stop(); // Ensure it stops if page is closed
+        }
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+            this.activityTimer = null;
         }
     },
 
-    // 初始化阿里云语音识别
-    initSpeechRecognition() {
+    // Initialize Speech Recognition
+    initSpeechRecognition: function () {
         this.speechRecognizer = new SpeechRecognizer();
 
-        // 设置结果回调
+        // --- Result Callback ---
         this.speechRecognizer.onResult((text: string, isFinal: boolean) => {
-            console.log('语音识别结果:', text, isFinal);
+            console.log('语音识别结果:', text, `isFinal: ${isFinal}`);
 
-            // 更新识别结果到输入框
+            // Detect voice activity - received a result means voice was detected
+            this.handleVoiceActivity();
+
+            // Update Debug Box 1
             this.setData({
-                inputMessage: text
+                debugRecognizedText: text
             });
+            // Store the latest text regardless of final status
+            this.latestRecognizedText = text;
 
-            // 如果是最终结果，可以选择自动发送
-            if (isFinal && text.trim()) {
-                // 这里不自动发送，让用户确认后手动发送
+            // --- Silence Detection Logic ---
+            // Clear any existing timer
+            if (this.silenceTimer) {
+                clearTimeout(this.silenceTimer);
+                this.silenceTimer = null;
             }
+            // If not final, and still recording, set a new timer
+            // Don't set timer if result is final to avoid sending after manual stop
+            if (!isFinal && this.data.isRecording) {
+                this.silenceTimer = setTimeout(() => {
+                    console.log('Silence detected, stopping recorder and sending to Deepseek...');
+                    // Stop recording first, indicating it was triggered by silence
+                    this.stopRecordingAndRecognition(true);
+                    // Immediately attempt to send (sendToDeepseek will check text)
+                    this.sendToDeepseek();
+                }, 2000); // 2 seconds of silence
+            }
+            // If it *is* final (e.g., service decided end of speech),
+            // and we have text, send it immediately? (Optional behavior)
+            // For now, we only send on timer expiry.
         });
 
-        // 设置错误回调
+        // --- Error Callback ---
         this.speechRecognizer.onError((error: any) => {
-            console.error('语音识别错误:', error);
+            const now = Date.now();
+            if (now - this.lastErrorTime < this.minErrorInterval) {
+                console.warn("Duplicate error suppressed within interval:", error);
+                return;
+            }
+            this.lastErrorTime = now;
 
-            // 检查是否是 reset 触发的事件
-            if (error && error.code === "RESET") {
+            let processedError: any = error;
+            let errorSource = "Unknown"; // For logging
+
+            // Try to parse if it's a string containing JSON
+            if (typeof error === 'string') {
+                try {
+                    processedError = JSON.parse(error);
+                    errorSource = "Parsed String";
+                } catch (e) {
+                    console.warn("Error data is a non-JSON string:", error);
+                    processedError = { message: error }; // Treat non-JSON string as a message
+                    errorSource = "Raw String";
+                }
+            } else if (typeof error === 'object' && error !== null) {
+                errorSource = "Object";
+            }
+
+            // Log the raw error object structure and content (using original error)
+            console.error(`语音识别错误 (Source: ${errorSource}, Raw): `, JSON.stringify(error, null, 2));
+            // Log the processed error object
+            if (errorSource !== "Object") {
+                console.error(`语音识别错误 (Processed): `, JSON.stringify(processedError, null, 2));
+            }
+
+            // Ignore reset events for UI feedback
+            if (processedError && processedError.code === "RESET") {
                 console.log("Ignoring reset event in error handler.");
-                // 对于 reset 事件，只打印日志，不显示 Toast
                 return;
             }
 
-            // 对于其他真实的错误，显示 Toast
+            // 忽略常见的非错误终止状态
+            const ignoredErrors = [
+                "END_OF_SPEECH",
+                "SPEECH_RECOGNITION_STOPPED",
+                "RECORDING_STOPPED",
+                "RECOGNITION_TIMEOUT",
+                "TASKFAILED", // Add TaskFailed (normalized to uppercase)
+                "ERR_VOICE_RECOGNITION_TIMEOUT",
+                "ERR_RECORDER_STOPPED"
+            ];
+
+            // Perform checks on the processedError
+            const errorCode = processedError && processedError.code ? processedError.code : undefined;
+            const errorName = processedError && processedError.header && processedError.header.name ? processedError.header.name.toUpperCase() : undefined;
+            const errorMessage = processedError && processedError.message ? processedError.message.toUpperCase() : undefined;
+            const errorErrMsg = processedError && processedError.errMsg ? processedError.errMsg.toUpperCase() : undefined;
+
+            // 检查错误代码、名称或错误信息中是否包含可忽略的状态
+            if (processedError && (
+                (errorCode && ignoredErrors.includes(errorCode)) ||
+                (errorName && ignoredErrors.includes(errorName)) ||
+                (errorMessage && ignoredErrors.some(code => ignoredErrors.includes(code.toUpperCase()) && errorMessage.includes(code.toUpperCase()))) ||
+                (errorErrMsg && ignoredErrors.some(code => ignoredErrors.includes(code.toUpperCase()) && errorErrMsg.includes(code.toUpperCase())))
+            )) {
+                console.log("正常结束的语音识别状态或可忽略的TaskFailed，不需要显示错误:", errorCode || errorName || errorMessage || errorErrMsg);
+                return; // 不显示错误信息
+            }
+
+            // If it reaches here, it's an unexpected error
+            console.error('未处理的语音识别错误，即将显示 Toast:', processedError);
+
+            // Handle other errors (use processedError for message extraction)
             wx.showToast({
-                title: '语音识别出错', // 或者更具体的错误信息 error.message || '语音识别出错'
+                title: `识别出错: ${processedError.errMsg || processedError.message || '未知错误'}`,
                 icon: 'none'
             });
-
-            // 如果需要，可以在这里重置 isRecording 状态
-            // this.setData({
-            //     isRecording: false
-            // });
+            this.setData({
+                isRecording: false,
+                isWaitingForDeepseek: false,
+                orbState: 'idle'
+            });
+            // Clear timer on error
+            if (this.silenceTimer) {
+                clearTimeout(this.silenceTimer);
+                this.silenceTimer = null;
+            }
+            if (this.activityTimer) {
+                clearTimeout(this.activityTimer);
+                this.activityTimer = null;
+            }
         });
     },
 
-    // 切换录音状态
-    toggleVoiceRecording() {
+    // --- Handle Voice Activity ---
+    // Called when we receive speech recognition results (indicating active speech)
+    handleVoiceActivity: function () {
+        // Update timestamp to track speech activity
+        this.lastResultTime = Date.now();
+
+        // Only change animation if we're in recording mode
+        if (!this.data.isRecording) return;
+
+        // Set to active bouncing state
+        if (this.data.orbState !== 'listening-active') {
+            this.setData({
+                orbState: 'listening-active'
+            });
+        }
+
+        // Clear any existing activity timer
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+        }
+
+        // Set a timer to change back to normal listening state when activity stops
+        this.activityTimer = setTimeout(() => {
+            // Only reset if we're still in active state and recording
+            if (this.data.orbState === 'listening-active' && this.data.isRecording) {
+                this.setData({
+                    orbState: 'listening'
+                });
+            }
+            this.activityTimer = null;
+        }, 800); // Return to normal listening state after 800ms without new results
+    },
+
+    // --- Orb Tap Handler ---
+    handleOrbTap: function () {
         if (this.data.isRecording) {
-            // 如果正在录音，则停止录音
-            this.endRecording();
+            this.stopRecordingAndRecognition();
         } else {
-            // 如果未录音，则开始录音
-            this.startRecording();
+            this.startRecordingAndRecognition();
         }
     },
 
-    // 开始录音
-    startRecording() {
-        console.log('开始录音');
+    // --- Start Recording ---
+    startRecordingAndRecognition: function () {
+        if (this.data.isRecording || this.data.isWaitingForDeepseek) {
+            return; // Already active or processing
+        }
+        console.log('开始录音和识别');
 
-        // Clean up any previous state
+        // Reset state before starting
         if (this.speechRecognizer) {
             try {
                 this.speechRecognizer.reset();
@@ -130,174 +248,150 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             }
         }
 
-        // Clear space for a new recognition session
+        // Clear timers
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+            this.activityTimer = null;
+        }
+
         this.setData({
             isRecording: true,
-            inputMessage: ''
+            isWaitingForDeepseek: false,
+            orbState: 'listening', // Start with normal listening state
+            debugRecognizedText: '', // Clear previous results
+            debugDeepseekResponse: '',
+            latestRecognizedText: '',
         });
 
-        // Start real-time speech recognition
+        // Start the speech recognizer (which handles the recorder internally)
         if (this.speechRecognizer) {
             this.speechRecognizer.start().catch((error: any) => {
-                console.error('开始语音识别失败:', error);
-
-                // Show error to user
+                console.error('启动语音识别失败:', error);
                 wx.showToast({
-                    title: '启动语音识别失败，正在重试...',
-                    icon: 'none',
-                    duration: 2000
+                    title: '启动识别失败',
+                    icon: 'none'
                 });
-
-                // Reset and try again after a short delay
-                setTimeout(() => {
-                    if (this.speechRecognizer) {
-                        this.speechRecognizer.reset();
-
-                        // Try once more with a delay
-                        setTimeout(() => {
-                            if (this.speechRecognizer) {
-                                this.speechRecognizer.start().catch((retryError: any) => {
-                                    console.error('重试语音识别失败:', retryError);
-                                    wx.showToast({
-                                        title: '语音识别功能暂时不可用',
-                                        icon: 'none',
-                                        duration: 2000
-                                    });
-                                    this.setData({
-                                        isRecording: false
-                                    });
-                                });
-                            }
-                        }, 1000);
-                    }
-                }, 500);
+                this.setData({
+                    isRecording: false,
+                    isWaitingForDeepseek: false,
+                    orbState: 'idle'
+                });
             });
         } else {
             console.error('语音识别器未初始化');
             wx.showToast({
-                title: '语音识别功能初始化失败',
+                title: '识别功能初始化失败',
                 icon: 'none'
             });
-            this.setData({
-                isRecording: false
-            });
+            this.setData({ isRecording: false, orbState: 'idle' });
         }
     },
 
-    // 结束录音
-    endRecording() {
-        console.log('结束录音');
+    // --- Stop Recording (Manual / Silence) ---
+    stopRecordingAndRecognition: function (triggeredBySilence: boolean = false) { // Add parameter to know the context
+        console.log(`停止录音和识别 (${triggeredBySilence ? '静默触发' : '手动'})`);
         if (!this.data.isRecording) return;
 
-        // 停止语音识别
-        if (this.speechRecognizer) {
-            this.speechRecognizer.stop();
+        // Clear timers
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+            this.activityTimer = null;
         }
 
-        // 重置录音状态
+        // Stop the recognizer (which stops the recorder)
+        if (this.speechRecognizer) {
+            this.speechRecognizer.stop().catch((err: any) => {
+                console.error("Error stopping speech recognizer:", err);
+                // Handle potential errors during stop if needed
+            });
+        }
+
+        // ONLY update isRecording state here. Let the caller decide the next state.
         this.setData({
             isRecording: false
         });
     },
 
-    // 取消录音
-    cancelVoiceRecording() {
-        console.log('取消录音');
-
-        // 设置取消标志
+    // --- Handle Debug Text Input ---
+    onDebugTextInput: function (e: WechatMiniprogram.Input) {
+        // 更新 debugRecognizedText，同时更新我们用于发送的文本
         this.setData({
-            cancelRecord: true,
-            inputMessage: '' // 清空识别结果
+            debugRecognizedText: e.detail.value
         });
-
-        // 停止语音识别
-        if (this.speechRecognizer) {
-            this.speechRecognizer.stop();
-        }
-
-        // 重置状态
-        setTimeout(() => {
-            this.setData({
-                isRecording: false,
-                cancelRecord: false
-            });
-        }, 100);
+        this.latestRecognizedText = e.detail.value;
     },
 
-    // 原有的initRecorderManager方法保留但现在只用于兼容性目的
-    initRecorderManager() {
-        this.recorderManager = wx.getRecorderManager();
-    },
-
-    // 输入消息处理
-    onMessageInput(e: WechatMiniprogram.Input) {
-        this.setData({
-            inputMessage: e.detail.value
-        });
-    },
-
-    // 发送消息到 Deepseek API
-    sendMessage() {
-        const { inputMessage, messages, isLoading } = this.data;
-
-        // 检查是否正在加载或消息为空
-        if (isLoading || !inputMessage.trim()) {
+    // --- Send Edited Text Manually ---
+    sendEditedText: function () {
+        // 如果正在等待回复，不做任何操作
+        if (this.data.isWaitingForDeepseek) {
             return;
         }
 
-        // 添加用户消息
-        const userMessage: Message = {
-            _id: 'user_' + Date.now(),
-            role: 'user',
-            content: inputMessage,
-            timestamp: Date.now()
-        };
+        // 如果正在录音，先停止录音 (pass false for manual trigger)
+        if (this.data.isRecording) {
+            this.stopRecordingAndRecognition(false);
+        }
 
+        // 发送当前文本框内的文本 (sendToDeepseek will handle state)
+        console.log('手动发送编辑后的文本:', this.data.debugRecognizedText);
+        // Update latestRecognizedText just before sending manually
+        this.latestRecognizedText = this.data.debugRecognizedText;
+        this.sendToDeepseek();
+    },
+
+    // --- Send Recognized Text to Deepseek ---
+    sendToDeepseek: function () {
+        // Check for empty text OR if already waiting for a response
+        if (!this.latestRecognizedText.trim() || this.data.isWaitingForDeepseek) {
+            console.log('发送取消：无有效文本或已在等待回复');
+            // Ensure state is idle if sending is cancelled without waiting
+            if (!this.data.isWaitingForDeepseek) {
+                this.setData({ isRecording: false, orbState: 'idle', isWaitingForDeepseek: false });
+            }
+            return;
+        }
+
+        console.log('准备发送给 Deepseek:', this.latestRecognizedText);
+        const textToSend = this.latestRecognizedText;
+
+        // State should be updated *before* the API call
         this.setData({
-            messages: [...messages, userMessage],
-            inputMessage: '',
-            isLoading: true,
-            currentAssistantMessage: ''
+            isRecording: false, // Ensure recording is marked as stopped
+            isWaitingForDeepseek: true,
+            orbState: 'processing',
+            debugDeepseekResponse: '思考中...' // Indicate processing
         });
 
-        // 滚动到底部
-        this.scrollToBottom();
-
-        // 创建临时的助手消息（空内容）用于显示打字效果
-        const tempAssistantMessage: Message = {
-            _id: 'assistant_' + Date.now(),
-            role: 'assistant',
-            content: '',
-            timestamp: Date.now()
-        };
-
-        this.setData({
-            messages: [...this.data.messages, tempAssistantMessage]
-        });
-
-        // 调用 Deepseek API（使用流式响应）
+        // Call Deepseek API with streaming response
         wx.request({
-            url: 'https://api.deepseek.com/v1/chat/completions',
+            url: DEEPSEEK_SECRETS.API_URL,
             method: 'POST',
             header: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer sk-09f11c2631f544a6af0456d5d058607b'
+                'Authorization': `Bearer ${DEEPSEEK_SECRETS.API_KEY}`
             },
             data: {
-                model: 'deepseek-chat',
+                model: DEEPSEEK_SECRETS.MODEL,
                 messages: [
-                    ...this.data.messages.slice(0, -1).map(msg => ({
-                        role: msg.role,
-                        content: msg.content
-                    }))
+                    // Consider adding system prompt or history if needed
+                    { role: 'user', content: textToSend }
                 ],
                 temperature: 0.7,
                 max_tokens: 1000,
-                stream: true
+                stream: true // 启用流式响应
             },
-            responseType: 'text',
+            responseType: 'text', // 流式响应需要使用 text 类型
             success: (res: any) => {
-                // 检查是否接收到文本响应
+                console.log("Deepseek API 流式响应开始");
                 if (res.statusCode === 200 && res.data) {
                     try {
                         // 将响应文本按行分割，每行是一个 SSE 事件
@@ -324,17 +418,10 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                                         if (delta && delta.content) {
                                             fullContent += delta.content;
 
-                                            // 更新当前消息
-                                            const updatedMessages = [...this.data.messages];
-                                            updatedMessages[updatedMessages.length - 1].content = fullContent;
-
+                                            // 实时更新 Debug 文本框
                                             this.setData({
-                                                messages: updatedMessages,
-                                                currentAssistantMessage: fullContent
+                                                debugDeepseekResponse: fullContent
                                             });
-
-                                            // 滚动到底部以显示新的内容
-                                            this.scrollToBottom();
                                         }
                                     }
                                 } catch (e) {
@@ -343,161 +430,42 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             }
                         }
 
-                        // 完成后更新状态
+                        // 流式响应处理完成后，更新状态
                         this.setData({
-                            isLoading: false
+                            isWaitingForDeepseek: false,
+                            orbState: 'idle'
                         });
 
-                        // 保存聊天历史
-                        this.saveChatHistory();
                     } catch (error) {
                         console.error('处理流式响应失败:', error);
                         this.handleApiError('处理响应失败');
                     }
                 } else {
                     // 处理错误
-                    this.handleApiError('无法获取响应');
+                    this.handleApiError(`请求失败 (${res.statusCode})`);
                 }
             },
             fail: (error) => {
-                console.error('API 请求失败:', error);
+                console.error('Deepseek API 请求失败:', error);
                 this.handleApiError('网络请求失败');
             }
         });
     },
 
-    // 滚动到底部
-    scrollToBottom() {
-        setTimeout(() => {
-            this.setData({
-                scrollToView: 'message-bottom'
-            });
-        }, 100);
-    },
-
-    // 处理 API 错误
-    handleApiError(errorMsg: string) {
-        // 更新最后一条消息为错误消息
-        const updatedMessages = [...this.data.messages];
-        if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1].role === 'assistant') {
-            updatedMessages[updatedMessages.length - 1].content = `抱歉，${errorMsg}，请稍后再试。`;
-        } else {
-            // 添加错误消息
-            updatedMessages.push({
-                _id: 'error_' + Date.now(),
-                role: 'assistant',
-                content: `抱歉，${errorMsg}，请稍后再试。`,
-                timestamp: Date.now()
-            });
-        }
-
+    // --- API Error Handling ---
+    handleApiError: function (errorMsg: string) {
         this.setData({
-            messages: updatedMessages,
-            isLoading: false
+            debugDeepseekResponse: `错误: ${errorMsg}`,
+            isLoading: false, // Ensure isLoading is also reset if used elsewhere
+            isWaitingForDeepseek: false,
+            orbState: 'idle' // Reset orb state on error
         });
-
-        // 显示错误提示
         wx.showToast({
             title: errorMsg,
             icon: 'none',
             duration: 2000
         });
-    },
-
-    // 保存聊天历史
-    saveChatHistory() {
-        wx.setStorageSync('chatHistory', this.data.messages);
-    },
-
-    // 加载聊天历史
-    loadChatHistory() {
-        try {
-            const chatHistory = wx.getStorageSync('chatHistory');
-            if (chatHistory && chatHistory.length) {
-                this.setData({ messages: chatHistory });
-                this.scrollToBottom();
-            }
-        } catch (e) {
-            console.error('加载聊天历史失败:', e);
-        }
-    },
-
-    // 清空聊天历史
-    clearChatHistory() {
-        wx.showModal({
-            title: '确认清空',
-            content: '确定要清空所有聊天记录吗？',
-            success: (res) => {
-                if (res.confirm) {
-                    this.setData({ messages: [] });
-                    wx.removeStorageSync('chatHistory');
-                    wx.showToast({
-                        title: '已清空聊天记录',
-                        icon: 'success'
-                    });
-                }
-            }
-        });
-    },
-
-    // 深度思考模式
-    activateDeepThinking() {
-        wx.showToast({
-            title: '深度思考模式已激活',
-            icon: 'none',
-            duration: 2000
-        });
-        // 这里可以添加深度思考模式的实际逻辑
-    },
-
-    // 联网搜索功能
-    activateWebSearch() {
-        wx.showToast({
-            title: '联网搜索已激活',
-            icon: 'none',
-            duration: 2000
-        });
-        // 这里可以添加联网搜索的实际逻辑
-    },
-
-    /**
-     * 导航到新页面，展示不同场景
-     */
-    navigateToNewPage() {
-        // 获取可用的对话数据列表
-        const dataUtils = require('../../data/data_utils');
-        const dataList = dataUtils.getAvailableDataList();
-
-        // 构建场景选项
-        const items = dataList.map((item: { title: string }) => `${item.title}`);
-
-        // 显示选择对话框
-        wx.showActionSheet({
-            itemList: items,
-            success: (res) => {
-                // 用户选择了某个场景
-                const selectedIndex = res.tapIndex;
-                const selectedDataId = dataList[selectedIndex].id;
-
-                // 导航到事件演示页面，并传递选择的数据ID
-                wx.navigateTo({
-                    url: `/pages/event-demo/event-demo?id=${selectedDataId}`,
-                    success: () => {
-                        console.log('成功导航到演示页面');
-                    },
-                    fail: (err) => {
-                        console.error('导航失败:', err);
-                        wx.showToast({
-                            title: '导航失败',
-                            icon: 'none'
-                        });
-                    }
-                });
-            },
-            fail: () => {
-                // 用户取消选择
-                console.log('用户取消了选择');
-            }
-        });
     }
+
+    // Removed: sendMessage, onMessageInput, scrollToBottom, saveChatHistory, loadChatHistory, clearChatHistory, activateDeepThinking, activateWebSearch, navigateToNewPage, initRecorderManager (now implicit)
 }); 

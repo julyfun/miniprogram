@@ -1,82 +1,22 @@
 <!-- 聊天助手页面 -->
 <view class="container">
-  <!-- 顶部标题 -->
-  <view class="header">
-    <text class="title">聊天场景演示</text>
-  </view>
-  <!-- 聊天内容区域 -->
-  <scroll-view class="chat-container" scroll-y="true" enhanced="true" show-scrollbar="false" scroll-into-view="{{scrollToView}}">
-    <block wx:if="{{messages.length > 0}}">
-      <view wx:for="{{messages}}" wx:key="index" class="message-wrapper {{item.role === 'user' ? 'user-wrapper' : 'ai-wrapper'}}">
-        <!-- AI消息带头像 -->
-        <block wx:if="{{item.role === 'assistant'}}">
-          <view class="avatar-container">
-            <image class="ai-avatar" src="/assets/icons/deepseek.png" mode="aspectFill"></image>
-          </view>
-        </block>
-        <view class="message-item {{item.role === 'user' ? 'user-message' : 'ai-message'}}">
-          <view class="message-content">{{item.content}}</view>
-        </view>
+  <view class="debug-container">
+    <view class="debug-box debug-box-recognition">
+      <view class="debug-title">实时识别结果:</view>
+      <view class="input-container">
+        <textarea value="{{debugRecognizedText}}" placeholder="请说话..." bindinput="onDebugTextInput" class="editable-textarea"></textarea>
+        <button class="send-button" bindtap="sendEditedText" disabled="{{isWaitingForDeepseek}}">
+          发送
+        </button>
       </view>
-    </block>
-    <block wx:else>
-      <!-- 中间声波动画区域 -->
-      <view class="voice-animation-container">
-        <view class="voice-animation">
-          <view class="voice-dot"></view>
-          <view class="voice-dot"></view>
-          <view class="voice-dot"></view>
-          <view class="voice-dot"></view>
-        </view>
-        <text class="welcome-text">请输入您的问题...</text>
-      </view>
-    </block>
-    <!-- 用于自动滚动到底部的锚点 -->
-    <view id="message-bottom"></view>
-  </scroll-view>
-  <!-- 底部输入区域 -->
-  <view class="input-container">
-    <view class="voice-input-wrapper">
-      <input class="message-input" type="text" confirm-type="send" placeholder="{{isRecording ? '正在语音识别...' : '给 DeepSeek 发送消息'}}" value="{{inputMessage}}" bindinput="onMessageInput" bindconfirm="sendMessage" disabled="{{isRecording}}" />
-      <view class="voice-button {{isRecording ? 'recording' : ''}}" bindtap="toggleVoiceRecording">
-        <image class="voice-icon" src="/assets/icons/{{isRecording ? 'recording' : 'voice'}}.svg" mode="aspectFit"></image>
-      </view>
+    </view>
+    <view class="debug-box debug-box-response">
+      <view class="debug-title">Deepseek 回复:</view>
+      <textarea value="{{debugDeepseekResponse}}" placeholder="等待回复..." disabled></textarea>
     </view>
   </view>
-  <!-- 语音录制提示 -->
-  <view class="voice-recording-overlay" wx:if="{{isRecording}}">
-    <view class="voice-recording-container">
-      <view class="voice-wave-animation">
-        <view class="voice-wave"></view>
-        <view class="voice-wave"></view>
-        <view class="voice-wave"></view>
-      </view>
-      <text class="voice-recording-text">实时语音识别中，识别结果将直接显示在输入框</text>
-      <view class="voice-action-buttons">
-        <view class="voice-cancel-button" bindtap="cancelVoiceRecording">取消</view>
-        <view class="voice-done-button" bindtap="endRecording">完成</view>
-      </view>
-    </view>
-  </view>
-  <!-- 功能按钮栏 -->
-  <view class="function-bar">
-    <view class="function-left">
-      <view class="function-button selected" bindtap="activateDeepThinking">
-        <view class="radio-dot"></view>
-        <text>深度思考 (R1)</text>
-      </view>
-      <view class="function-button" bindtap="activateWebSearch">
-        <view class="radio-dot"></view>
-        <text>联网搜索</text>
-      </view>
-    </view>
-    <view class="function-right">
-      <view class="plus-button" bindtap="navigateToNewPage">
-        <text class="plus-text">+</text>
-      </view>
-      <view class="send-button" bindtap="sendMessage">
-        <view class="arrow-icon"></view>
-      </view>
-    </view>
+  <view class="orb-container">
+    <view class="orb {{orbState}}" bindtap="handleOrbTap"></view>
+    <view class="orb-instruction">{{isRecording ? '正在聆听... 点击停止' : '点击开始说话'}}</view>
   </view>
 </view>
