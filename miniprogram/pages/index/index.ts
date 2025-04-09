@@ -129,11 +129,11 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             }
 
             // Log the raw error object structure and content (using original error)
-            console.error(`语音识别错误 (Source: ${errorSource}, Raw): `, JSON.stringify(error, null, 2));
+            // console.error(`语音识别错误 (Source: ${errorSource}, Raw): `, JSON.stringify(error, null, 2));
             // Log the processed error object
-            if (errorSource !== "Object") {
-                console.error(`语音识别错误 (Processed): `, JSON.stringify(processedError, null, 2));
-            }
+            // if (errorSource !== "Object") {
+            //     console.error(`语音识别错误 (Processed): `, JSON.stringify(processedError, null, 2));
+            // }
 
             // Ignore reset events for UI feedback
             if (processedError && processedError.code === "RESET") {
@@ -422,8 +422,19 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             if (jsonStr === '[DONE]') continue;
                             try {
                                 const chunk = JSON.parse(jsonStr);
-                                if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0].delta?.content) {
-                                    fullContent += chunk.choices[0].delta.content;
+
+                                // 提取增量内容 (Replace optional chaining)
+                                if (chunk.choices &&
+                                    chunk.choices.length > 0 &&
+                                    chunk.choices[0].delta &&
+                                    chunk.choices[0].delta.content) {
+                                    const delta = chunk.choices[0].delta;
+                                    fullContent += delta.content;
+
+                                    // 实时更新 Debug 文本框
+                                    this.setData({
+                                        debugDeepseekResponse: fullContent
+                                    });
                                 }
                             } catch (e) { /* ignore json parse error */ }
                         }

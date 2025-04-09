@@ -498,7 +498,8 @@ class RealtimeSpeechRecognition {
             });
 
             this.speechRecognizer.on('failed', (msg) => {
-                console.error('Speech recognition failed:', msg);
+                // Comment out the verbose log as index.ts handles the UI aspect
+                // console.error('Speech recognition failed:', msg); 
                 if (this.onErrorCallback) {
                     this.onErrorCallback(msg);
                 }
@@ -552,8 +553,8 @@ class RealtimeSpeechRecognition {
                 await this.speechRecognizer.close({});
                 console.log("[SpeechRecognizer] Closed successfully.");
             } catch (error) {
-                // Log specific close error, but don't necessarily re-throw if recorder already stopped
-                console.error('Error closing speech recognizer during stop:', error);
+                // Comment out this log as the error is expected and handled by index.ts onError
+                // console.error('Error closing speech recognizer during stop:', error);
             } finally {
                 this.speechRecognizer = null;
                 this.isRecognizing = false;
