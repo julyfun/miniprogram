@@ -1,6 +1,6 @@
 {
   "description": "项目配置文件",
-  "cloudfunctionRoot": "cloudfunctions/",
+  "cloudfunctionRoot": "miniprogram/cloudfunction/",
   "miniprogramRoot": "miniprogram/",
   "compileType": "miniprogram",
   "setting": {
@@ -19,9 +19,10 @@
     "enhance": false,
     "showShadowRootInWxmlPanel": false,
     "packNpmRelationList": [],
-    "ignoreUploadUnusedFiles": true,
+    "ignoreUploadUnusedFiles": false,
     "compileHotReLoad": false,
-    "skylineRenderEnable": true
+    "skylineRenderEnable": true,
+    "es6": false
   },
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},

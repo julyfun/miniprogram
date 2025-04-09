@@ -37,7 +37,7 @@
   <!-- 底部输入区域 -->
   <view class="input-container">
     <view class="voice-input-wrapper">
-      <input class="message-input" type="text" confirm-type="send" placeholder="给 DeepSeek 发送消息" value="{{inputMessage}}" bindinput="onMessageInput" bindconfirm="sendMessage" />
+      <input class="message-input" type="text" confirm-type="send" placeholder="{{isRecording ? '正在语音识别...' : '给 DeepSeek 发送消息'}}" value="{{inputMessage}}" bindinput="onMessageInput" bindconfirm="sendMessage" disabled="{{isRecording}}" />
       <view class="voice-button {{isRecording ? 'recording' : ''}}" bindtap="toggleVoiceRecording">
         <image class="voice-icon" src="/assets/icons/{{isRecording ? 'recording' : 'voice'}}.svg" mode="aspectFit"></image>
       </view>
@@ -51,8 +51,11 @@
         <view class="voice-wave"></view>
         <view class="voice-wave"></view>
       </view>
-      <text class="voice-recording-text">正在录音，点击麦克风图标结束</text>
-      <view class="voice-cancel-button" bindtap="cancelVoiceRecording">取消录音</view>
+      <text class="voice-recording-text">实时语音识别中，识别结果将直接显示在输入框</text>
+      <view class="voice-action-buttons">
+        <view class="voice-cancel-button" bindtap="cancelVoiceRecording">取消</view>
+        <view class="voice-done-button" bindtap="endRecording">完成</view>
+      </view>
     </view>
   </view>
   <!-- 功能按钮栏 -->

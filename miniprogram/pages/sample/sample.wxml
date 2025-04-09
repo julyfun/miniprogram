@@ -1,0 +1,11 @@
+<!-- pages/index2/index2.wxml -->
+<view wx:if="{{!openid}}">
+    <button open-type="getUserInfo" lang="zh_CN" bindgetuserinfo="onGotUserInfo">获取用户</button>
+</view>
+<view wx:if="{{openid}}">
+    <text>openid: {{openid}}</text>
+    <view class="btn-container">
+        <button bindtap="addLog" data-value="{{1}}" class="operation-btn add-btn">+1</button>
+        <button bindtap="addLog" data-value="{{-1}}" class="operation-btn sub-btn">-1</button>
+    </view>
+</view>

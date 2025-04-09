@@ -1,0 +1,3 @@
+[submodule "miniprogram/third_party/alibabacloud-nls-wx-sdk"]
+	path = miniprogram/third_party/alibabacloud-nls-wx-sdk
+	url = git@github.com:aliyun/alibabacloud-nls-wx-sdk.git
