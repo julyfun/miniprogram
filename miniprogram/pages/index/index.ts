@@ -1,6 +1,10 @@
-import SpeechRecognizer from '../../utils/speechRecognition';
+import AliSpeechRecognizer from '../../utils/customSpeechRecognition'; // Rename old import
+import DashScopeSpeechRecognizer from '../../utils/dashScopeSpeechRecognition'; // Import new one
 import { DEEPSEEK_SECRETS } from '../../utils/secrets';
 import { synthesizeAndPlay, stopPlayback as stopTTSPlayback } from '../../utils/tts'; // Import TTS functions
+
+// Define ASR engine types
+type AsrEngineType = 'alibaba' | 'dashscope';
 
 // Define the possible states for the orb animation
 type OrbState = 'idle' | 'listening' | 'listening-active' | 'processing' | 'speaking'; // Add speaking state
@@ -12,6 +16,19 @@ interface IPageData {
     isWaitingForDeepseek: boolean;  // Waiting for API response?
     isSpeaking: boolean;            // Is TTS currently playing?
     orbState: OrbState;             // Controls orb animation
+    currentAsrEngine: AsrEngineType; // Add state for current engine
+}
+
+// Choose the default ASR engine here
+const DEFAULT_ASR_ENGINE: AsrEngineType = 'dashscope'; // Or 'alibaba'
+
+// Define a common interface for our speech recognizers
+interface ISpeechRecognizer {
+    onResult(callback: (text: string, isFinal: boolean) => void): void;
+    onError(callback: (error: any) => void): void;
+    start(): Promise<void>;
+    stop(): Promise<void>;
+    reset(): void;
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
@@ -22,6 +39,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         isWaitingForDeepseek: false,
         isSpeaking: false,
         orbState: 'idle',
+        currentAsrEngine: DEFAULT_ASR_ENGINE, // Initialize with default
     },
 
     // Silence detection timer
@@ -33,23 +51,23 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     // Last result timestamp to detect activity
     lastResultTime: 0,
 
-    // Speech recognizer instance
-    speechRecognizer: null as SpeechRecognizer | null,
+    // Speech recognizer instance - now typed with the interface
+    speechRecognizer: null as ISpeechRecognizer | null,
 
     // Add a flag to prevent rapid duplicate error handling
     lastErrorTime: 0,
     minErrorInterval: 500, // Minimum interval in ms between handling errors
 
     onLoad: function () {
-        // Only init recognizer here
-        this.initSpeechRecognition();
-        // Recorder manager is handled within SpeechRecognizer now
+        this.initSpeechRecognition(); // Will use the engine specified in data
     },
 
     onUnload: function () {
         // Clean up resources
         if (this.speechRecognizer) {
-            this.speechRecognizer.stop(); // Ensure ASR stops if page is closed
+            if (typeof this.speechRecognizer.stop === 'function') {
+                this.speechRecognizer.stop();
+            }
         }
         stopTTSPlayback(); // Ensure TTS stops if page is closed
         if (this.silenceTimer) {
@@ -62,9 +80,23 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         }
     },
 
-    // Initialize Speech Recognition
+    // Initialize Speech Recognition based on currentAsrEngine
     initSpeechRecognition: function () {
-        this.speechRecognizer = new SpeechRecognizer();
+        const engineType = this.data.currentAsrEngine;
+        console.log(`Initializing ASR engine: ${engineType}`);
+
+        // Instantiate the selected recognizer
+        if (engineType === 'dashscope') {
+            this.speechRecognizer = new DashScopeSpeechRecognizer();
+        } else { // Default to Alibaba
+            this.speechRecognizer = new AliSpeechRecognizer();
+        }
+
+        if (!this.speechRecognizer) {
+            console.error("Failed to initialize speech recognizer!");
+            wx.showToast({ title: '语音引擎初始化失败', icon: 'none' });
+            return;
+        }
 
         // --- Result Callback ---
         this.speechRecognizer.onResult((text: string, isFinal: boolean) => {
@@ -499,7 +531,34 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             icon: 'none',
             duration: 2000
         });
-    }
+    },
+
+    // --- Add method to switch engine (Example) ---
+    switchAsrEngine: function () {
+        const nextEngine: AsrEngineType = this.data.currentAsrEngine === 'alibaba' ? 'dashscope' : 'alibaba';
+        console.log(`Switching ASR engine to: ${nextEngine}`);
+        // Stop current recognizer if active
+        if (this.speechRecognizer && this.data.isRecording) {
+            this.speechRecognizer.stop();
+        }
+        if (this.speechRecognizer && typeof this.speechRecognizer.reset === 'function') {
+            this.speechRecognizer.reset(); // Call reset if available
+        }
+        this.speechRecognizer = null; // Clear instance
+        stopTTSPlayback(); // Stop TTS during switch
+        this.setData({
+            currentAsrEngine: nextEngine,
+            isRecording: false,
+            isWaitingForDeepseek: false,
+            isSpeaking: false,
+            orbState: 'idle',
+            debugRecognizedText: '',
+            debugDeepseekResponse: ''
+        }, () => {
+            this.initSpeechRecognition(); // Re-initialize with the new engine
+            wx.showToast({ title: `已切换到 ${nextEngine} 引擎`, icon: 'none' });
+        });
+    },
 
     // Removed: sendMessage, onMessageInput, scrollToBottom, saveChatHistory, loadChatHistory, clearChatHistory, activateDeepThinking, activateWebSearch, navigateToNewPage, initRecorderManager (now implicit)
 }); 
