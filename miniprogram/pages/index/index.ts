@@ -1,14 +1,16 @@
 import SpeechRecognizer from '../../utils/speechRecognition';
 import { DEEPSEEK_SECRETS } from '../../utils/secrets';
+import { synthesizeAndPlay, stopPlayback as stopTTSPlayback } from '../../utils/tts'; // Import TTS functions
 
 // Define the possible states for the orb animation
-type OrbState = 'idle' | 'listening' | 'listening-active' | 'processing';
+type OrbState = 'idle' | 'listening' | 'listening-active' | 'processing' | 'speaking'; // Add speaking state
 
 interface IPageData {
     debugRecognizedText: string;    // For Debug Box 1
     debugDeepseekResponse: string;  // For Debug Box 2
     isRecording: boolean;           // Is microphone active?
-    isWaitingForDeepseek: boolean;  // Waiting for API response? (Used for orb state)
+    isWaitingForDeepseek: boolean;  // Waiting for API response?
+    isSpeaking: boolean;            // Is TTS currently playing?
     orbState: OrbState;             // Controls orb animation
 }
 
@@ -18,6 +20,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         debugDeepseekResponse: '',
         isRecording: false,
         isWaitingForDeepseek: false,
+        isSpeaking: false,
         orbState: 'idle',
     },
 
@@ -46,8 +49,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     onUnload: function () {
         // Clean up resources
         if (this.speechRecognizer) {
-            this.speechRecognizer.stop(); // Ensure it stops if page is closed
+            this.speechRecognizer.stop(); // Ensure ASR stops if page is closed
         }
+        stopTTSPlayback(); // Ensure TTS stops if page is closed
         if (this.silenceTimer) {
             clearTimeout(this.silenceTimer);
             this.silenceTimer = null;
@@ -227,6 +231,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     handleOrbTap: function () {
         if (this.data.isRecording) {
             this.stopRecordingAndRecognition();
+        } else if (this.data.isSpeaking) { // If speaking, tapping stops TTS
+            stopTTSPlayback();
+            this.setData({ isSpeaking: false, orbState: 'idle' });
         } else {
             this.startRecordingAndRecognition();
         }
@@ -234,6 +241,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
     // --- Start Recording ---
     startRecordingAndRecognition: function () {
+        stopTTSPlayback(); // Stop any ongoing TTS before starting recording
         if (this.data.isRecording || this.data.isWaitingForDeepseek) {
             return; // Already active or processing
         }
@@ -360,15 +368,18 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             return;
         }
 
+        stopTTSPlayback(); // Stop TTS if it was somehow playing
+
         console.log('准备发送给 Deepseek:', this.latestRecognizedText);
         const textToSend = this.latestRecognizedText;
 
         // State should be updated *before* the API call
         this.setData({
-            isRecording: false, // Ensure recording is marked as stopped
+            isRecording: false,
             isWaitingForDeepseek: true,
+            isSpeaking: false, // Ensure speaking is false
             orbState: 'processing',
-            debugDeepseekResponse: '思考中...' // Indicate processing
+            debugDeepseekResponse: '思考中...'
         });
 
         // Call Deepseek API with streaming response
@@ -389,59 +400,71 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 max_tokens: 1000,
                 stream: true // 启用流式响应
             },
-            responseType: 'text', // 流式响应需要使用 text 类型
+            responseType: 'text',
             success: (res: any) => {
                 console.log("Deepseek API 流式响应开始");
                 if (res.statusCode === 200 && res.data) {
+                    let fullContent = '';
+                    let sentenceEndDetected = false;
+                    let firstChunkReceived = false;
+
+                    // We need a way to process the stream chunk by chunk as it arrives.
+                    // wx.request 'success' gives the whole data at once even with stream:true.
+                    // For true streaming UI update & TTS, we'd need wx.requestTask.onChunkReceived (not standard)
+                    // or a WebSocket connection to a backend proxy that handles the stream.
+
+                    // --- SIMPLIFIED APPROACH for now: Process whole response, then TTS --- 
                     try {
-                        // 将响应文本按行分割，每行是一个 SSE 事件
                         const lines = res.data.split('\n');
-                        let fullContent = '';
-
                         for (const line of lines) {
-                            // 忽略空行
-                            if (!line.trim()) continue;
-
-                            // 检查是否是数据行，格式为 "data: {...}"
-                            if (line.startsWith('data:')) {
-                                const jsonStr = line.substring(5).trim();
-
-                                // 忽略 [DONE] 信号
-                                if (jsonStr === '[DONE]') continue;
-
-                                try {
-                                    const chunk = JSON.parse(jsonStr);
-
-                                    // 提取增量内容
-                                    if (chunk.choices && chunk.choices.length > 0) {
-                                        const delta = chunk.choices[0].delta;
-                                        if (delta && delta.content) {
-                                            fullContent += delta.content;
-
-                                            // 实时更新 Debug 文本框
-                                            this.setData({
-                                                debugDeepseekResponse: fullContent
-                                            });
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error('解析 SSE 数据失败:', e, jsonStr);
+                            if (!line.trim() || !line.startsWith('data:')) continue;
+                            const jsonStr = line.substring(5).trim();
+                            if (jsonStr === '[DONE]') continue;
+                            try {
+                                const chunk = JSON.parse(jsonStr);
+                                if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0].delta?.content) {
+                                    fullContent += chunk.choices[0].delta.content;
                                 }
-                            }
+                            } catch (e) { /* ignore json parse error */ }
                         }
 
-                        // 流式响应处理完成后，更新状态
+                        // Update the debug box with the final content
                         this.setData({
-                            isWaitingForDeepseek: false,
-                            orbState: 'idle'
+                            debugDeepseekResponse: fullContent,
+                            isWaitingForDeepseek: false, // Finished waiting for API
+                            // We will set speaking state once TTS starts
                         });
+
+                        // --- Play the full response using TTS ---
+                        if (fullContent.trim()) {
+                            console.log("[TTS] Attempting to play full response:", fullContent);
+                            this.setData({ isSpeaking: true, orbState: 'speaking' }); // Update state for TTS
+                            synthesizeAndPlay(
+                                fullContent,
+                                'Aitong', // Or another voice
+                                'mp3',
+                                16000,
+                                () => { // onEnded
+                                    console.log("[TTS] Playback completed successfully.");
+                                    this.setData({ isSpeaking: false, orbState: 'idle' });
+                                },
+                                (error) => { // onError
+                                    console.error("[TTS] Playback failed:", error);
+                                    this.setData({ isSpeaking: false, orbState: 'idle' });
+                                    // Optionally show a toast for TTS playback error
+                                    wx.showToast({ title: '语音播放失败', icon: 'none' });
+                                }
+                            );
+                        } else {
+                            // No content to speak, return to idle
+                            this.setData({ orbState: 'idle' });
+                        }
 
                     } catch (error) {
                         console.error('处理流式响应失败:', error);
                         this.handleApiError('处理响应失败');
                     }
                 } else {
-                    // 处理错误
                     this.handleApiError(`请求失败 (${res.statusCode})`);
                 }
             },

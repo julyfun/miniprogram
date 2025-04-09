@@ -1,122 +1,143 @@
-const request = require('request');
+const WebSocket = require('ws');
 const fs = require('fs');
-function processGETRequest(appkey, token, text, audioSaveFile, format, sampleRate) {
-    var url = 'nls-gateway-ap-southeast-1.aliyuncs.com/stream/v1/tts';
-    /**
-     * 设置URL请求参数。
-     */
-    url = url + '?appkey=' + appkey;
-    url = url + '&token=' + token;
-    url = url + '&text=' + text;
-    url = url + '&format=' + format;
-    url = url + '&sample_rate=' + sampleRate;
-    // voice 发音人，可选，默认是xiaoyun。
-    // url = url + "&voice=" + "xiaoyun";
-    // volume 音量，范围是0~100，可选，默认50。
-    // url = url + "&volume=" + 50;
-    // speech_rate 语速，范围是-500~500，可选，默认是0。
-    // url = url + "&speech_rate=" + 0;
-    // pitch_rate 语调，范围是-500~500，可选，默认是0。
-    // url = url + "&pitch_rate=" + 0;
-    console.log(url);
-    /**
-     * 设置HTTPS GET请求。
-     * encoding必须设置为null，HTTPS响应的Body为二进制Buffer类型。
-     */
-    var options = {
-        url: url,
-        method: 'GET',
-        encoding: null
-    };
-    request(options, function (error, response, body) {
-        /**
-         * 处理服务端的响应。
-         */
-        if (error != null) {
-            console.log(error);
-        }
-        else {
-            var contentType = response.headers['content-type'];
-            if (contentType === undefined || contentType != 'audio/mpeg') {
-                console.log(body.toString());
-                console.log('The GET request failed!');
-            }
-            else {
-                fs.writeFileSync(audioSaveFile, body);
-                console.log('The GET request is succeed!');
-            }
-        }
-    });
-}
-function processPOSTRequest(appkeyValue, tokenValue, textValue, audioSaveFile, formatValue, sampleRateValue) {
-    var url = 'nls-gateway-ap-southeast-1.aliyuncs.com/stream/v1/tts';
-    /**
-     * 请求参数，以JSON格式字符串填入HTTPS POST请求的Body中。
-    */
-    var task = {
-        appkey : appkeyValue,
-        token : tokenValue,
-        text : textValue,
-        format : formatValue,
-        sample_rate : sampleRateValue
-        // voice 发音人，可选，默认是xiaoyun。
-        // voice : 'xiaoyun',
-        // volume 音量，范围是0~100，可选，默认50。
-        // volume : 50,
-        // speech_rate 语速，范围是-500~500，可选，默认是0。
-        // speech_rate : 0,
-        // pitch_rate 语调，范围是-500~500，可选，默认是0。
-        // pitch_rate : 0
-    };
-    var bodyContent = JSON.stringify(task);
-    console.log('The POST request body content: ' + bodyContent);
-    /**
-     * 设置HTTPS POST请求头部。
-     */
-    var httpHeaders = {
-        'Content-type' : 'application/json'
+const uuid = require('uuid').v4;
+
+// 若没有将API Key配置到环境变量，可将下行替换为：apiKey = 'your_api_key'。不建议在生产环境中直接将API Key硬编码到代码中，以减少API Key泄露风险。
+const apiKey = process.env.DASHSCOPE_API_KEY;
+// WebSocket服务器地址
+const url = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/';
+// 输出文件路径
+const outputFilePath = 'output.mp3';
+
+// 清空输出文件
+fs.writeFileSync(outputFilePath, '');
+
+// 创建WebSocket客户端
+const ws = new WebSocket(url, {
+  headers: {
+    Authorization: `bearer ${apiKey}`,
+    'X-DashScope-DataInspection': 'enable'
+  }
+});
+
+let taskStarted = false;
+let taskId = uuid();
+
+ws.on('open', () => {
+  console.log('已连接到WebSocket服务器');
+
+  // 发送run-task指令
+  const runTaskMessage = JSON.stringify({
+    header: {
+      action: 'run-task',
+      task_id: taskId,
+      streaming: 'duplex'
+    },
+    payload: {
+      task_group: 'audio',
+      task: 'tts',
+      function: 'SpeechSynthesizer',
+      model: 'cosyvoice-v1',
+      parameters: {
+        text_type: 'PlainText',
+        voice: 'longxiaochun', // 音色
+        format: 'mp3', // 音频格式
+        sample_rate: 22050, // 采样率
+        volume: 50, // 音量
+        rate: 1, // 语速
+        pitch: 1 // 音调
+      },
+      input: {}
     }
-    /**
-     * 设置HTTPS POST请求。
-     * encoding必须设置为null，HTTPS响应的Body为二进制Buffer类型。
-     */
-    var options = {
-        url: url,
-        method: 'POST',
-        headers: httpHeaders,
-        body: bodyContent,
-        encoding: null
-    };
-    request(options, function (error, response, body) {
-        /**
-         * 处理服务端的响应。
-         */
-        if (error != null) {
-            console.log(error);
-        }
-        else {
-            var contentType = response.headers['content-type'];
-            if (contentType === undefined || contentType != 'audio/mpeg') {
-                console.log(body.toString());
-                console.log('The POST request failed!');
+  });
+  ws.send(runTaskMessage);
+  console.log('已发送run-task消息');
+});
+
+const fileStream = fs.createWriteStream(outputFilePath, { flags: 'a' });
+ws.on('message', (data, isBinary) => {
+  if (isBinary) {
+    // 写入二进制数据到文件
+    fileStream.write(data);
+  } else {
+    const message = JSON.parse(data);
+
+    switch (message.header.event) {
+      case 'task-started':
+        taskStarted = true;
+        console.log('任务已开始');
+        // 发送continue-task指令
+        sendContinueTasks(ws);
+        break;
+      case 'task-finished':
+        console.log('任务已完成');
+        ws.close();
+        fileStream.end(() => {
+          console.log('文件流已关闭');
+        });
+        break;
+      case 'task-failed':
+        console.error('任务失败：', message.header.error_message);
+        ws.close();
+        fileStream.end(() => {
+          console.log('文件流已关闭');
+        });
+        break;
+      default:
+        // 可以在这里处理result-generated
+        break;
+    }
+  }
+});
+
+function sendContinueTasks(ws) {
+  const texts = [
+    '床前明月光，',
+    '疑是地上霜。',
+    '举头望明月，',
+    '低头思故乡。'
+  ];
+  
+  texts.forEach((text, index) => {
+    setTimeout(() => {
+      if (taskStarted) {
+        const continueTaskMessage = JSON.stringify({
+          header: {
+            action: 'continue-task',
+            task_id: taskId,
+            streaming: 'duplex'
+          },
+          payload: {
+            input: {
+              text: text
             }
-            else {
-                fs.writeFileSync(audioSaveFile, body);
-                console.log('The POST request is succeed!');
-            }
+          }
+        });
+        ws.send(continueTaskMessage);
+        console.log(`已发送continue-task，文本：${text}`);
+      }
+    }, index * 1000); // 每隔1秒发送一次
+  });
+
+  // 发送finish-task指令
+  setTimeout(() => {
+    if (taskStarted) {
+      const finishTaskMessage = JSON.stringify({
+        header: {
+          action: 'finish-task',
+          task_id: taskId,
+          streaming: 'duplex'
+        },
+        payload: {
+          input: {}
         }
-    });
+      });
+      ws.send(finishTaskMessage);
+      console.log('已发送finish-task');
+    }
+  }, texts.length * 1000 + 1000); // 在所有continue-task指令发送完毕后1秒发送
 }
-var appkey = '您的appkey';
-var token = '您的token';
-var text = '今天是周一，天气挺好的。';
-var textUrlEncode = encodeURIComponent(text)
-                    .replace(/[!'()*]/g, function(c) {
-                        return '%' + c.charCodeAt(0).toString(16);
-                    });
-console.log(textUrlEncode);
-var audioSaveFile = 'syAudio.wav';
-var format = 'wav';
-var sampleRate = 16000;
-processGETRequest(appkey, token, textUrlEncode, audioSaveFile, format, sampleRate);
-// processPOSTRequest(appkey, token, text, audioSaveFile, format, sampleRate);
+
+ws.on('close', () => {
+  console.log('已断开与WebSocket服务器的连接');
+});

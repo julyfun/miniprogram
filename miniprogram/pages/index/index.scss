@@ -804,6 +804,13 @@
         transform: scale(0.95);
         box-shadow: 0 4px 15px rgba(43, 145, 255, 0.3);
     }
+
+    // Speaking State Animation (Color Pulse)
+    &.speaking {
+        animation: colorPulse 1.5s infinite ease-in-out;
+        // Keep the base background for color pulse
+        background: radial-gradient(circle at 30% 30%, #64e6ff, #2b91ff);
+    }
 }
 
 .orb-instruction {
