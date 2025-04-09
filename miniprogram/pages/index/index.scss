@@ -1,13 +1,12 @@
 /* 全局容器 */
 .container {
+    height: 100vh;
+    width: 100vw;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    height: 100vh;
-    padding: 40rpx 20rpx;
-    box-sizing: border-box;
-    background-color: #f8f8f8; // 轻微浅灰色背景
+    background: #ffffff;
+    position: relative;
+    overflow: hidden;
 }
 
 /* 顶部标题 */
@@ -24,13 +23,61 @@
 }
 
 /* 聊天内容区域 */
-.chat-container {
+.chat-history {
     flex: 1;
-    padding: 30rpx 0 140rpx 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    width: 100%;
+    padding: 30px 26px;
+    padding-bottom: 300px;
+    /* Increased from 220px to prevent overlap with the orb */
+    height: 100%;
     box-sizing: border-box;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling for iOS */
+}
+
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-bottom: 60px;
+    /* Increased from 30px to add more space at the bottom */
+    width: 100%;
+    min-height: 100%;
+}
+
+.message {
+    max-width: 85%;
+    opacity: 0;
+    animation: fadeIn 0.3s ease-out forwards;
+    padding: 0 10rpx;
+
+    &.user {
+        align-self: flex-end;
+        text-align: right;
+        margin-right: 10rpx;
+    }
+
+    &.assistant {
+        align-self: flex-start;
+        text-align: left;
+        margin-left: 10rpx;
+    }
+}
+
+.message-text {
+    font-size: 20px;
+    line-height: 1.4;
+    color: #333333;
+    text-shadow: none;
+    font-weight: bold;
+    padding: 16rpx 24rpx;
+}
+
+.message-hint {
+    display: block;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.6);
+    margin-top: 4px;
 }
 
 /* 消息包装器 */
@@ -80,13 +127,13 @@
 
 /* 消息项 */
 .message-item {
-    margin-bottom: 0;
+    margin-bottom: 10rpx;
     max-width: 85%;
     box-sizing: border-box;
 }
 
 .message-content {
-    padding: 20rpx 24rpx;
+    padding: 24rpx 30rpx;
     border-radius: 20rpx;
     font-size: 30rpx;
     line-height: 1.5;
@@ -96,15 +143,18 @@
     overflow-wrap: break-word;
     box-sizing: border-box;
     max-width: 100%;
+    margin: 0 6rpx;
 }
 
 /* 用户消息样式 */
 .user-message {
     .message-content {
-        background-color: #4169E1;
-        color: #ffffff;
+        background-color: #ebf2ff;
+        color: #333333;
         border-radius: 20rpx;
         word-break: break-word;
+        margin-left: 20rpx;
+        box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
     }
 }
 
@@ -115,6 +165,8 @@
         color: #000000;
         border-radius: 20rpx;
         word-break: break-word;
+        margin-right: 20rpx;
+        box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
     }
 }
 
@@ -744,132 +796,222 @@
     }
 }
 
-// Orb 容器
+/* Orb 容器 */
 .orb-container {
+    position: fixed;
+    bottom: 40px;
+    left: 0;
+    right: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    flex-grow: 1; // 占用剩余垂直空间
-    width: 100%;
-    padding-bottom: 40rpx; // 底部留出一些空间
+    gap: 16px;
+    z-index: 100;
+    /* Ensure orb stays above other content */
+    background: rgba(255, 255, 255, 0.95);
+    /* More opaque to ensure visibility */
+    padding-top: 30px;
+    /* Increased from 20px for better separation */
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    /* Add a subtle border for visual separation */
 }
 
-// Siri 风格的球体
 .orb {
-    width: 240rpx;
-    height: 240rpx;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     position: relative;
     cursor: pointer;
-    background: radial-gradient(circle at 30% 30%, #64e6ff, #2b91ff);
-    box-shadow: 0 8px 30px rgba(43, 145, 255, 0.4);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-    // 内部光晕效果
-    &::after {
-        content: '';
+    .orb-inner {
         position: absolute;
-        top: 15%;
-        left: 15%;
-        width: 30%;
-        height: 30%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 55px;
+        height: 55px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.5);
-        filter: blur(5rpx);
+        background: white;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        overflow: hidden;
+        /* 确保头像不超出边界 */
     }
 
-    // 静止状态（微小的呼吸动画）
-    &.idle {
-        animation: breathe 4s infinite ease-in-out;
+    .dog-avatar {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 50%;
     }
 
-    // 有声音时的活跃状态（跳动）
-    &.listening-active {
-        animation: activeBounce 0.8s infinite ease-in-out;
+    .orb-outer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+        border: 2px solid rgba(0, 0, 0, 0.1);
     }
 
-    // 普通监听状态（轻微的上下移动）
     &.listening {
-        animation: gentleBounce 2s infinite ease-in-out;
+        .orb-inner {
+            animation: elasticPulse 1.5s ease-in-out infinite;
+            /* 用户说话时弹性变形 */
+        }
+
+        .orb-outer {
+            border: none;
+            box-shadow: 0 0 0 rgba(150, 150, 150, 0.7);
+            animation: ripple 2s infinite ease-out;
+            /* 用户说话发出灰色波纹 */
+        }
     }
 
-    // 处理中状态（旋转）
+    &.listening-active {
+        .orb-inner {
+            animation: elasticBounce 0.8s ease-in-out infinite;
+            /* 听到用户说话时弹性强烈变形 */
+        }
+
+        .orb-outer {
+            border: none;
+            box-shadow: 0 0 0 rgba(150, 150, 150, 0.9);
+            animation: ripple 1s infinite ease-out;
+            /* 快速灰色波纹 */
+        }
+    }
+
     &.processing {
-        animation: rotate 2s linear infinite;
+        .orb-inner {
+            animation: none;
+            /* 不对头像进行变形 */
+        }
+
+        .orb-outer {
+            border: 2px dotted rgba(0, 0, 0, 0.2);
+            animation: orbRotate 1.5s linear infinite;
+            /* API请求等待时转圈 */
+        }
     }
 
-    // 按下效果
-    &:active {
-        transform: scale(0.95);
-        box-shadow: 0 4px 15px rgba(43, 145, 255, 0.3);
-    }
-
-    // Speaking State Animation (Color Pulse)
     &.speaking {
-        animation: colorPulse 1.5s infinite ease-in-out;
-        // Keep the base background for color pulse
-        background: radial-gradient(circle at 30% 30%, #64e6ff, #2b91ff);
+        .orb-inner {
+            animation: gentlePulse 0.5s ease-in-out infinite;
+            /* AI说话时轻微脉动 */
+        }
+
+        .orb-outer {
+            border: 2px solid rgba(65, 105, 225, 0.3);
+            animation: orbRotate 2s linear infinite reverse;
+            /* AI说话时转圈 */
+        }
     }
 }
 
 .orb-instruction {
-    margin-top: 40rpx;
-    font-size: 30rpx;
-    color: #555;
+    font-size: 16px;
+    color: #333333;
     text-align: center;
 }
 
-// 细微呼吸动画（静止状态）
-@keyframes breathe {
+.model-switch {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 101; // Higher than orb-container to stay on top
+}
 
-    0%,
-    100% {
-        transform: scale(1);
-        box-shadow: 0 8px 30px rgba(43, 145, 255, 0.4);
-    }
+.switch-model-btn {
+    background-color: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.8);
 
-    50% {
-        transform: scale(1.02);
-        box-shadow: 0 10px 35px rgba(43, 145, 255, 0.45);
+    &:active {
+        background-color: rgba(0, 0, 0, 0.12);
     }
 }
 
-// 轻微上下移动（监听状态）
-@keyframes gentleBounce {
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-    0%,
-    100% {
+    to {
+        opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* 弹性变形动画 - 用户说话时 */
+@keyframes elasticPulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.95);
+    }
 
     50% {
-        transform: translateY(-6rpx);
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(0.95);
     }
 }
 
-// 有声音时的跳动动画（更活跃）
-@keyframes activeBounce {
-
-    0%,
-    100% {
-        transform: scale(1) translateY(0);
-        box-shadow: 0 8px 30px rgba(43, 145, 255, 0.5);
+/* 更强烈的弹性变形 - 听到用户声音时 */
+@keyframes elasticBounce {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
     }
 
     40% {
-        transform: scale(1.1) translateY(-10rpx);
-        box-shadow: 0 15px 40px rgba(43, 145, 255, 0.6);
+        transform: translate(-50%, -50%) scale(1.15);
     }
 
     60% {
-        transform: scale(1.05) translateY(-5rpx);
-        box-shadow: 0 12px 35px rgba(43, 145, 255, 0.55);
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
-// 处理中的旋转动画
-@keyframes rotate {
+/* 温和的脉动 - AI说话时 */
+@keyframes gentlePulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* 灰色波纹效果 */
+@keyframes ripple {
+    0% {
+        box-shadow: 0 0 0 0 rgba(150, 150, 150, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba(150, 150, 150, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(150, 150, 150, 0);
+    }
+}
+
+@keyframes orbRotate {
     from {
         transform: rotate(0deg);
     }
@@ -879,15 +1021,159 @@
     }
 }
 
-// 颜色光芒闪烁
-@keyframes colorPulse {
+/* 文本输入容器 */
+.text-input-container {
+    margin-top: 20rpx;
+    margin-bottom: 200rpx;
+    /* Increased from 40rpx to provide more space above the orb */
+    width: 90%;
+    max-width: 90%;
+    align-self: center !important;
+    padding: 10rpx !important;
+    opacity: 1;
+    animation: none;
+    /* Disable animation from message class */
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 16rpx;
+}
 
-    0%,
-    100% {
-        box-shadow: 0 0 30rpx rgba(43, 145, 255, 0.6);
+/* Simple text prompt without borders or background */
+.text-input-prompt {
+    color: #777;
+    font-size: 30rpx;
+    text-align: center;
+    width: 100%;
+    height: 60rpx;
+    line-height: 60rpx;
+    font-weight: normal;
+    margin-top: 20rpx;
+    margin-bottom: 20rpx;
+    letter-spacing: 1rpx;
+}
+
+/* Active container when editing */
+.text-input-active-container {
+    position: relative;
+    width: 100%;
+    min-height: 80rpx;
+    background-color: #f5f5f5;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20rpx;
+    padding: 10rpx 20rpx;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    text-align: left !important;
+    box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+}
+
+.text-input {
+    flex: 1;
+    height: 60rpx;
+    font-size: 28rpx;
+    color: #333;
+    padding: 0 20rpx;
+    font-weight: normal;
+    text-align: left;
+    background-color: transparent;
+}
+
+.text-send-button {
+    position: absolute;
+    right: 10rpx;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60rpx;
+    line-height: 60rpx;
+    padding: 0 30rpx;
+    background-color: #4169E1;
+    color: white;
+    font-size: 28rpx;
+    border-radius: 30rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80rpx;
+    max-width: 120rpx;
+    font-weight: normal;
+    border: none;
+    box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+    margin: 0;
+}
+
+/* Feature buttons in chat messages */
+.feature-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20rpx;
+    margin-top: 20rpx;
+    margin-bottom: 15rpx;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.feature-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20rpx 24rpx;
+    background-color: rgba(245, 248, 255, 0.9);
+    /* More opaque background */
+    border-radius: 12rpx;
+    border: 1px solid rgba(65, 105, 225, 0.25);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    font-size: 26rpx;
+    color: #3a5dc9;
+    min-width: 160rpx;
+    height: 100rpx;
+    box-sizing: border-box;
+    text-align: center;
+
+    &:active {
+        transform: scale(0.98);
+        background-color: #e8f0ff;
     }
 
-    50% {
-        box-shadow: 0 0 50rpx rgba(100, 230, 255, 0.8);
+    .feature-button-text {
+        z-index: 2;
+        font-weight: 500;
+        font-size: 28rpx;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        margin-bottom: 6rpx;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .feature-button-description {
+        display: block;
+        font-size: 22rpx;
+        color: rgba(65, 105, 225, 0.8);
+        margin-top: 2rpx;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        z-index: 2;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+    }
+
+    .feature-button-image {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        opacity: 0.12;
+        /* Further reduced opacity */
+        z-index: 1;
+        object-fit: cover;
+        object-position: center;
+        mix-blend-mode: multiply;
     }
 }

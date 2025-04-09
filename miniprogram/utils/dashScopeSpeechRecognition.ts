@@ -14,6 +14,7 @@ class DashScopeSpeechRecognition {
     private taskId: string;
     private onResultCallback: ResultCallback | null;
     private onErrorCallback: ErrorCallback | null;
+    private lastRecognizedText: string; // Store the last text
 
     constructor() {
         // Initialize properties in the constructor
@@ -23,6 +24,7 @@ class DashScopeSpeechRecognition {
         this.taskId = '';
         this.onResultCallback = null;
         this.onErrorCallback = null;
+        this.lastRecognizedText = ''; // Initialize last text
 
         this.recorderManager = wx.getRecorderManager();
         this.setupRecorderManager();
@@ -93,7 +95,7 @@ class DashScopeSpeechRecognition {
     }
 
     public async stop(): Promise<void> {
-        console.log('[DashScope ASR] Stopping recognition...');
+        console.log('[DashScope ASR] Stopping recognition (stop requested)...');
         if (!this.isRecognizing) {
             console.log('[DashScope ASR] Not recognizing, stop ignored.');
             return;
@@ -108,6 +110,7 @@ class DashScopeSpeechRecognition {
         }
 
         // 2. Send finish-task message if task started
+        // The service will send final result & task-finished after this
         if (this.ws && this.taskStarted) {
             const finishTaskMessage = {
                 header: {
@@ -121,29 +124,27 @@ class DashScopeSpeechRecognition {
             };
             console.log('[DashScope ASR] Sending finish-task...');
             this.ws.send({ data: JSON.stringify(finishTaskMessage) });
-            // Don't close WS immediately, wait for task-finished or timeout
+            // Don't set isRecognizing = false here yet, wait for task-finished or error
         } else if (this.ws) {
-            // If task never started, just close the socket
-            console.log('[DashScope ASR] Task never started, closing WebSocket.');
-            this.ws.close({});
+            console.log('[DashScope ASR] Task never started or WS closed, cleaning up.');
+            this.cleanupWebSocket(); // Clean up immediately if task wasn't running
+            this.isRecognizing = false; // Ensure state is false
+        } else {
+            this.isRecognizing = false; // Ensure state is false if ws is already null
         }
-
-        this.isRecognizing = false;
-        // Reset taskStarted flag, it will be set true on 'task-started' event
-        // this.taskStarted = false; // Let onError/onClose handle final state reset
     }
 
-    public reset(): void { // Simple reset, just ensures clean state
+    public reset(): void {
         console.log('[DashScope ASR] Resetting state...');
-        this.stop(); // Attempt to stop cleanly
+        this.stop();
         this.isRecognizing = false;
         this.taskStarted = false;
         this.taskId = '';
+        this.lastRecognizedText = ''; // Reset last text
         if (this.ws) {
             this.ws.close({});
             this.ws = null;
         }
-        // Notify UI about reset
         if (this.onErrorCallback) {
             this.onErrorCallback({ code: 'RESET', message: 'DashScope ASR Reset' });
         }
@@ -162,18 +163,14 @@ class DashScopeSpeechRecognition {
         this.ws.onMessage((event) => {
             try {
                 const message = JSON.parse(event.data as string);
-                // console.log('[DashScope ASR] Received message:', JSON.stringify(message));
-
-                if (!message.header) {
-                    console.warn('[DashScope ASR] Received message without header:', message);
-                    return;
-                }
+                if (!message.header) return;
 
                 switch (message.header.event) {
                     case 'task-started':
                         console.log('[DashScope ASR] Task started.');
                         this.taskStarted = true;
-                        this.startRecorder(); // Start recorder only after task confirmation
+                        this.lastRecognizedText = ''; // Reset text on new task
+                        this.startRecorder();
                         break;
                     case 'result-generated':
                         let text = '';
@@ -182,25 +179,22 @@ class DashScopeSpeechRecognition {
                             message.payload.output.sentence &&
                             message.payload.output.sentence.text) {
                             text = message.payload.output.sentence.text;
+                            this.lastRecognizedText = text; // Store the latest text
                         }
 
-                        // Check for finality (adjust field if needed based on actual API response)
-                        // Replace optional chaining for isFinal check too
-                        let isFinal = false;
-                        if (message.payload &&
-                            message.payload.output &&
-                            message.payload.output.sentence &&
-                            message.payload.output.sentence.end_time !== undefined) {
-                            isFinal = true;
-                        }
-
-                        console.log(`[DashScope ASR] Result: "${text}", Final: ${isFinal}`);
+                        // Report intermediate results as NOT final
+                        console.log(`[DashScope ASR] Intermediate Result: "${text}"`);
                         if (this.onResultCallback && text) {
-                            this.onResultCallback(text, isFinal);
+                            this.onResultCallback(text, false); // Always false here
                         }
                         break;
                     case 'task-finished':
                         console.log('[DashScope ASR] Task finished.');
+                        // Report the last received text as FINAL
+                        if (this.onResultCallback && this.lastRecognizedText) {
+                            console.log(`[DashScope ASR] Final Result: "${this.lastRecognizedText}"`);
+                            this.onResultCallback(this.lastRecognizedText, true);
+                        }
                         this.cleanupWebSocket();
                         break;
                     case 'task-failed':

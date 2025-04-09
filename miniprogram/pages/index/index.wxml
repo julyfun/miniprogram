@@ -1,22 +1,60 @@
 <!-- 聊天助手页面 -->
-<view class="container">
-  <view class="debug-container">
-    <view class="debug-box debug-box-recognition">
-      <view class="debug-title">实时识别结果:</view>
-      <view class="input-container">
-        <textarea value="{{debugRecognizedText}}" placeholder="请说话..." bindinput="onDebugTextInput" class="editable-textarea"></textarea>
-        <button class="send-button" bindtap="sendEditedText" disabled="{{isWaitingForDeepseek}}">
-          发送
-        </button>
+<view class="container" bindtap="hideTextInputIfNeeded">
+  <!-- Chat History -->
+  <scroll-view class="chat-history" scroll-y scroll-into-view="{{lastMessageId}}" scroll-with-animation="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" bounces="{{true}}" scroll-anchoring="{{true}}" refresher-enabled="{{false}}">
+    <view class="messages">
+      <block wx:for="{{chatHistory}}" wx:key="id">
+        <view class="message {{item.role}}" id="msg-{{item.id}}">
+          <text class="message-text">{{item.content}}</text>
+          <text class="message-hint" wx:if="{{item.hint}}">{{item.hint}}</text>
+          <!-- Feature Buttons -->
+          <view class="feature-buttons" wx:if="{{item.buttons && item.buttons.length > 0}}">
+            <view wx:for="{{item.buttons}}" wx:for-item="button" wx:key="id" class="feature-button" bindtap="handleFeatureButtonTap" data-feature="{{button.feature}}">
+              <text class="feature-button-text">{{button.name}}</text>
+              <text wx:if="{{button.description}}" class="feature-button-description">
+                {{button.description}}
+              </text>
+              <image wx:if="{{button.image}}" class="feature-button-image" src="{{button.image}}" mode="scaleToFill"></image>
+            </view>
+          </view>
+        </view>
+      </block>
+      <!-- Current Recognition Text - only show when not already in chat history -->
+      <view class="message user" wx:if="{{debugRecognizedText && isRecording}}">
+        <text class="message-text">"{{debugRecognizedText}}"</text>
+      </view>
+      <!-- AI Response - only show when not already in chat history -->
+      <view class="message assistant" wx:if="{{debugDeepseekResponse && debugDeepseekResponse !== '思考中...' && isWaitingForDeepseek}}">
+        <text class="message-text">{{debugDeepseekResponse}}</text>
+      </view>
+      <!-- Editable Text Input Field -->
+      <view class="message user text-input-container" wx:if="{{!isWaitingForDeepseek}}" catchtap="preventBubble">
+        <view wx:if="{{!isEditing}}" class="text-input-prompt" bindtap="showTextInput">
+          {{isSpeaking ? '点击打断并输入文字' : (isRecording ? '点击打断并输入文字' : '点击输入文字')}}
+        </view>
+        <view wx:if="{{isEditing}}" class="text-input-active-container">
+          <input class="text-input" value="{{debugRecognizedText}}" bindinput="onTextInputChange" focus="{{isEditing}}" confirm-type="send" bindconfirm="sendEditedText" />
+          <button wx:if="{{debugRecognizedText.trim().length > 0}}" class="text-send-button" bindtap="sendEditedText">
+            发送
+          </button>
+        </view>
       </view>
     </view>
-    <view class="debug-box debug-box-response">
-      <view class="debug-title">Deepseek 回复:</view>
-      <textarea value="{{debugDeepseekResponse}}" placeholder="等待回复..." disabled></textarea>
+  </scroll-view>
+  <!-- Bottom Orb Area -->
+  <view class="orb-container">
+    <view class="orb {{orbState}}" bindtap="handleOrbTap">
+      <view class="orb-inner">
+        <image class="dog-avatar" src="/assets/icons/dog.jpg" mode="aspectFill" />
+      </view>
+      <view class="orb-outer"></view>
+    </view>
+    <view class="orb-instruction">
+      {{isRecording ? '正在聆听...' : (isSpeaking ? '正在说话...' : '轻触开始')}}
     </view>
   </view>
-  <view class="orb-container">
-    <view class="orb {{orbState}}" bindtap="handleOrbTap"></view>
-    <view class="orb-instruction">{{isRecording ? '正在聆听... 点击停止' : '点击开始说话'}}</view>
+  <!-- Model Switch Button -->
+  <view class="model-switch">
+    <button bindtap="switchAiModel" class="switch-model-btn">切换模型 ({{currentAiModel}})</button>
   </view>
 </view>
