@@ -45,6 +45,65 @@ interface IPageData {
     accumulatedText: string;        // Accumulated recognized text during recording
 }
 
+// Helper function to play text with TTS
+function playTextWithTTS(
+    this: WechatMiniprogram.Page.Instance<IPageData, WechatMiniprogram.IAnyObject>,
+    text: string,
+    shouldAutoRecord: boolean,
+    logId: string = ''
+): void {
+    if (!text.trim()) {
+        this.setData({ orbState: 'idle' });
+        return;
+    }
+
+    console.log(`[TTS] Attempting to play response: ${logId}`, text);
+    this.setData({ isSpeaking: true, orbState: 'speaking' });
+
+    // 根据当前的TTS提供商选择不同的语音和采样率
+    let voice, sampleRate;
+    if (this.data.currentTtsProvider === 'cosyvoice') {
+        // cosyvoice使用官方示例中推荐的参数
+        voice = 'longwan';
+        sampleRate = 22050;
+    } else {
+        // 阿里云使用默认的参数
+        voice = 'aitong';
+        sampleRate = 16000;
+    }
+
+    synthesizeAndPlay(
+        text,
+        voice,
+        'mp3',
+        sampleRate,
+        () => {
+            console.log("[TTS] Playback completed successfully.");
+            // If shouldAutoRecord is true, start recording after speech completes
+            if (shouldAutoRecord) {
+                console.log("[Auto-Record] Starting recording automatically after speech");
+                this.startRecordingAndRecognition();
+            } else {
+                this.setData({ isSpeaking: false, orbState: 'idle' });
+            }
+        },
+        (error) => {
+            console.error("[TTS] Playback failed:", error);
+            this.setData({ isSpeaking: false, orbState: 'idle' });
+            // Show a toast for TTS playback error only if it's not "Close received after close"
+            // since that error often happens when switching screens or interrupting playback
+            if (error && error.errMsg &&
+                !error.errMsg.includes("Close received after close") &&
+                !error.errMsg.includes("未完成的操作")) {
+                wx.showToast({
+                    title: '语音播放失败，将使用备用引擎',
+                    icon: 'none'
+                });
+            }
+        }
+    );
+}
+
 // Choose the default ASR engine here
 const DEFAULT_ASR_ENGINE: AsrEngineType = 'dashscope'; // Or 'alibaba'
 
@@ -742,38 +801,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
                             // --- Play the full response using TTS ---
                             if (processedText.trim()) {
-                                console.log("[TTS] Attempting to play full response #1:", processedText);
-                                this.setData({ isSpeaking: true, orbState: 'speaking' }); // Update state for TTS
-                                synthesizeAndPlay(
-                                    processedText, // Use processed text for TTS
-                                    'longwan', // Or another voice
-                                    'mp3',
-                                    16000,
-                                    () => { // onEnded
-                                        console.log("[TTS] Playback completed successfully.");
-                                        // If shouldAutoRecord is true, start recording after speech completes
-                                        if (shouldAutoRecord) {
-                                            console.log("[Auto-Record] Starting recording automatically after speech");
-                                            this.startRecordingAndRecognition();
-                                        } else {
-                                            this.setData({ isSpeaking: false, orbState: 'idle' });
-                                        }
-                                    },
-                                    (error) => { // onError
-                                        console.error("[TTS] Playback failed:", error);
-                                        this.setData({ isSpeaking: false, orbState: 'idle' });
-                                        // Show a toast for TTS playback error only if it's not "Close received after close"
-                                        // since that error often happens when switching screens or interrupting playback
-                                        if (error && error.errMsg &&
-                                            !error.errMsg.includes("Close received after close") &&
-                                            !error.errMsg.includes("未完成的操作")) {
-                                            wx.showToast({
-                                                title: '语音播放失败，将使用备用引擎',
-                                                icon: 'none'
-                                            });
-                                        }
-                                    }
-                                );
+                                playTextWithTTS.call(this, processedText, shouldAutoRecord, "#1");
                             } else {
                                 // No content to speak, return to idle
                                 this.setData({ orbState: 'idle' });
@@ -837,36 +865,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     if (processedText.trim()) {
                         console.log("[TTS] Attempting to play response: #2", processedText);
                         this.setData({ isSpeaking: true, orbState: 'speaking' });
-                        synthesizeAndPlay(
-                            processedText, // Use processed text for TTS
-                            'longwan',
-                            'mp3',
-                            16000,
-                            () => {
-                                console.log("[TTS] Playback completed successfully.");
-                                // If shouldAutoRecord is true, start recording after speech completes
-                                if (shouldAutoRecord) {
-                                    console.log("[Auto-Record] Starting recording automatically after speech");
-                                    this.startRecordingAndRecognition();
-                                } else {
-                                    this.setData({ isSpeaking: false, orbState: 'idle' });
-                                }
-                            },
-                            (error) => {
-                                console.error("[TTS] Playback failed:", error);
-                                this.setData({ isSpeaking: false, orbState: 'idle' });
-                                // Show a toast for TTS playback error only if it's not "Close received after close"
-                                // since that error often happens when switching screens or interrupting playback
-                                if (error && error.errMsg &&
-                                    !error.errMsg.includes("Close received after close") &&
-                                    !error.errMsg.includes("未完成的操作")) {
-                                    wx.showToast({
-                                        title: '语音播放失败，将使用备用引擎',
-                                        icon: 'none'
-                                    });
-                                }
-                            }
-                        );
+                        playTextWithTTS.call(this, processedText, shouldAutoRecord, "#2");
                     } else {
                         this.setData({ orbState: 'idle' });
                     }
@@ -1077,35 +1076,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         if (processedText.trim()) {
                             this.setData({ isSpeaking: true, orbState: 'speaking' });
                             console.log("[TTS] Attempting to play response: #3", processedText);
-                            synthesizeAndPlay(
-                                processedText,
-                                'longwan',
-                                'mp3',
-                                16000,
-                                () => {
-                                    // If shouldAutoRecord is true, start recording after speech completes
-                                    if (shouldAutoRecord) {
-                                        console.log("[Auto-Record] Starting recording automatically after speech");
-                                        this.startRecordingAndRecognition();
-                                    } else {
-                                        this.setData({ isSpeaking: false, orbState: 'idle' });
-                                    }
-                                },
-                                (error) => {
-                                    console.error("[TTS] Playback failed:", error);
-                                    this.setData({ isSpeaking: false, orbState: 'idle' });
-                                    // Show a toast for TTS playback error only if it's not "Close received after close"
-                                    // since that error often happens when switching screens or interrupting playback
-                                    if (error && error.errMsg &&
-                                        !error.errMsg.includes("Close received after close") &&
-                                        !error.errMsg.includes("未完成的操作")) {
-                                        wx.showToast({
-                                            title: '语音播放失败，将使用备用引擎',
-                                            icon: 'none'
-                                        });
-                                    }
-                                }
-                            );
+                            playTextWithTTS.call(this, processedText, shouldAutoRecord, "#3");
+                        } else {
+                            this.setData({ orbState: 'idle' });
                         }
                     } catch (error) {
                         console.error('处理初始响应失败:', error);
@@ -1169,35 +1142,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 if (processedText.trim()) {
                     this.setData({ isSpeaking: true, orbState: 'speaking' });
                     console.log("[TTS] Attempting to play response: #4", processedText);
-                    synthesizeAndPlay(
-                        processedText, // Use processed text for TTS
-                        'longwan',
-                        'mp3',
-                        16000,
-                        () => {
-                            // If shouldAutoRecord is true, start recording after speech completes
-                            if (shouldAutoRecord) {
-                                console.log("[Auto-Record] Starting recording automatically after speech");
-                                this.startRecordingAndRecognition();
-                            } else {
-                                this.setData({ isSpeaking: false, orbState: 'idle' });
-                            }
-                        },
-                        (error) => {
-                            console.error("[TTS] Playback failed:", error);
-                            this.setData({ isSpeaking: false, orbState: 'idle' });
-                            // Show a toast for TTS playback error only if it's not "Close received after close"
-                            // since that error often happens when switching screens or interrupting playback
-                            if (error && error.errMsg &&
-                                !error.errMsg.includes("Close received after close") &&
-                                !error.errMsg.includes("未完成的操作")) {
-                                wx.showToast({
-                                    title: '语音播放失败，将使用备用引擎',
-                                    icon: 'none'
-                                });
-                            }
-                        }
-                    );
+                    playTextWithTTS.call(this, processedText, shouldAutoRecord, "#4");
                 } else {
                     this.setData({ orbState: 'idle' });
                 }

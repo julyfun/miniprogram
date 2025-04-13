@@ -56,7 +56,34 @@ o首页改为一个语音助手对话界面，
 
 ## 
 
-红包教学 redpacket_tutorial
+redpacket_tutorial.js event-demo.ts
+红包教学 redpacket_tutorial 需要进行如下优化
 1. 根据说话文字多少调整 delay，现在大部分 delay 都偏少
 2. 红包输入金额界面允许高亮，并等待用户修改金额后 2s 再执行下一事件
 3. 添加转账确认界面（如 Image 图片所示）
+
+## 发送照片功能
+
+- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 3 个图片，
+
+## 单独 tts
+
+@cosyvoice.md不再使用现有的 tts.ts, ttsProvider 等，其逻辑已经太过复杂， 需要彻底抛弃。 @index.ts  保留现在类似的接口，仿照 @cosyvoice.md 的写法重写一个接口.秘钥在 @secrets.ts 中使用 
+
+## sync
+
+[TTS Provider] Synthesizing with:
+ttsProvider.ts:101 [TTS Provider] Current TTS provider: cosyvoice
+ttsProvider.ts:106 [TTS Provider] Synthesizing with CosyVoice: {text: "您好呀，有什么我可以帮您的吗？", voice: "longwan", format: "mp3", sampleRate: 16000}
+cosyVoiceTts.ts:34 [CosyVoice] Starting synthesis for: 您好呀，有什么我可以帮您的吗？
+cosyVoiceTts.ts:74 [CosyVoice] WebSocket connection request sent successfully
+cosyVoiceTts.ts:89 [CosyVoice] WebSocket connection opened
+cosyVoiceTts.ts:122 [CosyVoice] Request payload: {voice: "longwan", format: "mp3", sample_rate: 16000, task_id: "ac7dbcc2-c564-4702-9441-0142200d2f5a"}
+cosyVoiceTts.ts:133 [CosyVoice] Sent run-task message
+cosyVoiceTts.ts:374 [CosyVoice] Received WebSocket message: undefined
+cosyVoiceTts.ts:375 [CosyVoice] Full message data: {header: {…}, payload: {…}}
+Sun Apr 13 2025 20:53:26 GMT+0800 (中国标准时间) 录音文件格式说明
+开发者工具上的录音文件与移动端格式不同，暂时只可在工具上进行播放调试，无法直接播放或者在客户端上播放
+cosyVoiceTts.ts:374 [CosyVoice] Received WebSocket message: undefined
+cosyVoiceTts.ts:375 [CosyVoice] Full message data: {header: {…}, payload: {…}}
+WebSocket connection to 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/' failed: Close received after close(env: Windows,mp,1.06.2412050; lib: 2.32.3)
