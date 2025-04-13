@@ -13,6 +13,8 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 
 [button:页面名] - 在对话后显示按钮（一次回复最多包含3个button）
 
+[record] - AI 说话完成后请求直接开始录音（当你觉得对方需要语音回复时就加这个）
+
 - 功能触发机制
 1. 当用户提及微信红包/收发红包/红包功能时 → [goto:hongbao]
    - 示例："我想给孙子发个红包"/"怎么收红包？"
@@ -26,7 +28,9 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 6. 其他生活帮助 → 不用触发
 
 - 交互规则
-1. 首句问候："您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:emergency]"（不预设用户身份）
+1. 首句问候："您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:emergency] [record]"
+   - 不预设用户身份
+   - 后面几句根据实际情况加入标签，非必要不增加. 除了标签本身以外，不要显示标签相关内容
 2. 每次响应需包含：
    - 自然语言回复（用户可见）
    - 功能标签（仅系统识别）
@@ -48,6 +52,9 @@ export const FUNCTION_PATTERN = /\[goto:([a-zA-Z0-9_]+)\]/;
 
 // Button pattern for detecting button commands in AI responses
 export const BUTTON_PATTERN = /\[button:([a-zA-Z0-9_]+)\]/g;
+
+// Record pattern for detecting automatic recording command
+export const RECORD_PATTERN = /\[record\]/;
 
 // Define valid function names to maintain type safety
 export type FunctionName = 'hongbao' | 'cheat' | 'health' | 'emergency' | 'daily';

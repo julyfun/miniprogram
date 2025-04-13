@@ -16,7 +16,14 @@ interface QwenResponse {
     request_id: string;
 }
 
-export async function callQwenApi(prompt: string): Promise<string> {
+// Define a message interface for chat history
+interface ChatMessage {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+}
+
+// New function that accepts chat history
+export async function callQwenApiWithHistory(messages: ChatMessage[]): Promise<string> {
     return new Promise((resolve, reject) => {
         wx.request({
             url: QWEN_SECRETS.API_URL,
@@ -29,16 +36,7 @@ export async function callQwenApi(prompt: string): Promise<string> {
             data: {
                 model: QWEN_SECRETS.MODEL,
                 input: {
-                    messages: [
-                        {
-                            role: "system",
-                            content: "You are a helpful assistant."
-                        },
-                        {
-                            role: "user",
-                            content: prompt
-                        }
-                    ]
+                    messages: messages
                 },
                 parameters: {
                     result_format: "message",
@@ -82,4 +80,20 @@ export async function callQwenApi(prompt: string): Promise<string> {
             }
         });
     });
-} 
+}
+
+// Keep the original function for backward compatibility
+export async function callQwenApi(prompt: string): Promise<string> {
+    const messages: ChatMessage[] = [
+        {
+            role: "system",
+            content: "You are a helpful assistant."
+        },
+        {
+            role: "user",
+            content: prompt
+        }
+    ];
+
+    return callQwenApiWithHistory(messages);
+}

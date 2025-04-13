@@ -11,10 +11,7 @@
           <view class="feature-buttons" wx:if="{{item.buttons && item.buttons.length > 0}}">
             <view wx:for="{{item.buttons}}" wx:for-item="button" wx:key="id" class="feature-button" bindtap="handleFeatureButtonTap" data-feature="{{button.feature}}">
               <text class="feature-button-text">{{button.name}}</text>
-              <text wx:if="{{button.description}}" class="feature-button-description">
-                {{button.description}}
-              </text>
-              <image wx:if="{{button.image}}" class="feature-button-image" src="{{button.image}}" mode="scaleToFill"></image>
+              <image wx:if="{{button.image}}" class="feature-button-image" src="{{button.image}}" mode="aspectFit"></image>
             </view>
           </view>
         </view>
@@ -53,8 +50,13 @@
       {{isRecording ? '正在聆听...' : (isSpeaking ? '正在说话...' : '轻触开始')}}
     </view>
   </view>
-  <!-- Model Switch Button -->
-  <view class="model-switch">
-    <button bindtap="switchAiModel" class="switch-model-btn">切换模型 ({{currentAiModel}})</button>
+  <!-- Setting Buttons Area -->
+  <view class="setting-buttons">
+    <!-- Model Switch Button -->
+    <button bindtap="switchAiModel" class="switch-btn">切换模型 ({{currentAiModel}})</button>
+    <!-- TTS Provider Switch Button -->
+    <button bindtap="switchTtsProvider" class="switch-btn">
+      语音引擎 ({{currentTtsProvider === 'ali' ? '阿里云' : 'CosyVoice'}})
+    </button>
   </view>
 </view>

@@ -1275,15 +1275,15 @@ Component({
         onSelectEmoji(e: WechatMiniprogram.CustomEvent) {
             const emoji = e.detail.emoji;
             console.log('选择了表情:', emoji);
-            
+
             // 将表情添加到当前输入文本中
             const newInputText = this.data.inputText + emoji;
-            
+
             this.setData({
                 inputText: newInputText
             });
         },
-        
+
         // 处理表情删除
         onDeleteEmoji() {
             if (this.data.inputText.length > 0) {
@@ -1291,7 +1291,7 @@ Component({
                 // 然后删除最后一个字符或表情
                 const characters = Array.from(this.data.inputText);
                 characters.pop();
-                
+
                 this.setData({
                     inputText: characters.join('')
                 });

@@ -16,9 +16,10 @@ let currentRequestTask: WechatMiniprogram.RequestTask | null = null;
  * @param onEnded Callback function when playback finishes.
  * @param onError Callback function for errors during synthesis or playback.
  */
-export async function synthesizeAndPlay(text: string, voice: string = 'Aitong', format: string = 'mp3', sampleRate: number = 16000, onEnded?: () => void, onError?: (error: any) => void): Promise<void> {
+export async function synthesizeAndPlay(text: string, voice: string = 'longwan', format: string = 'mp3', sampleRate: number = 16000, onEnded?: () => void, onError?: (error: any) => void): Promise<void> {
     console.log('[TTS] Starting synthesis for:', text);
     stopPlayback(); // Stop any previous playback or request
+    voice = '';
 
     try {
         // --- Get a valid NLS token --- 
@@ -132,8 +133,9 @@ function playAudioData(audioData: ArrayBuffer, onEnded?: () => void, onError?: (
 
 /**
  * Stops the current TTS playback and cancels any ongoing request.
+ * @param suppressErrors If true, errors from stopping playback will be suppressed (for intentional stops).
  */
-export function stopPlayback(): void {
+export function stopPlayback(suppressErrors: boolean = false): void {
     if (currentRequestTask) {
         console.log('[TTS] Aborting ongoing synthesis request...');
         currentRequestTask.abort();
@@ -141,6 +143,12 @@ export function stopPlayback(): void {
     }
     if (innerAudioContext) {
         console.log('[TTS] Stopping playback...');
+
+        // If we're suppressing errors, remove error handlers before stopping
+        if (suppressErrors && innerAudioContext.offError) {
+            innerAudioContext.offError();
+        }
+
         innerAudioContext.stop();
         innerAudioContext.destroy();
         innerAudioContext = null;

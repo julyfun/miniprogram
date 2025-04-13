@@ -1,9 +1,9 @@
 import AliSpeechRecognizer from '../../utils/customSpeechRecognition'; // Rename old import
 import DashScopeSpeechRecognizer from '../../utils/dashScopeSpeechRecognition'; // Import new one
 import { DEEPSEEK_SECRETS } from '../../utils/secrets';
-import { synthesizeAndPlay, stopPlayback as stopTTSPlayback } from '../../utils/tts'; // Import TTS functions
-import { callQwenApi } from '../../utils/qwenApi';
-import { AI_INITIAL_PROMPT, FUNCTION_PATTERN, BUTTON_PATTERN, FUNCTION_ROUTES, FunctionName } from '../../utils/config'; // Import AI config
+import { synthesizeAndPlay, stopPlayback as stopTTSPlayback, setTtsProvider, getCurrentTtsProvider, TtsProviderType } from '../../utils/ttsProvider'; // Import TTS functions from the provider
+import { callQwenApi, callQwenApiWithHistory } from '../../utils/qwenApi';
+import { AI_INITIAL_PROMPT, FUNCTION_PATTERN, BUTTON_PATTERN, RECORD_PATTERN, FUNCTION_ROUTES, FunctionName } from '../../utils/config'; // Import AI config
 import { FEATURE_METADATA } from '../../utils/featureMetadata'; // Import feature metadata
 
 // Define ASR engine types
@@ -38,9 +38,11 @@ interface IPageData {
     orbState: OrbState;             // Controls orb animation
     currentAsrEngine: AsrEngineType; // Add state for current engine
     currentAiModel: 'deepseek' | 'qwen'; // Add new property for AI model selection
+    currentTtsProvider: TtsProviderType; // Add property for current TTS provider
     chatHistory: ChatMessage[];
     lastMessageId: string;
     isEditing: boolean;             // Is the text input being edited?
+    accumulatedText: string;        // Accumulated recognized text during recording
 }
 
 // Choose the default ASR engine here
@@ -56,11 +58,12 @@ interface ISpeechRecognizer {
 }
 
 // Add a function to check for and handle special function triggers in AI responses
-function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[] } {
+function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean } {
     // Don't modify the original text that is displayed to the user
     let processedText = text;
     let functionFound = false;
     let buttons: Button[] = [];
+    let shouldAutoRecord = false;
 
     // Check for goto function pattern
     const match = text.match(FUNCTION_PATTERN);
@@ -109,6 +112,13 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
         processedText = text.replace(FUNCTION_PATTERN, '').trim();
     }
 
+    // Check for record tag
+    if (text.match(RECORD_PATTERN)) {
+        console.log('Record command detected in AI response');
+        shouldAutoRecord = true;
+        processedText = processedText.replace(RECORD_PATTERN, '').trim();
+    }
+
     // Check for button patterns (can have multiple in one message)
     let buttonMatch;
     // Reset lastIndex to avoid infinite loop
@@ -136,7 +146,7 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
         buttons = buttons.slice(0, 3);
     }
 
-    return { processedText, functionFound, buttons };
+    return { processedText, functionFound, buttons, shouldAutoRecord };
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
@@ -149,10 +159,16 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         orbState: 'idle',
         currentAsrEngine: DEFAULT_ASR_ENGINE, // Initialize with default
         currentAiModel: 'qwen', // Default to qwen instead of deepseek
+        currentTtsProvider: 'cosyvoice', // Default to Alibaba Cloud TTS
         chatHistory: [],
         lastMessageId: '',
         isEditing: false,         // Add isEditing state
+        accumulatedText: '',      // Accumulated recognized text during recording
     },
+
+    // Add a property to maintain the actual conversation history for API calls
+    // This is separate from chatHistory which is for display purposes
+    conversationHistory: [] as { role: 'system' | 'user' | 'assistant', content: string }[],
 
     // Silence detection timer
     silenceTimer: null as number | null,
@@ -242,12 +258,39 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             // Detect voice activity - received a result means voice was detected
             this.handleVoiceActivity();
 
-            // Update Debug Box 1
+            // 如果是空文本，不更新显示
+            if (!text.trim()) {
+                return;
+            }
+
+            // 累积已识别的文本，将新文本追加到已累积的文本中
+            // 如果新文本是已累积文本的一部分（识别引擎可能返回部分结果），则使用更长的那个
+            let updatedText = text;
+            const currentAccumulated = this.data.accumulatedText;
+
+            // 检查新文本是否已包含在累积文本中，或累积文本是否是新文本的一部分
+            if (currentAccumulated && text) {
+                if (text.includes(currentAccumulated)) {
+                    // 新文本包含旧文本，使用新文本
+                    updatedText = text;
+                } else if (!currentAccumulated.includes(text)) {
+                    // 如果新文本不是旧文本的一部分，也不包含旧文本，则累加
+                    // 可能是新的句子开始
+                    updatedText = currentAccumulated + ' ' + text;
+                } else {
+                    // 旧文本包含新文本，保持旧文本
+                    updatedText = currentAccumulated;
+                }
+            }
+
+            // 更新界面显示和状态
             this.setData({
-                debugRecognizedText: text
+                debugRecognizedText: updatedText,
+                accumulatedText: updatedText
             });
-            // Store the latest text regardless of final status
-            this.latestRecognizedText = text;
+
+            // 保存最新文本用于后续发送
+            this.latestRecognizedText = updatedText;
 
             // --- Silence Detection Logic ---
             // Clear any existing timer
@@ -264,7 +307,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     this.stopRecordingAndRecognition(true);
                     // Immediately attempt to send (sendToDeepseek will check text)
                     this.sendToDeepseek();
-                }, 2000); // 2 seconds of silence
+                }, 4000); // 4 seconds of silence
             }
             // If it *is* final (e.g., service decided end of speech),
             // and we have text, send it immediately? (Optional behavior)
@@ -400,7 +443,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     showTextInput: function () {
         // If speaking, stop the speech
         if (this.data.isSpeaking) {
-            stopTTSPlayback();
+            stopTTSPlayback(true); // Pass true to suppress error messages
             this.setData({
                 isSpeaking: false,
                 orbState: 'idle'
@@ -471,9 +514,11 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
         if (this.data.isRecording) {
             this.stopRecordingAndRecognition();
-        } else if (this.data.isSpeaking) { // If speaking, tapping stops TTS
-            stopTTSPlayback();
-            this.setData({ isSpeaking: false, orbState: 'idle' });
+        } else if (this.data.isSpeaking) { // If speaking, tapping stops TTS and starts recording
+            stopTTSPlayback(true); // Pass true to suppress error messages
+            this.setData({ isSpeaking: false });
+            // Immediately start recording after stopping TTS
+            this.startRecordingAndRecognition();
         } else {
             this.startRecordingAndRecognition();
         }
@@ -481,7 +526,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
     // --- Start Recording ---
     startRecordingAndRecognition: function () {
-        stopTTSPlayback(); // Stop any ongoing TTS before starting recording
+        stopTTSPlayback(true); // Stop any ongoing TTS before starting recording, suppress errors
         if (this.data.isRecording || this.data.isWaitingForDeepseek) {
             return; // Already active or processing
         }
@@ -513,6 +558,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             debugRecognizedText: '', // Clear previous results
             debugDeepseekResponse: '',
             latestRecognizedText: '',
+            accumulatedText: '', // 重置累积的文本
         });
 
         // Start the speech recognizer (which handles the recorder internally)
@@ -554,6 +600,11 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             this.activityTimer = null;
         }
 
+        // 确保在停止录音时保留累积的文本
+        if (this.data.accumulatedText) {
+            this.latestRecognizedText = this.data.accumulatedText;
+        }
+
         // Stop the recognizer (which stops the recorder)
         if (this.speechRecognizer) {
             this.speechRecognizer.stop().catch((err: any) => {
@@ -587,7 +638,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             return;
         }
 
-        stopTTSPlayback();
+        stopTTSPlayback(true); // Suppress errors since this is an intentional stop
 
         const userMessage: ChatMessage = {
             id: Date.now(),
@@ -603,10 +654,17 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             chatHistory: [...this.data.chatHistory, userMessage],
             lastMessageId: `msg-${userMessage.id}`,
             debugRecognizedText: '', // Clear debug text once added to chat history
+            accumulatedText: '', // 清除累积的文本
             isEditing: false,         // Ensure editing state is reset
         }, () => {
             // Scroll to the bottom after adding user message
             this.scrollToBottom();
+        });
+
+        // Add user's message to conversation history
+        this.conversationHistory.push({
+            role: 'user',
+            content: this.latestRecognizedText
         });
 
         if (this.data.currentAiModel === 'deepseek') {
@@ -662,13 +720,14 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             }
 
                             // Check for function triggers and buttons in the response
-                            const { processedText, functionFound, buttons } = checkAndHandleFunctionTriggers(fullContent);
+                            const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(fullContent);
 
                             const assistantMessage: ChatMessage = {
                                 id: Date.now(),
                                 role: 'assistant',
                                 content: processedText, // Use the processed text without function tags
-                                buttons: buttons.length > 0 ? buttons : undefined // Add buttons if any
+                                buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
+                                hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                             };
 
                             this.setData({
@@ -687,18 +746,32 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                                 this.setData({ isSpeaking: true, orbState: 'speaking' }); // Update state for TTS
                                 synthesizeAndPlay(
                                     processedText, // Use processed text for TTS
-                                    'Aitong', // Or another voice
+                                    'longwan', // Or another voice
                                     'mp3',
                                     16000,
                                     () => { // onEnded
                                         console.log("[TTS] Playback completed successfully.");
-                                        this.setData({ isSpeaking: false, orbState: 'idle' });
+                                        // If shouldAutoRecord is true, start recording after speech completes
+                                        if (shouldAutoRecord) {
+                                            console.log("[Auto-Record] Starting recording automatically after speech");
+                                            this.startRecordingAndRecognition();
+                                        } else {
+                                            this.setData({ isSpeaking: false, orbState: 'idle' });
+                                        }
                                     },
                                     (error) => { // onError
                                         console.error("[TTS] Playback failed:", error);
                                         this.setData({ isSpeaking: false, orbState: 'idle' });
-                                        // Optionally show a toast for TTS playback error
-                                        wx.showToast({ title: '语音播放失败', icon: 'none' });
+                                        // Show a toast for TTS playback error only if it's not "Close received after close"
+                                        // since that error often happens when switching screens or interrupting playback
+                                        if (error && error.errMsg &&
+                                            !error.errMsg.includes("Close received after close") &&
+                                            !error.errMsg.includes("未完成的操作")) {
+                                            wx.showToast({
+                                                title: '语音播放失败，将使用备用引擎',
+                                                icon: 'none'
+                                            });
+                                        }
                                     }
                                 );
                             } else {
@@ -720,22 +793,35 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 }
             });
         } else {
-            // Qwen implementation with chat history update
-            callQwenApi(this.latestRecognizedText)
+            // Updated Qwen implementation with chat history
+            // Create a copy of the conversation history for the API call
+            const messages = [
+                { role: 'system' as const, content: 'You are a helpful assistant.' },
+                ...this.conversationHistory
+            ];
+
+            callQwenApiWithHistory(messages)
                 .then(response => {
                     if (!response) {
                         throw new Error('Empty response from Qwen API');
                     }
 
+                    // Add assistant response to conversation history
+                    this.conversationHistory.push({
+                        role: 'assistant',
+                        content: response
+                    });
+
                     // Check for function triggers and buttons in the response
-                    const { processedText, functionFound, buttons } = checkAndHandleFunctionTriggers(response);
+                    const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(response);
                     console.log('Initial prompt response with buttons:', buttons.length > 0);
 
                     const assistantMessage: ChatMessage = {
                         id: Date.now(),
                         role: 'assistant',
                         content: processedText, // Use processed text without function tags
-                        buttons: buttons.length > 0 ? buttons : undefined // Add buttons if any
+                        buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
+                        hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                     };
 
                     this.setData({
@@ -753,17 +839,32 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         this.setData({ isSpeaking: true, orbState: 'speaking' });
                         synthesizeAndPlay(
                             processedText, // Use processed text for TTS
-                            'Aitong',
+                            'longwan',
                             'mp3',
                             16000,
                             () => {
                                 console.log("[TTS] Playback completed successfully.");
-                                this.setData({ isSpeaking: false, orbState: 'idle' });
+                                // If shouldAutoRecord is true, start recording after speech completes
+                                if (shouldAutoRecord) {
+                                    console.log("[Auto-Record] Starting recording automatically after speech");
+                                    this.startRecordingAndRecognition();
+                                } else {
+                                    this.setData({ isSpeaking: false, orbState: 'idle' });
+                                }
                             },
                             (error) => {
                                 console.error("[TTS] Playback failed:", error);
                                 this.setData({ isSpeaking: false, orbState: 'idle' });
-                                wx.showToast({ title: '语音播放失败', icon: 'none' });
+                                // Show a toast for TTS playback error only if it's not "Close received after close"
+                                // since that error often happens when switching screens or interrupting playback
+                                if (error && error.errMsg &&
+                                    !error.errMsg.includes("Close received after close") &&
+                                    !error.errMsg.includes("未完成的操作")) {
+                                    wx.showToast({
+                                        title: '语音播放失败，将使用备用引擎',
+                                        icon: 'none'
+                                    });
+                                }
                             }
                         );
                     } else {
@@ -796,20 +897,29 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     scrollToBottom: function () {
         // Give the DOM time to update before scrolling
         setTimeout(() => {
-            // Try the modern approach with SelectorQuery first
+            // Try to directly scroll to bottom first
             wx.createSelectorQuery()
                 .select('.chat-history')
                 .node()
                 .exec((res) => {
-                    const scrollView = res[0]?.node;
+                    const scrollView = res[0] && res[0].node;
                     if (scrollView) {
-                        const scrollViewContext = scrollView.getContext();
-                        scrollViewContext.scrollToBottom();
+                        // Direct scrollTo method
+                        scrollView.scrollTo({
+                            top: 999999, // Very large number to ensure scroll to bottom
+                            behavior: 'smooth'
+                        });
                     } else {
                         // Fallback: Try to scroll to the element with the lastMessageId
                         if (this.data.lastMessageId) {
                             wx.pageScrollTo({
                                 selector: `#${this.data.lastMessageId}`,
+                                duration: 300
+                            });
+                        } else {
+                            // Final fallback: just scroll to bottom of page
+                            wx.pageScrollTo({
+                                scrollTop: 9999,
                                 duration: 300
                             });
                         }
@@ -859,7 +969,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         });
     },
 
-    // Add method to clear chat history
+    // Update clearChatHistory to also clear the conversation history
     clearChatHistory: function () {
         this.setData({
             chatHistory: [],
@@ -867,6 +977,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             debugRecognizedText: '',
             debugDeepseekResponse: ''
         });
+
+        // Clear the API conversation history as well
+        this.conversationHistory = [];
     },
 
     // Add method to send initial prompt to AI
@@ -937,7 +1050,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         }
 
                         // For initial prompt, extract the text, buttons, but skip function navigation
-                        const { processedText, buttons } = checkAndHandleFunctionTriggers(fullContent);
+                        const { processedText, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(fullContent);
                         console.log('Initial prompt response with buttons:', buttons.length > 0);
 
                         // Add the initial greeting from AI to chat with any buttons found
@@ -945,15 +1058,19 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             id: Date.now(),
                             role: 'assistant',
                             content: processedText,
-                            buttons: buttons.length > 0 ? buttons : undefined
+                            buttons: buttons.length > 0 ? buttons : undefined,
+                            hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                         };
 
                         this.setData({
-                            chatHistory: [assistantMessage], // Just add the AI response
+                            chatHistory: [assistantMessage], // For initial message, just set one message
                             lastMessageId: `msg-${assistantMessage.id}`,
                             debugDeepseekResponse: '',
                             isWaitingForDeepseek: false,
                             orbState: 'idle'
+                        }, () => {
+                            // Scroll to the bottom after updating chat
+                            this.scrollToBottom();
                         });
 
                         // Optionally speak the welcome message
@@ -961,15 +1078,31 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             this.setData({ isSpeaking: true, orbState: 'speaking' });
                             synthesizeAndPlay(
                                 processedText,
-                                'Aitong',
+                                'longwan',
                                 'mp3',
                                 16000,
                                 () => {
-                                    this.setData({ isSpeaking: false, orbState: 'idle' });
+                                    // If shouldAutoRecord is true, start recording after speech completes
+                                    if (shouldAutoRecord) {
+                                        console.log("[Auto-Record] Starting recording automatically after speech");
+                                        this.startRecordingAndRecognition();
+                                    } else {
+                                        this.setData({ isSpeaking: false, orbState: 'idle' });
+                                    }
                                 },
                                 (error) => {
                                     console.error("[TTS] Playback failed:", error);
                                     this.setData({ isSpeaking: false, orbState: 'idle' });
+                                    // Show a toast for TTS playback error only if it's not "Close received after close"
+                                    // since that error often happens when switching screens or interrupting playback
+                                    if (error && error.errMsg &&
+                                        !error.errMsg.includes("Close received after close") &&
+                                        !error.errMsg.includes("未完成的操作")) {
+                                        wx.showToast({
+                                            title: '语音播放失败，将使用备用引擎',
+                                            icon: 'none'
+                                        });
+                                    }
                                 }
                             );
                         }
@@ -995,25 +1128,39 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             orbState: 'processing'
         });
 
-        callQwenApi(prompt)
+        // Initialize conversation history with the system prompt
+        this.conversationHistory = [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: prompt }
+        ];
+
+        // Call API with the initial conversation
+        callQwenApiWithHistory(this.conversationHistory)
             .then(response => {
                 if (!response) {
                     throw new Error('Empty response from Qwen API');
                 }
 
+                // Add the response to conversation history
+                this.conversationHistory.push({
+                    role: 'assistant',
+                    content: response
+                });
+
                 // For initial prompt, extract the text, buttons, but skip function navigation
-                const { processedText, buttons } = checkAndHandleFunctionTriggers(response);
+                const { processedText, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(response);
                 console.log('Initial prompt response with buttons:', buttons.length > 0);
 
                 const assistantMessage: ChatMessage = {
                     id: Date.now(),
                     role: 'assistant',
                     content: processedText,
-                    buttons: buttons.length > 0 ? buttons : undefined
+                    buttons: buttons.length > 0 ? buttons : undefined,
+                    hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                 };
 
                 this.setData({
-                    chatHistory: [assistantMessage], // Just add the AI response
+                    chatHistory: [assistantMessage], // For initial message, just set one message
                     lastMessageId: `msg-${assistantMessage.id}`,
                     isWaitingForDeepseek: false
                 });
@@ -1021,17 +1168,32 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 if (processedText.trim()) {
                     this.setData({ isSpeaking: true, orbState: 'speaking' });
                     synthesizeAndPlay(
-                        processedText,
-                        'Aitong',
+                        processedText, // Use processed text for TTS
+                        'longwan',
                         'mp3',
                         16000,
                         () => {
-                            this.setData({ isSpeaking: false, orbState: 'idle' });
+                            // If shouldAutoRecord is true, start recording after speech completes
+                            if (shouldAutoRecord) {
+                                console.log("[Auto-Record] Starting recording automatically after speech");
+                                this.startRecordingAndRecognition();
+                            } else {
+                                this.setData({ isSpeaking: false, orbState: 'idle' });
+                            }
                         },
                         (error) => {
                             console.error("[TTS] Playback failed:", error);
                             this.setData({ isSpeaking: false, orbState: 'idle' });
-                            wx.showToast({ title: '语音播放失败', icon: 'none' });
+                            // Show a toast for TTS playback error only if it's not "Close received after close"
+                            // since that error often happens when switching screens or interrupting playback
+                            if (error && error.errMsg &&
+                                !error.errMsg.includes("Close received after close") &&
+                                !error.errMsg.includes("未完成的操作")) {
+                                wx.showToast({
+                                    title: '语音播放失败，将使用备用引擎',
+                                    icon: 'none'
+                                });
+                            }
                         }
                     );
                 } else {
@@ -1044,5 +1206,30 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             });
     },
 
+    // Add new method to switch TTS providers
+    switchTtsProvider: function () {
+        // Switch between available providers
+        const nextProvider: TtsProviderType = this.data.currentTtsProvider === 'ali' ? 'cosyvoice' : 'ali';
+        console.log(`Switching TTS provider to: ${nextProvider}`);
+
+        // Stop any ongoing TTS playback
+        stopTTSPlayback(true); // Pass true to suppress error messages
+
+        // Update the provider in the TTS service
+        setTtsProvider(nextProvider);
+
+        // Update the UI state
+        this.setData({
+            currentTtsProvider: nextProvider,
+            isSpeaking: false
+        });
+
+        wx.showToast({
+            title: `已切换到 ${nextProvider === 'ali' ? '阿里云' : 'CosyVoice'} TTS引擎`,
+            icon: 'none',
+            duration: 2000
+        });
+    },
+
     // Removed: sendMessage, onMessageInput, scrollToBottom, saveChatHistory, loadChatHistory, clearChatHistory, activateDeepThinking, activateWebSearch, navigateToNewPage, initRecorderManager (now implicit)
-}); 
+});
