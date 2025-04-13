@@ -2,6 +2,7 @@
 
 - 样式描述文件后缀名为 .scss 页面逻辑通常写在 .ts 中，页面布局写在 .wxml 中.
 - /miniprogram/components 中有微信聊天的组件
+- 编写完后，我会使用微信小程序模拟器运行结果，不用 npm run
 
 ---
 
@@ -74,19 +75,19 @@ redpacket_tutorial.js event-demo.ts
 
 ## [ok] 添加转账确认界面如 Image 所示
 
-## 
+## [ok]
 
 @chat-container.wxml @event-player.wxml 目前 chat-content 所占空间不对，他应该和 input-bar 并列，而现在它在 input-bar 底层（Z 轴下面）。修复此问题
 
-## .js 中音频时长处理
+## [failed] .js 中音频时长处理
 
-transitions 中的 delay 可以有多种形式，要么是一个直接的数字，和现在一样。要么是可以指定音频结束后多少时间播放。这种情况下 delay 的格式不同(指定 delay type)。将 redpacket_tutorial 中的语音播放大部分改为说完后延迟 0.8s 执行下一个事件（需要在 .ts 中获取音频长度）
+使 transitions 中的 delay 允许多种形式，要么是一个直接的数字，和现在一样。要么是可以指定音频结束后多少时间播放。这种情况下 delay 的格式不同(指定 delay type)。将 redpacket_tutorial 中的语音播放大部分改为说完后延迟 0.8s 执行下一个事件（需要在 .ts 中获取音频长度）
 
 ## message 允许显示红包
 
 ## 发送照片功能
 
-- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 4 个图片，如 001.jpg 所示，可以勾选图片，点击右下角“发送”来发送到聊天框中. 图片现在都使用 miniprogram\assets\images\photo-alnum-example\farm.png 这个图片
+- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 4 个图片，布局如 001.jpg 所示，可以勾选图片，点击右下角“发送”来发送到聊天框中. 图片现在都使用 miniprogram\assets\images\photo-alnum-example\farm.png 这个图片
 
 ## 发送照片教程
 

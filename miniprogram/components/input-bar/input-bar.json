@@ -1,6 +1,7 @@
 {
     "component": true,
     "usingComponents": {
-        "redpacket-page": "../redpacket-page/redpacket-page"
+        "redpacket-page": "../redpacket-page/redpacket-page",
+        "photo-selector": "../photo-selector/photo-selector"
     }
 }

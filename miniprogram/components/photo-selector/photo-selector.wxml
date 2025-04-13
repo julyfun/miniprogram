@@ -1,0 +1,35 @@
+<!-- 照片选择界面 -->
+<view class="photo-selector" wx:if="{{visible}}">
+    <!-- 顶部导航栏 -->
+    <view class="nav-bar">
+        <view class="nav-back" bindtap="onBack">
+            <view class="back-icon"></view>
+        </view>
+        <view class="nav-title">相册</view>
+        <view class="nav-right"></view>
+    </view>
+    <!-- 照片网格 -->
+    <scroll-view class="photo-grid-container" scroll-y="{{true}}">
+        <view class="photo-grid">
+            <block wx:for="{{photos}}" wx:key="index">
+                <view class="photo-item-wrapper" bindtap="onSelectPhoto" data-index="{{index}}">
+                    <view class="photo-item">
+                        <image class="photo-image" src="{{item}}" mode="aspectFill"></image>
+                        <view class="checkbox {{selectedPhotos.indexOf(index) !== -1 ? 'checked' : ''}}">
+                            <view class="check-icon" wx:if="{{selectedPhotos.indexOf(index) !== -1}}"></view>
+                        </view>
+                    </view>
+                </view>
+            </block>
+        </view>
+    </scroll-view>
+    <!-- 底部操作栏 -->
+    <view class="bottom-bar">
+        <view class="selected-count" wx:if="{{selectedPhotos.length > 0}}">
+            已选择 {{selectedPhotos.length}} 张
+        </view>
+        <view class="send-button {{selectedPhotos.length > 0 ? 'active' : ''}}" bindtap="onSend">
+            发送{{selectedPhotos.length > 0 ? '(' + selectedPhotos.length + ')' : ''}}
+        </view>
+    </view>
+</view>

@@ -1,0 +1,156 @@
+/* 照片选择器样式 */
+.photo-selector {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f5f5f5;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 导航栏样式 */
+.nav-bar {
+    height: 88rpx;
+    padding: 0 30rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffffff;
+    border-bottom: 1rpx solid #e6e6e6;
+    position: relative;
+}
+
+.nav-back {
+    width: 60rpx;
+    height: 60rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-icon {
+    width: 20rpx;
+    height: 40rpx;
+    border-left: 5rpx solid #000;
+    border-bottom: 5rpx solid #000;
+    transform: rotate(45deg);
+    margin-left: 10rpx;
+}
+
+.nav-title {
+    font-size: 36rpx;
+    font-weight: 500;
+    color: #000000;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.nav-right {
+    width: 60rpx;
+}
+
+/* 照片网格容器 */
+.photo-grid-container {
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 照片网格样式 */
+.photo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10rpx;
+}
+
+/* 照片项包装器 */
+.photo-item-wrapper {
+    width: 25%;
+    box-sizing: border-box;
+    padding: 10rpx;
+}
+
+/* 照片项样式 */
+.photo-item {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    /* 正方形 */
+    border-radius: 8rpx;
+    overflow: hidden;
+    background-color: #e0e0e0;
+}
+
+.photo-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 复选框样式 */
+.checkbox {
+    position: absolute;
+    top: 10rpx;
+    right: 10rpx;
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 50%;
+    border: 2rpx solid rgba(255, 255, 255, 0.8);
+    background-color: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkbox.checked {
+    background-color: #07C160;
+    border-color: #07C160;
+}
+
+.check-icon {
+    width: 20rpx;
+    height: 12rpx;
+    border-left: 4rpx solid #fff;
+    border-bottom: 4rpx solid #fff;
+    transform: rotate(-45deg);
+    margin-top: -5rpx;
+}
+
+/* 底部操作栏 */
+.bottom-bar {
+    height: 120rpx;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 30rpx;
+    border-top: 1rpx solid #e6e6e6;
+}
+
+.selected-count {
+    flex: 1;
+    font-size: 28rpx;
+    color: #666666;
+}
+
+.send-button {
+    width: 180rpx;
+    height: 72rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #cecece;
+    color: #ffffff;
+    font-size: 30rpx;
+    border-radius: 8rpx;
+}
+
+.send-button.active {
+    background-color: #07C160;
+}

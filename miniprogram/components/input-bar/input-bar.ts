@@ -65,7 +65,8 @@ Component({
         showFeaturePanel: false, // 是否显示功能面板
         touchStartY: 0, // 触摸开始的Y坐标
         isCancelled: false, // 是否取消录音
-        showRedpacketPage: false // 是否显示红包发送页面
+        showRedpacketPage: false, // 是否显示红包发送页面
+        showPhotoSelector: false // 是否显示照片选择器
     },
 
     /**
@@ -115,6 +116,9 @@ Component({
             // 针对特定功能执行特殊处理
             if (feature === 'redpacket') {
                 this.setData({ showRedpacketPage: true });
+            } else if (feature === 'album') {
+                // 显示照片选择器
+                this.setData({ showPhotoSelector: true });
             }
 
             // 触发特定功能按钮点击事件
@@ -133,6 +137,20 @@ Component({
             this.triggerEvent('redpacketsend', redpacketData);
             // 关闭红包页面
             this.setData({ showRedpacketPage: false });
+        },
+
+        // 处理照片选择器关闭
+        onPhotoSelectorClose() {
+            this.setData({ showPhotoSelector: false });
+        },
+
+        // 处理照片发送
+        onPhotoSend(e: WechatMiniprogram.CustomEvent) {
+            const photoData = e.detail;
+            // 将照片数据传递给父组件
+            this.triggerEvent('photosend', photoData);
+            // 关闭照片选择器
+            this.setData({ showPhotoSelector: false });
         },
 
         // 处理红包金额修改
