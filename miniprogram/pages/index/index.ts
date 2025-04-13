@@ -43,6 +43,7 @@ interface IPageData {
     lastMessageId: string;
     isEditing: boolean;             // Is the text input being edited?
     accumulatedText: string;        // Accumulated recognized text during recording
+    showSettings: boolean;          // Controls the visibility of settings menu
 }
 
 // Helper function to play text with TTS
@@ -223,6 +224,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         lastMessageId: '',
         isEditing: false,         // Add isEditing state
         accumulatedText: '',      // Accumulated recognized text during recording
+        showSettings: false,      // Add showSettings state for settings menu
     },
 
     // Add a property to maintain the actual conversation history for API calls
@@ -528,10 +530,34 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         }
     },
 
+    // --- Toggle Settings Menu ---
+    toggleSettingsMenu: function () {
+        const newState = !this.data.showSettings;
+        console.log('[Settings] Toggling settings menu:', this.data.showSettings, '->', newState);
+        this.setData({
+            showSettings: newState
+        });
+    },
+
+    // --- Hide Settings Menu ---
+    hideSettingsMenu: function () {
+        // Hide both text input and settings menu
+        this.hideTextInputIfNeeded();
+
+        if (this.data.showSettings) {
+            this.setData({
+                showSettings: false
+            });
+        }
+    },
+
     // --- Prevent Event Bubbling ---
     preventBubble: function (e: WechatMiniprogram.TouchEvent) {
         // This prevents the container's tap event from firing
-        // when tapping on the text input container
+        // when tapping on the text input container or settings menu
+        console.log('[UI] Preventing event bubble');
+        // 微信小程序中使用catchtap绑定而不是使用stopPropagation
+        // 已在wxml中使用catchtap="preventBubble"
     },
 
     // --- Handle Text Input Change ---

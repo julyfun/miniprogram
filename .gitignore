@@ -4,3 +4,6 @@ node_modules
 # Secrets - DO NOT COMMIT!
 /miniprogram/utils/secrets.ts
 miniprogram_npm
+
+# others
+/tutorials/pm

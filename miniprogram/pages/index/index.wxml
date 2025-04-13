@@ -1,5 +1,5 @@
 <!-- 聊天助手页面 -->
-<view class="container" bindtap="hideTextInputIfNeeded">
+<view class="container" bindtap="hideSettingsMenu">
   <!-- Chat History -->
   <scroll-view class="chat-history" scroll-y scroll-into-view="{{lastMessageId}}" scroll-with-animation="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" bounces="{{true}}" scroll-anchoring="{{true}}" refresher-enabled="{{false}}">
     <view class="messages">
@@ -50,13 +50,22 @@
       {{isRecording ? '正在聆听...' : (isSpeaking ? '正在说话...' : '轻触开始')}}
     </view>
   </view>
-  <!-- Setting Buttons Area -->
-  <view class="setting-buttons">
-    <!-- Model Switch Button -->
-    <button bindtap="switchAiModel" class="switch-btn">切换模型 ({{currentAiModel}})</button>
-    <!-- TTS Provider Switch Button -->
-    <button bindtap="switchTtsProvider" class="switch-btn">
-      语音引擎 ({{currentTtsProvider === 'ali' ? '阿里云' : 'CosyVoice'}})
-    </button>
+  <!-- 设置按钮和菜单 -->
+  <view class="settings-container">
+    <!-- 设置菜单 -->
+    <view class="settings-menu {{showSettings ? 'show' : ''}}" catchtap="preventBubble">
+      <!-- 模型切换按钮 -->
+      <view class="settings-item" bindtap="switchAiModel">
+        <text>AI模型: {{currentAiModel}}</text>
+      </view>
+      <!-- 语音引擎切换按钮 -->
+      <view class="settings-item" bindtap="switchTtsProvider">
+        <text>语音引擎: {{currentTtsProvider === 'ali' ? '阿里云' : 'CosyVoice'}}</text>
+      </view>
+    </view>
+    <!-- 设置按钮 -->
+    <view class="settings-button" catchtap="toggleSettingsMenu">
+      <image src="/assets/icons/index/settings.svg" mode="aspectFit"></image>
+    </view>
   </view>
 </view>

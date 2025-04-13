@@ -31,7 +31,7 @@ export async function synthesizeAndPlay(
     onEnded?: () => void,
     onError?: (error: any) => void
 ): Promise<void> {
-    console.log('[CosyVoice] Starting synthesis for:', text);
+    console.log('[CosyVoice] Starting synthesis');
     stopPlayback(); // Stop any previous playback or WebSocket connection
 
     audioData = null; // Reset audio data collection
@@ -53,7 +53,7 @@ export async function synthesizeAndPlay(
             if (isConnecting && ws) {
                 console.error('[CosyVoice] WebSocket connection timeout');
                 ws.close({
-                    success: () => console.log('[CosyVoice] Timed out connection closed'),
+                    success: () => { },
                     fail: () => console.error('[CosyVoice] Failed to close timed out connection')
                 });
                 ws = null;
@@ -70,9 +70,7 @@ export async function synthesizeAndPlay(
                 'Authorization': `bearer ${DASHSCOPE_SECRETS.API_KEY}`,
                 'X-DashScope-DataInspection': 'enable'
             },
-            success: () => {
-                console.log('[CosyVoice] WebSocket connection request sent successfully');
-            },
+            success: () => { },
             fail: (err) => {
                 console.error('[CosyVoice] WebSocket connection failed:', err);
                 isConnecting = false;
@@ -119,19 +117,10 @@ export async function synthesizeAndPlay(
                 }
             });
 
-            console.log('[CosyVoice] Request payload:', {
-                voice,
-                format,
-                sample_rate: sampleRate,
-                task_id: taskId
-            });
-
             if (ws) {
                 ws.send({
                     data: runTaskMessage,
-                    success: () => {
-                        console.log('[CosyVoice] Sent run-task message');
-                    },
+                    success: () => { },
                     fail: (err) => {
                         console.error('[CosyVoice] Failed to send run-task message:', err);
                         if (onError) onError(err);
@@ -156,7 +145,6 @@ export async function synthesizeAndPlay(
         });
 
         ws.onClose(() => {
-            console.log('[CosyVoice] WebSocket connection closed');
             isConnecting = false;
             ws = null;
 
@@ -210,16 +198,10 @@ function sendContinueTask(text: string, onError?: (error: any) => void): void {
         }
     });
 
-    console.log('[CosyVoice] Continue task payload:', {
-        task_id: taskId,
-        text: text
-    });
-
     if (ws) {
         ws.send({
             data: continueTaskMessage,
             success: () => {
-                console.log('[CosyVoice] Sent continue-task message');
                 // Send finish-task message after a delay to ensure all text is processed
                 setTimeout(() => {
                     if (ws) sendFinishTask(onError);
@@ -257,9 +239,7 @@ function sendFinishTask(onError?: (error: any) => void): void {
     if (ws) {
         ws.send({
             data: finishTaskMessage,
-            success: () => {
-                console.log('[CosyVoice] Sent finish-task message');
-            },
+            success: () => { },
             fail: (err) => {
                 console.error('[CosyVoice] Failed to send finish-task message:', err);
                 if (onError) onError(err);
@@ -278,8 +258,6 @@ function writeAndPlayAudio(onEnded?: () => void, onError?: (error: any) => void)
         return;
     }
 
-    console.log('[CosyVoice] Processing audio data of size:', audioData.length);
-
     // Write data to file
     const fs = wx.getFileSystemManager();
     try {
@@ -288,12 +266,9 @@ function writeAndPlayAudio(onEnded?: () => void, onError?: (error: any) => void)
             data: audioData.buffer as ArrayBuffer,
             encoding: 'binary',
             success: () => {
-                console.log('[CosyVoice] Audio data written to file:', tempFilePath);
-
                 // 检查文件是否真的写入成功且有内容
                 try {
                     const stats = fs.statSync(tempFilePath);
-                    console.log('[CosyVoice] File size:', stats.size);
 
                     if (stats.size > 0) {
                         playAudioFile(tempFilePath, onEnded, onError);
@@ -322,40 +297,11 @@ function writeAndPlayAudio(onEnded?: () => void, onError?: (error: any) => void)
  */
 function playAudioFile(filePath: string, onEnded?: () => void, onError?: (error: any) => void): void {
     try {
-        console.log('[CosyVoice] Creating audio context for:', filePath);
         innerAudioContext = wx.createInnerAudioContext();
 
-        // 添加所有可能的事件监听
-        innerAudioContext.onCanplay(() => {
-            console.log('[CosyVoice] Audio is ready to play');
-        });
-
+        // 只保留关键事件监听
         innerAudioContext.onPlay(() => {
             console.log('[CosyVoice] Audio playback started');
-        });
-
-        innerAudioContext.onWaiting(() => {
-            console.log('[CosyVoice] Audio playback waiting');
-        });
-
-        innerAudioContext.onSeeking(() => {
-            console.log('[CosyVoice] Audio seeking');
-        });
-
-        innerAudioContext.onSeeked(() => {
-            console.log('[CosyVoice] Audio seek completed');
-        });
-
-        innerAudioContext.onPause(() => {
-            console.log('[CosyVoice] Audio playback paused');
-        });
-
-        innerAudioContext.onStop(() => {
-            console.log('[CosyVoice] Audio playback stopped');
-        });
-
-        innerAudioContext.onTimeUpdate(() => {
-            console.log('[CosyVoice] Audio time update:', innerAudioContext?.currentTime);
         });
 
         innerAudioContext.onEnded(() => {
@@ -372,12 +318,10 @@ function playAudioFile(filePath: string, onEnded?: () => void, onError?: (error:
 
         // 设置源和自动播放
         innerAudioContext.src = filePath;
-        console.log('[CosyVoice] Setting audio source to:', filePath);
 
         // 延迟一点启动播放
         setTimeout(() => {
             if (innerAudioContext) {
-                console.log('[CosyVoice] Starting playback...');
                 innerAudioContext.autoplay = true;
                 innerAudioContext.play();
             }
@@ -445,17 +389,13 @@ function handleWebSocketMessage(
         if (typeof event.data === 'string') {
             // Handle string message (typically JSON control messages)
             const data = JSON.parse(event.data);
-            console.log('[CosyVoice] Received WebSocket message:', data.header?.event || data.header?.status);
-            console.log('[CosyVoice] Full message data:', data);
 
             // 按照官方示例格式处理事件
             if (data.header && data.header.event) {
                 // 官方示例格式的事件处理
-                console.log('[CosyVoice] Received event:', data.header.event);
-
                 switch (data.header.event) {
                     case 'task-started':
-                        console.log('[CosyVoice] Task started with ID:', data.header.task_id);
+                        console.log('[CosyVoice] Task started');
                         taskStarted = true;
                         // Send the continue-task message with the actual text
                         if (ws) sendContinueTask(text, onError);
@@ -479,16 +419,13 @@ function handleWebSocketMessage(
 
                     case 'result-generated':
                         // 处理中间结果，如果需要的话
-                        console.log('[CosyVoice] Result generated');
                         break;
                 }
             }
             // 兼容旧格式处理（作为备用）
             else if (data.header && data.header.status === 'message') {
-                console.log('[CosyVoice] Received legacy message:', data.payload.message);
-
                 if (data.payload.message === 'task-started') {
-                    console.log('[CosyVoice] Task started with ID:', data.header.task_id);
+                    console.log('[CosyVoice] Task started');
                     taskStarted = true;
                     // Send the continue-task message with the actual text
                     if (ws) sendContinueTask(text, onError);
@@ -502,17 +439,11 @@ function handleWebSocketMessage(
                     console.error('[CosyVoice] Task failed:', data.payload.failure);
                     if (onError) onError(data.payload.failure);
                 }
-            } else {
-                console.log('[CosyVoice] Unrecognized message format:', data);
             }
         } else {
             // Handle binary message (audio data)
             // Convert binary data to Uint8Array and append to audioData
             const uint8Array = new Uint8Array(event.data as ArrayBuffer);
-            console.log('[CosyVoice] Received binary audio chunk:', {
-                size: uint8Array.length,
-                totalSize: audioData ? audioData.length + uint8Array.length : uint8Array.length
-            });
             audioData = audioData ? concatUint8Arrays(audioData, uint8Array) : uint8Array;
         }
     } catch (error) {

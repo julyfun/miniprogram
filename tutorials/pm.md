@@ -1,3 +1,10 @@
+## base
+
+- 样式描述文件后缀名为 .scss
+- 页面逻辑通常写在 .ts 中，页面布局写在 .wxml 中. /miniprogram/components 中有微信聊天的组件
+
+---
+
 阿里巴巴的语音识别 SDK 位置：miniprogram\third_party\alibabacloud-nls-wx-sdk
 可通过 require 导入
 根据 miniprogram\third_party\aliba.md 中的说明，重构语音识别部分，在首页进行实时语音识别（按键时说话即可在文本框中显示实时识别出来的文字）。如果需要什么信息或者 token 可以问我.
@@ -36,7 +43,7 @@ o首页改为一个语音助手对话界面，
 
 为 event-demo 添加语音播放功能，可输入 URI 播放音频。每个对方对话可以绑定一个音频。目前每个对话对应音频 URI 都是 assets/voice/redpacket_tutorial/iwill.mp3 。当前仅修改 redpacket_tutorial 相关教学 
 
-## 步骤修改为
+## 步骤修改为 [ok]
 
 1. 您好，我将指导您如何发送微信红包 (iwill.mp3)
 
@@ -54,6 +61,8 @@ o首页改为一个语音助手对话界面，
 
 8. 恭喜您已经学会了如何发红包，您可以到微信聊天尝试一下啦~ (cong.mp3)
 
+---
+
 ## 
 
 redpacket_tutorial.js event-demo.ts
@@ -64,7 +73,15 @@ redpacket_tutorial.js event-demo.ts
 
 ## 发送照片功能
 
-- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 3 个图片，
+- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 4 个图片，如 001.jpg 所示，可以勾选图片，点击右下角“发送”来发送到聊天框中
+
+## 发送照片教程
+
+- 模仿现有的红包教程 @redpacket_tutorial.js 中的教学数据格式，写一个 photo_tutorial ，通过 UI 、消息和语音提示教导用户使用发送图片功能。所有 audioUri 暂时留空. 文案也可以模仿红包教程 
+
+## 发送语音功能
+
+- @index.ts @index.wxml 左下角目前有一个发送语音按钮。点击后，原本的文字输入框替换为“按住说话”。长按进入录音模式，界面如图所示。松开可以发送录音。拖到左边“取消”圆圈内则取消发送。拖到右边“转文字 发送”暂时不用实现，我们之后再实现.
 
 ## 单独 tts
 
