@@ -36,7 +36,7 @@ module.exports = {
             "id": "step1_instruction",
             "type": "message",
             "role": "assistant",
-            "content": "首先，请点击右下角的加号按钮",
+            "content": "首先，请点击右下角的加号键",
             "audioUri": "assets/voice/redpacket_tutorial/plusbutton.mp3",
             "transitions": [
                 {
@@ -127,7 +127,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "step3_highlight",
-                    "delay": 3000
+                    "delay": 4000
                 }
             ]
         },
@@ -140,7 +140,21 @@ module.exports = {
             "content": "高亮金额输入区",
             "highlightTarget": "amount-input",
             "transitions": [
-                { "targetId": "waiting_for_amount_input" }
+                { "targetId": "step4_instruction" }
+            ]
+        },
+        // 第四步: 输入金额
+        {
+            "id": "step4_instruction",
+            "type": "message",
+            "role": "assistant",
+            "content": "然后用下面的数字键盘输入红包金额",
+            "audioUri": "assets/voice/redpacket_tutorial/number2.mp3",
+            "transitions": [
+                {
+                    "targetId": "waiting_for_amount_input",
+                    "delay": 4000
+                }
             ]
         },
 
@@ -169,26 +183,12 @@ module.exports = {
             "content": "很好！您已成功输入了红包金额",
             "transitions": [
                 {
-                    "targetId": "step4_instruction",
+                    "targetId": "step5_instruction",
                     "delay": 2000
                 }
             ]
         },
 
-        // 第四步: 输入金额
-        {
-            "id": "step4_instruction",
-            "type": "message",
-            "role": "assistant",
-            "content": "然后用下面的数字键盘输入红包金额",
-            "audioUri": "assets/voice/redpacket_tutorial/number2.mp3",
-            "transitions": [
-                {
-                    "targetId": "step5_instruction",
-                    "delay": 4000
-                }
-            ]
-        },
 
         // 第五步: 塞钱进红包
         {
