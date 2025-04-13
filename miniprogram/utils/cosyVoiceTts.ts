@@ -119,6 +119,13 @@ export async function synthesizeAndPlay(
                 }
             });
 
+            console.log('[CosyVoice] Request payload:', {
+                voice,
+                format,
+                sample_rate: sampleRate,
+                task_id: taskId
+            });
+
             if (ws) {
                 ws.send({
                     data: runTaskMessage,
@@ -201,6 +208,11 @@ function sendContinueTask(text: string, onError?: (error: any) => void): void {
                 text: text
             }
         }
+    });
+
+    console.log('[CosyVoice] Continue task payload:', {
+        task_id: taskId,
+        text: text
     });
 
     if (ws) {
@@ -360,6 +372,7 @@ function handleWebSocketMessage(
             // Handle string message (typically JSON control messages)
             const data = JSON.parse(event.data);
             console.log('[CosyVoice] Received WebSocket message:', data.header?.status);
+            console.log('[CosyVoice] Full message data:', data);
 
             if (data.header && data.header.status === 'message') {
                 console.log('[CosyVoice] Received message:', data.payload.message);
@@ -384,6 +397,10 @@ function handleWebSocketMessage(
             // Handle binary message (audio data)
             // Convert binary data to Uint8Array and append to audioData
             const uint8Array = new Uint8Array(event.data as ArrayBuffer);
+            console.log('[CosyVoice] Received binary audio chunk:', {
+                size: uint8Array.length,
+                totalSize: audioData ? audioData.length + uint8Array.length : uint8Array.length
+            });
             audioData = audioData ? concatUint8Arrays(audioData, uint8Array) : uint8Array;
         }
     } catch (error) {

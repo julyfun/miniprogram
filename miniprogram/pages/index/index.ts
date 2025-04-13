@@ -742,7 +742,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
                             // --- Play the full response using TTS ---
                             if (processedText.trim()) {
-                                console.log("[TTS] Attempting to play full response:", processedText);
+                                console.log("[TTS] Attempting to play full response #1:", processedText);
                                 this.setData({ isSpeaking: true, orbState: 'speaking' }); // Update state for TTS
                                 synthesizeAndPlay(
                                     processedText, // Use processed text for TTS
@@ -835,7 +835,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     });
 
                     if (processedText.trim()) {
-                        console.log("[TTS] Attempting to play response:", processedText);
+                        console.log("[TTS] Attempting to play response: #2", processedText);
                         this.setData({ isSpeaking: true, orbState: 'speaking' });
                         synthesizeAndPlay(
                             processedText, // Use processed text for TTS
@@ -1076,6 +1076,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         // Optionally speak the welcome message
                         if (processedText.trim()) {
                             this.setData({ isSpeaking: true, orbState: 'speaking' });
+                            console.log("[TTS] Attempting to play response: #3", processedText);
                             synthesizeAndPlay(
                                 processedText,
                                 'longwan',
@@ -1167,6 +1168,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
                 if (processedText.trim()) {
                     this.setData({ isSpeaking: true, orbState: 'speaking' });
+                    console.log("[TTS] Attempting to play response: #4", processedText);
                     synthesizeAndPlay(
                         processedText, // Use processed text for TTS
                         'longwan',

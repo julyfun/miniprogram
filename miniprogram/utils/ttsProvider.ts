@@ -58,6 +58,7 @@ export async function synthesizeAndPlay(
 
     // Make sure there's no ongoing playback
     stopPlayback(true);
+    console.log('[TTS Provider] Synthesizing with:')
 
     // Create wrapped callbacks to handle fallback
     const wrappedOnError = (error: any) => {
@@ -97,9 +98,17 @@ export async function synthesizeAndPlay(
     };
 
     // Select the appropriate defaults and provider for synthesis
+    console.log('[TTS Provider] Current TTS provider:', currentProvider);
     if (currentProvider === 'cosyvoice') {
         const cosyVoice = voice || 'longxiaochun';
         const cosySampleRate = sampleRate || 22050;
+
+        console.log('[TTS Provider] Synthesizing with CosyVoice:', {
+            text,
+            voice: cosyVoice,
+            format,
+            sampleRate: cosySampleRate
+        });
 
         try {
             return await cosyVoiceTts.synthesizeAndPlay(
@@ -117,6 +126,13 @@ export async function synthesizeAndPlay(
         // Default to Alibaba Cloud TTS
         const aliVoice = voice || 'longwan';
         const aliSampleRate = sampleRate || 16000;
+
+        console.log('[TTS Provider] Synthesizing with Ali TTS:', {
+            text,
+            voice: aliVoice,
+            format,
+            sampleRate: aliSampleRate
+        });
 
         try {
             return await aliTts.synthesizeAndPlay(
