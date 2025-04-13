@@ -3,11 +3,7 @@
     height: 100%;
     background-color: #EDEDED;
     box-sizing: border-box;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: relative;
     padding: 0;
     margin: 0;
     overflow: hidden;
@@ -17,6 +13,7 @@
 .chat-page .chat-content .full-width-container {
     width: 100%;
     max-width: 100vw;
+    height: 100%;
 }
 
 .message-list {
@@ -26,4 +23,5 @@
     box-sizing: border-box;
     min-height: 100%;
     width: 100%;
+    padding-bottom: 48rpx;
 }

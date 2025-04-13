@@ -11,7 +11,7 @@
         </view>
     </view>
     <!-- 单个金额输入 -->
-    <view class="amount-section" bindtap="showAmountKeyboard">
+    <view class="amount-section {{highlight === 'amount-input' && showHighlight ? 'highlight-active' : ''}}" bindtap="showAmountKeyboard">
         <view class="amount-label">单个金额</view>
         <view class="amount-input-container">
             <text class="currency-symbol">¥</text>
@@ -65,8 +65,38 @@
     <!-- 底部金额显示和发送按钮 -->
     <view class="redpacket-footer">
         <view class="total-amount">¥{{amount || '0.00'}}</view>
-        <view class="send-button" bindtap="onSendRedpacket">塞钱进红包</view>
+        <view class="send-button {{highlight === 'pay-button' && showHighlight ? 'highlight-active' : ''}}" bindtap="onSendRedpacket">
+            塞钱进红包
+        </view>
     </view>
     <!-- 未领取红包提示 -->
     <view class="unreceived-hint">可直接使用收到的零钱发红包</view>
+    <!-- 转账确认界面 (模拟微信支付界面) -->
+    <view class="payment-overlay" wx:if="{{showPaymentConfirm}}">
+        <view class="payment-dialog">
+            <view class="payment-header">
+                <view class="payment-close" bindtap="onClosePayment">×</view>
+                <view class="payment-use-password">使用密码</view>
+            </view>
+            <view class="payment-content">
+                <view class="payment-title">向{{recipientName || '茹茹宝宝(**珠)'}}转账</view>
+                <view class="payment-amount">¥{{amount || '1.00'}}</view>
+                <view class="payment-method">
+                    <view class="payment-method-item">
+                        <view class="payment-method-icon">
+                            <view class="wallet-icon"></view>
+                        </view>
+                        <view class="payment-method-info">
+                            <view class="payment-method-name">零钱</view>
+                            <view class="payment-method-status">可用</view>
+                        </view>
+                        <view class="payment-method-check"></view>
+                    </view>
+                </view>
+                <view class="payment-button {{highlight === 'pay-button' && showHighlight ? 'highlight-active' : ''}}" bindtap="onConfirmPayment">
+                    支付
+                </view>
+            </view>
+        </view>
+    </view>
 </view>

@@ -135,6 +135,13 @@ Component({
             this.setData({ showRedpacketPage: false });
         },
 
+        // 处理红包金额修改
+        onAmountChanged(e: WechatMiniprogram.CustomEvent) {
+            console.log('红包金额已修改');
+            // 将金额修改事件传递给父组件
+            this.triggerEvent('amountChanged');
+        },
+
         // 处理输入框输入
         onInput(e: WechatMiniprogram.Input) {
             this.triggerEvent('input', e.detail);

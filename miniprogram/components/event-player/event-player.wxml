@@ -13,13 +13,15 @@
             </view>
         </view>
     </navigation-bar>
-    <!-- 内容区域 -->
-    <view class="chat-content full-width-content">
-        <!-- 使用chat-container组件 -->
-        <chat-container messages="{{formattedMessages}}" selfAvatar="/assets/icons/default-avatar.svg" otherAvatar="{{metadata.opponent.avatarUrl || '/assets/icons/default-avatar.svg'}}" scrollIntoView="{{scrollToView}}" />
+    <!-- 内容区域 - 添加独立容器确保正确的层级关系 -->
+    <view class="chat-content-wrapper">
+        <view class="chat-content full-width-content">
+            <!-- 使用chat-container组件 -->
+            <chat-container messages="{{formattedMessages}}" selfAvatar="/assets/icons/default-avatar.svg" otherAvatar="{{metadata.opponent.avatarUrl || '/assets/icons/default-avatar.svg'}}" scrollIntoView="{{scrollToView}}" />
+        </view>
     </view>
     <!-- 底部输入区域 -->
-    <input-bar value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
+    <input-bar value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" bindamountChanged="onAmountChanged" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
     <!-- 控制栏 隐藏 -->
     <view class="control-bar" style="display: none;">
         <view class="control-button" bindtap="onRestart">
@@ -60,5 +62,4 @@
             </view>
         </view>
     </view>
-    <!-- 移除UI高亮覆盖层，改用元素类属性实现高亮 -->
 </view>

@@ -26,7 +26,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "step1_instruction",
-                    "delay": 3500
+                    "delay": 4000
                 }
             ]
         },
@@ -41,7 +41,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "step1_highlight",
-                    "delay": 2500
+                    "delay": 3500
                 }
             ]
         },
@@ -84,7 +84,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "step2_highlight",
-                    "delay": 500
+                    "delay": 3000
                 }
             ]
         },
@@ -126,8 +126,51 @@ module.exports = {
             "audioUri": "assets/voice/redpacket_tutorial/number.mp3",
             "transitions": [
                 {
+                    "targetId": "step3_highlight",
+                    "delay": 3000
+                }
+            ]
+        },
+
+        // 高亮金额输入区
+        {
+            "id": "step3_highlight",
+            "type": "ui_highlight",
+            "role": "system",
+            "content": "高亮金额输入区",
+            "highlightTarget": "amount-input",
+            "transitions": [
+                { "targetId": "waiting_for_amount_input" }
+            ]
+        },
+
+        // 等待用户输入金额
+        {
+            "id": "waiting_for_amount_input",
+            "type": "waiting_for_input",
+            "role": "system",
+            "content": "等待用户输入金额...",
+            "transitions": [
+                {
+                    "conditions": [
+                        { "type": "flag", "key": "userChangedAmount", "value": true }
+                    ],
+                    "targetId": "step4_after_amount_input",
+                    "delay": 2000
+                }
+            ]
+        },
+
+        // 第四步: 输入金额后的提示
+        {
+            "id": "step4_after_amount_input",
+            "type": "message",
+            "role": "assistant",
+            "content": "很好！您已成功输入了红包金额",
+            "transitions": [
+                {
                     "targetId": "step4_instruction",
-                    "delay": 2500
+                    "delay": 2000
                 }
             ]
         },
@@ -142,7 +185,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "step5_instruction",
-                    "delay": 2500
+                    "delay": 4000
                 }
             ]
         },
@@ -157,7 +200,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "step6_instruction",
-                    "delay": 2500
+                    "delay": 4000
                 }
             ]
         },
@@ -171,8 +214,37 @@ module.exports = {
             "audioUri": "assets/voice/redpacket_tutorial/confirm.mp3",
             "transitions": [
                 {
-                    "targetId": "completion",
+                    "targetId": "step7_transfer_confirm",
+                    "delay": 4000
+                }
+            ]
+        },
+
+        // 添加转账确认界面提示
+        {
+            "id": "step7_transfer_confirm",
+            "type": "message",
+            "role": "assistant",
+            "content": "当您点击确认支付后，会出现转账确认界面。请确认收款方信息和金额无误后再点击【支付】",
+            "transitions": [
+                {
+                    "targetId": "step7_highlight_pay",
                     "delay": 3000
+                }
+            ]
+        },
+
+        // 高亮支付按钮
+        {
+            "id": "step7_highlight_pay",
+            "type": "ui_highlight",
+            "role": "system",
+            "content": "高亮支付按钮",
+            "highlightTarget": "pay-button",
+            "transitions": [
+                {
+                    "targetId": "completion",
+                    "delay": 4000
                 }
             ]
         },
@@ -187,7 +259,7 @@ module.exports = {
             "transitions": [
                 {
                     "targetId": "tutorial_end",
-                    "delay": 3000
+                    "delay": 4000
                 }
             ]
         },

@@ -1173,7 +1173,26 @@ Component({
             this.transitionToNextEvent(currentEvent);
         },
 
-        // 处理红包发送
+        // 添加处理金额修改事件
+        onAmountChanged() {
+            console.log('用户修改了红包金额');
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.userChangedAmount = true;
+
+            // 更新状态
+            this.setData({
+                conditionState
+            }, () => {
+                // 在状态更新完成后检查转换
+                console.log('金额已修改，更新标志状态，检查转换');
+                this.checkAndTransitionBasedOnFlags();
+            });
+        },
+
+        // 修改 onRedpacketSend 方法，确保它可以正确处理转账确认步骤
         onRedpacketSend(e: WechatMiniprogram.CustomEvent) {
             console.log('收到红包发送事件', e.detail);
 
@@ -1199,6 +1218,26 @@ Component({
                 formattedMessages,
                 scrollToView: `msg-${formattedMessages.length - 1}`
             });
+
+            // 如果在支付按钮高亮状态，则设置支付标志
+            if (this.data.highlightTarget === 'pay-button' && this.data.showHighlight) {
+                console.log('支付操作已完成，更新支付标志状态');
+
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+                conditionState.customFlags = conditionState.customFlags || {};
+                conditionState.customFlags.userConfirmedPayment = true;
+
+                // 更新状态并隐藏高亮
+                this.setData({
+                    conditionState,
+                    showHighlight: false
+                }, () => {
+                    // 在状态更新完成后检查转换
+                    console.log('支付状态已更新，检查转换');
+                    this.checkAndTransitionBasedOnFlags();
+                });
+            }
         },
 
         // 处理表情选择

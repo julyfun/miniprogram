@@ -1,7 +1,7 @@
 ## base
 
-- 样式描述文件后缀名为 .scss
-- 页面逻辑通常写在 .ts 中，页面布局写在 .wxml 中. /miniprogram/components 中有微信聊天的组件
+- 样式描述文件后缀名为 .scss 页面逻辑通常写在 .ts 中，页面布局写在 .wxml 中.
+- /miniprogram/components 中有微信聊天的组件
 
 ---
 
@@ -38,7 +38,6 @@ o首页改为一个语音助手对话界面，
 - 任务描述
    - 每句话和对应 MP3 文件名
 
-
 ### 
 
 为 event-demo 添加语音播放功能，可输入 URI 播放音频。每个对方对话可以绑定一个音频。目前每个对话对应音频 URI 都是 assets/voice/redpacket_tutorial/iwill.mp3 。当前仅修改 redpacket_tutorial 相关教学 
@@ -63,7 +62,9 @@ o首页改为一个语音助手对话界面，
 
 ---
 
-## 
+## [ok] 如果首页跳转到任何其他页面，立即停止首页正在播放的语音
+
+## [ok]
 
 redpacket_tutorial.js event-demo.ts
 红包教学 redpacket_tutorial 需要进行如下优化
@@ -71,9 +72,21 @@ redpacket_tutorial.js event-demo.ts
 2. 红包输入金额界面允许高亮，并等待用户修改金额后 2s 再执行下一事件
 3. 添加转账确认界面（如 Image 图片所示）
 
+## [ok] 添加转账确认界面如 Image 所示
+
+## 
+
+@chat-container.wxml @event-player.wxml 目前 chat-content 所占空间不对，他应该和 input-bar 并列，而现在它在 input-bar 底层（Z 轴下面）。修复此问题
+
+## .js 中音频时长处理
+
+transitions 中的 delay 可以有多种形式，要么是一个直接的数字，和现在一样。要么是可以指定音频结束后多少时间播放。这种情况下 delay 的格式不同(指定 delay type)。将 redpacket_tutorial 中的语音播放大部分改为说完后延迟 0.8s 执行下一个事件（需要在 .ts 中获取音频长度）
+
+## message 允许显示红包
+
 ## 发送照片功能
 
-- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 4 个图片，如 001.jpg 所示，可以勾选图片，点击右下角“发送”来发送到聊天框中
+- 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 4 个图片，如 001.jpg 所示，可以勾选图片，点击右下角“发送”来发送到聊天框中. 图片现在都使用 miniprogram\assets\images\photo-alnum-example\farm.png 这个图片
 
 ## 发送照片教程
 
@@ -83,9 +96,13 @@ redpacket_tutorial.js event-demo.ts
 
 - @index.ts @index.wxml 左下角目前有一个发送语音按钮。点击后，原本的文字输入框替换为“按住说话”。长按进入录音模式，界面如图所示。松开可以发送录音。拖到左边“取消”圆圈内则取消发送。拖到右边“转文字 发送”暂时不用实现，我们之后再实现.
 
-## 单独 tts
+## [optional] 单独 tts
 
-@cosyvoice.md不再使用现有的 tts.ts, ttsProvider 等，其逻辑已经太过复杂， 需要彻底抛弃。 @index.ts  保留现在类似的接口，仿照 @cosyvoice.md 的写法重写一个接口.秘钥在 @secrets.ts 中使用 
+@cosyvoice.md不再使用现有的 tts.ts, ttsProvider 等，其逻辑已经太过复杂，需要彻底抛弃。 @index.ts  保留现在类似的接口，仿照 @cosyvoice.md 的写法重写一个接口.秘钥在 @secrets.ts 中使用 
+
+## 诈骗来电模拟
+
+## AI 智能食谱
 
 ## sync
 

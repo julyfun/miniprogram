@@ -131,6 +131,9 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
         const functionName = match[1] as FunctionName;
         console.log(`Function detected: ${functionName}`);
 
+        // 在任何导航前停止TTS播放
+        stopTTSPlayback(true); // true参数抑制错误提示
+
         // Special handling for hongbao function
         if (functionName === 'hongbao') {
             // Navigate directly to event-demo with redpacket_tutorial ID
@@ -252,6 +255,13 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         const feature = e.currentTarget.dataset.feature;
         console.log('Feature button tapped:', feature);
 
+        // 在导航前停止语音播放
+        stopTTSPlayback(true); // true参数抑制错误提示
+        this.setData({
+            isSpeaking: false,
+            orbState: 'idle'
+        });
+
         if (feature && FUNCTION_ROUTES[feature as FunctionName]) {
             wx.navigateTo({
                 url: FUNCTION_ROUTES[feature as FunctionName],
@@ -274,6 +284,18 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
         // Send initial prompt to AI on load
         this.sendInitialPromptToAI();
+    },
+
+    onHide: function () {
+        // 当页面隐藏（包括跳转到其他页面）时停止语音播放
+        console.log('Index page hidden, stopping TTS playback');
+        stopTTSPlayback(true); // 使用true参数抑制错误提示
+
+        // 更新UI状态
+        this.setData({
+            isSpeaking: false,
+            orbState: 'idle'
+        });
     },
 
     onUnload: function () {

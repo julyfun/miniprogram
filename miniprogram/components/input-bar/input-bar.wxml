@@ -91,5 +91,5 @@
         </view>
     </view>
     <!-- 红包发送页面 -->
-    <redpacket-page wx:if="{{showRedpacketPage}}" visible="{{showRedpacketPage}}" bindclose="onRedpacketPageClose" bindsend="onRedpacketSend" />
+    <redpacket-page wx:if="{{showRedpacketPage}}" visible="{{showRedpacketPage}}" bindclose="onRedpacketPageClose" bindsend="onRedpacketSend" bindamountChanged="onAmountChanged" isTutorial="{{showHighlight && (highlight === 'amount-input' || highlight === 'pay-button')}}" highlight="{{highlight}}" showHighlight="{{showHighlight}}" />
 </view>
