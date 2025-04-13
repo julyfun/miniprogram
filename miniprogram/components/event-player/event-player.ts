@@ -9,15 +9,17 @@ interface EventMessage {
     explanation?: string;   // 解释，用于assessment事件
     transitions?: EventTransition[]; // 过渡条件，用于有向图跳转
     nextId?: string;      // 简单跳转的下一个事件ID (用于没有条件的转换)
-    delay?: number;       // 可选的延迟时间（毫秒），控制事件显示间隔
+    delay?: number;       // 已废弃: 使用 transitions[i].delay 替代
     setFlags?: Record<string, any>; // 用于设置自定义标志
     highlightTarget?: string; // 高亮目标元素
+    audioUri?: string;    // 用于语音播放的音频URI
 }
 
 // 过渡条件定义
 interface EventTransition {
     targetId: string;     // 目标事件ID
-    conditions: EventCondition[]; // 跳转条件列表
+    conditions?: EventCondition[]; // 跳转条件列表
+    delay?: number;       // 可选的延迟时间（毫秒），控制转换延迟
 }
 
 // 事件条件
@@ -174,7 +176,11 @@ Component({
         // UI高亮相关
         showHighlight: false,       // 是否显示高亮
         highlightTarget: '',        // 要高亮的目标元素
-        highlightRectPosition: {}   // 高亮区域的位置信息
+        highlightRectPosition: {},   // 高亮区域的位置信息
+        // 音频相关
+        audioContext: null as WechatMiniprogram.InnerAudioContext | null,
+        isAudioPlaying: false,
+        currentAudioUri: ''
     },
 
     /**
@@ -373,152 +379,138 @@ Component({
 
         // 开始播放
         startPlayback() {
-            // 取消所有活动的计时器
-            this.clearAllTimers();
+            console.log('开始播放');
 
-            console.log('开始播放对话，清空状态');
+            if (this.data.isComplete) {
+                console.log('事件序列已完成，无法开始播放');
+                return;
+            }
 
-            // 获取起始事件ID
-            const { metadata, allEvents } = this.data;
-            const startId = (metadata && metadata.startId) || (allEvents[0] && allEvents[0].id);
-            console.log(`起始事件ID: ${startId}`);
-
-            // 重置条件状态
-            const resetConditionState: ConditionState = {
-                messageCount: 0,
-                lastEventId: '',
-                customFlags: {},
-                correctAnswerCount: 0,
-                wrongAnswerCount: 0,
-                userAnswers: {}
-            };
-
-            // 记录开始时间
-            const playbackStartTime = Date.now();
-
-            // 重置视图状态
+            // 设置播放状态
             this.setData({
-                messages: [],
-                formattedMessages: [],
-                conditionState: resetConditionState,
                 isPlaying: true,
-                showAssessment: false,
-                currentAssessment: null,
-                playbackStartTime,
-                allowInput: true // 启用输入功能
+                allowInput: this.properties.interactionMode, // 根据交互模式设置允许输入
+                playbackStartTime: Date.now()
             });
 
-            // 如果有有效的起始事件，开始处理
-            if (startId && this.data.eventMap[startId]) {
-                console.log(`找到起始事件: ${startId}`);
-                // 设置当前事件并处理
-                this.setData({ currentEventId: startId });
-                this.processEvent(startId);
+            // 记录开始时间
+            this.triggerEvent('playStart');
+
+            // 如果是首次开始，从第一个事件开始
+            if (!this.data.currentEventId) {
+                if (this.data.metadata.startId) {
+                    this.processEvent(this.data.metadata.startId);
+                } else if (this.data.allEvents.length > 0) {
+                    this.processEvent(this.data.allEvents[0].id);
+                } else {
+                    console.warn('没有事件可播放');
+                    this.setData({ isPlaying: false });
+                }
             } else {
-                console.error('起始事件未找到:', startId);
-                wx.showToast({
-                    title: '未找到起始事件',
-                    icon: 'error'
-                });
+                // 如果是重新开始，检查条件并进行合适的转换
+                this.checkAndTransitionBasedOnFlags();
             }
         },
 
         // 检查条件是否满足
         checkCondition(condition: EventCondition): boolean {
-            const conditionState = this.data.conditionState;
+            return this.evaluateCondition(condition);
+        },
 
-            console.log(`检查条件: ${condition.type}`, condition, conditionState);
+        // 获取下一个事件的ID
+        getNextEventId(event: EventMessage): { id: string | null, delay?: number } {
+            console.log(`获取 ${event.id} 的下一事件ID`);
 
-            switch (condition.type) {
-                case 'messageCount':
-                    return conditionState.messageCount >= (condition.value || 0);
+            // 检查条件转换
+            if (event.transitions && event.transitions.length > 0) {
+                console.log(`事件 ${event.id} 有 ${event.transitions.length} 个可能的转换`);
 
-                case 'flag':
-                    if (condition.key && condition.value !== undefined) {
-                        const flagValue = conditionState.customFlags[condition.key];
-                        console.log(`检查标志 ${condition.key}: ${flagValue} === ${condition.value}`);
-                        return flagValue === condition.value;
+                // 查找满足所有条件的第一个转换
+                for (const transition of event.transitions) {
+                    // 如果没有条件，直接使用这个转换
+                    if (!transition.conditions || transition.conditions.length === 0) {
+                        console.log(`找到无条件转换到 ${transition.targetId}${transition.delay ? `，延迟 ${transition.delay}ms` : ''}`);
+                        return {
+                            id: transition.targetId,
+                            delay: transition.delay
+                        };
                     }
-                    return false;
 
-                case 'lastEvent':
-                    return conditionState.lastEventId === condition.value;
+                    // 检查所有条件是否满足
+                    const conditionResults = transition.conditions.map(condition => {
+                        const result = this.evaluateCondition(condition);
+                        console.log(`条件检查 ${condition.type} ${condition.key || ''}: ${result}`);
+                        return result;
+                    });
 
-                default:
-                    console.warn('未知条件类型:', condition.type);
-                    return false;
-            }
-        },
+                    const allConditionsMet = conditionResults.every(result => result === true);
 
-        // 获取下一个事件ID
-        getNextEventId(event: EventMessage): string | null {
-            if (!event.transitions || event.transitions.length === 0) {
-                console.log(`事件 ${event.id} 没有指定转换`);
-                return null;
-            }
-
-            // 遍历所有转换
-            for (const transition of event.transitions) {
-                // 无条件转换
-                if (!transition.conditions || transition.conditions.length === 0) {
-                    console.log(`事件 ${event.id} 使用无条件转换到 ${transition.targetId}`);
-                    return transition.targetId;
-                }
-
-                // 条件转换：所有条件都必须满足
-                const allConditionsMet = transition.conditions.every(condition =>
-                    this.checkCondition(condition)
-                );
-
-                if (allConditionsMet) {
-                    console.log(`事件 ${event.id} 所有条件满足，转换到 ${transition.targetId}`);
-                    return transition.targetId;
+                    if (allConditionsMet) {
+                        console.log(`所有条件满足，转换到 ${transition.targetId}${transition.delay ? `，延迟 ${transition.delay}ms` : ''}`);
+                        return {
+                            id: transition.targetId,
+                            delay: transition.delay
+                        };
+                    }
                 }
             }
 
-            console.log(`事件 ${event.id} 没有满足条件的转换`);
-            return null;
+            // 没有找到满足条件的下一个事件
+            console.log(`事件 ${event.id} 无下一步或条件不满足`);
+            return { id: null };
         },
 
-        // 处理指定ID的事件
+        // 处理事件
         processEvent(eventId: string) {
+            console.log(`处理事件: ${eventId}`);
+            // 如果没有活动 ID 或 ID 无效，则退出
             if (!eventId || !this.data.eventMap[eventId]) {
-                console.error(`事件ID不存在: ${eventId}`);
+                console.error(`无效的事件ID: ${eventId}`);
                 return;
             }
 
+            // 获取事件对象
             const event = this.data.eventMap[eventId];
-            console.log(`处理事件: ${eventId}`, event);
 
-            // 更新当前事件ID
+            // 兼容处理 - 如果有nextId但没有transitions，创建一个transition
+            if (event.nextId && (!event.transitions || event.transitions.length === 0)) {
+                console.log(`使用nextId ${event.nextId} 创建转换`);
+                event.transitions = [
+                    {
+                        targetId: event.nextId,
+                        conditions: []
+                    }
+                ];
+            }
+
             this.setData({ currentEventId: eventId });
 
-            // 根据事件类型处理
+            // 根据事件类型进行处理
             switch (event.type) {
                 case 'message':
                     this.handleMessageEvent(event);
                     break;
-
-                case 'system':
-                    this.handleSystemEvent(event);
-                    break;
-
                 case 'assessment':
                     this.handleAssessmentEvent(event);
                     break;
-
+                case 'task_complete':
+                    this.handleTaskCompleteEvent(event);
+                    break;
                 case 'waiting_for_input':
                     this.handleWaitingForInputEvent(event);
                     break;
-
                 case 'ui_highlight':
                     this.handleUIHighlightEvent(event);
                     break;
-
+                case 'system':
+                case 'system_display':
+                    this.handleSystemEvent(event);
+                    break;
                 default:
-                    console.warn(`未知事件类型: ${event.type}`);
-                    // 未知类型的事件也尝试转到下一个
+                    console.warn(`未知的事件类型: ${event.type}`);
+                    // 未知类型的事件，直接转到下一个
                     this.transitionToNextEvent(event);
+                    break;
             }
         },
 
@@ -541,23 +533,8 @@ Component({
             // 更新状态
             this.setData({ conditionState });
 
-            // 系统事件通常不显示，直接转到下一个事件
-            const delay = event.delay || 0;
-            if (delay > 0) {
-                console.log(`系统事件延迟 ${delay}ms 后转到下一步`);
-                const adjustedDelay = delay / this.properties.playbackSpeed;
-                const timerId = setTimeout(() => {
-                    this.transitionToNextEvent(event);
-                }, adjustedDelay);
-
-                // 添加到活动计时器列表
-                this.setData({
-                    activeTimers: [...this.data.activeTimers, timerId]
-                });
-            } else {
-                // 立即转到下一个事件
-                this.transitionToNextEvent(event);
-            }
+            // 系统事件不显示，直接转到下一个事件
+            this.transitionToNextEvent(event);
         },
 
         // 处理消息类型事件
@@ -587,6 +564,11 @@ Component({
             conditionState.lastEventId = event.id;
             this.setData({ conditionState });
 
+            // 如果消息有音频URI，播放语音
+            if (event.audioUri) {
+                this.playAudio(event.audioUri);
+            }
+
             // 检查是否需要用户交互
             if (event.transitions && event.transitions.some(t =>
                 t.conditions && t.conditions.some(c => c.type === 'messageCount' && c.value > 0))) {
@@ -597,28 +579,8 @@ Component({
                 return;
             }
 
-            // 延迟转到下一个事件
-            const delay = event.delay || this.data.defaultDelay;
-            const adjustedDelay = delay / this.properties.playbackSpeed;
-
-            console.log(`事件 ${event.id} 将在 ${adjustedDelay}ms 后转到下一步`);
-
-            const timerId = setTimeout(() => {
-                // 从活动定时器列表中移除
-                const activeTimers = [...this.data.activeTimers];
-                const timerIndex = activeTimers.indexOf(timerId);
-                if (timerIndex !== -1) {
-                    activeTimers.splice(timerIndex, 1);
-                    this.setData({ activeTimers });
-                }
-
-                this.transitionToNextEvent(event);
-            }, adjustedDelay);
-
-            // 添加到活动定时器列表
-            this.setData({
-                activeTimers: [...this.data.activeTimers, timerId]
-            });
+            // 处理转到下一个事件 - 由 transitionToNextEvent 方法处理延迟
+            this.transitionToNextEvent(event);
         },
 
         // 处理评估类型事件
@@ -648,26 +610,8 @@ Component({
                 duration: 2000
             });
 
-            // 延迟转到下一个事件
-            const delay = event.delay || 2000;
-            const adjustedDelay = delay / this.properties.playbackSpeed;
-
-            const timerId = setTimeout(() => {
-                // 从活动定时器列表中移除
-                const activeTimers = [...this.data.activeTimers];
-                const timerIndex = activeTimers.indexOf(timerId);
-                if (timerIndex !== -1) {
-                    activeTimers.splice(timerIndex, 1);
-                    this.setData({ activeTimers });
-                }
-
-                this.transitionToNextEvent(event);
-            }, adjustedDelay);
-
-            // 添加到活动定时器列表
-            this.setData({
-                activeTimers: [...this.data.activeTimers, timerId]
-            });
+            // 转到下一个事件
+            this.transitionToNextEvent(event);
         },
 
         // 评估条件是否满足
@@ -725,19 +669,63 @@ Component({
             }
         },
 
-        // 根据条件转到下一个事件
+        // 根据事件转换到下一个事件
         transitionToNextEvent(event: EventMessage) {
-            // 获取下一个事件ID
-            const nextEventId = this.getNextEventId(event);
+            console.log(`尝试转换事件: ${event.id}`);
 
-            if (nextEventId) {
-                console.log(`事件 ${event.id} 转向 ${nextEventId}`);
-                // 处理下一个事件
-                this.processEvent(nextEventId);
-            } else {
-                console.log(`事件 ${event.id} 无下一步，结束流程`);
-                // 没有下一个事件，结束播放
+            // 如果当前ID不是传入的事件ID，则可能是由于其他并发触发，忽略此次转换
+            if (this.data.currentEventId !== event.id) {
+                console.log(`当前事件ID (${this.data.currentEventId}) 与传入事件ID (${event.id}) 不匹配，忽略转换`);
+                return;
+            }
+
+            if (!this.data.isPlaying) {
+                console.log(`播放已暂停，不进行转换`);
+                return;
+            }
+
+            // 尝试获取下一个事件ID和延迟
+            const nextEventInfo = this.getNextEventId(event);
+
+            if (nextEventInfo.id) {
+                console.log(`找到下一个事件: ${nextEventInfo.id}${nextEventInfo.delay ? `，延迟 ${nextEventInfo.delay}ms` : ''}`);
+
+                const transitionDelay = nextEventInfo.delay || 0;
+
+                if (transitionDelay > 0) {
+                    // 如果指定了延迟，使用定时器延迟执行
+                    console.log(`将在 ${transitionDelay}ms 后转换到事件 ${nextEventInfo.id}`);
+
+                    const timerId = setTimeout(() => {
+                        // 只有当仍在播放状态，且当前事件ID仍然是此事件时，才执行转换
+                        if (this.data.isPlaying && this.data.currentEventId === event.id) {
+                            // 移除活动定时器
+                            const activeTimers = [...this.data.activeTimers];
+                            const timerIndex = activeTimers.indexOf(timerId);
+                            if (timerIndex !== -1) {
+                                activeTimers.splice(timerIndex, 1);
+                                this.setData({ activeTimers });
+                            }
+
+                            // 处理下一个事件
+                            this.processEvent(nextEventInfo.id as string);
+                        }
+                    }, transitionDelay);
+
+                    // 添加到活动定时器列表
+                    this.setData({
+                        activeTimers: [...this.data.activeTimers, timerId]
+                    });
+                } else {
+                    // 如果没有延迟，立即处理下一个事件
+                    this.processEvent(nextEventInfo.id as string);
+                }
+            } else if (!nextEventInfo.id && !event.transitions) {
+                // 如果没有找到下一个事件，且当前事件也没有定义转换
+                console.log(`事件 ${event.id} 没有下一步，播放完成`);
                 this.completePlayback();
+            } else {
+                console.log(`事件 ${event.id} 没有满足条件的下一步，等待用户操作`);
             }
         },
 
@@ -767,13 +755,13 @@ Component({
         pausePlayback() {
             if (!this.data.isPlaying) return;
 
-            // 清除所有定时器
+            this.setData({ isPlaying: false });
             this.clearAllTimers();
 
-            this.setData({
-                isPlaying: false
-            });
+            // 停止音频播放
+            this.stopAudio();
 
+            // 触发暂停事件
             this.triggerEvent('playPause');
         },
 
@@ -788,71 +776,56 @@ Component({
 
         // 恢复播放
         resumePlayback() {
-            if (this.data.isPlaying) return;
+            if (this.data.isComplete) {
+                console.log('事件序列已完成，无法恢复播放');
+                return;
+            }
 
             this.setData({
-                isPlaying: true
+                isPlaying: true,
+                playbackStartTime: Date.now()
             });
 
-            // 如果有当前事件，继续处理
-            if (this.data.currentEventId) {
-                this.processEvent(this.data.currentEventId);
-            } else {
-                // 否则从头开始
-                this.startPlayback();
-            }
+            // 触发播放开始事件
+            this.triggerEvent('playStart');
+
+            // 检查当前状态并进行下一步转换
+            this.checkAndTransitionBasedOnFlags();
         },
 
-        // 重新开始事件序列
+        // 重新开始播放
         onRestart() {
-            wx.showLoading({
-                title: '重新开始...',
-            });
+            console.log('重新开始播放');
 
-            try {
-                // 清除所有定时器
-                this.clearAllTimers();
+            // 停止当前播放
+            this.clearAllTimers();
 
-                // 清除所有事件订阅
-                this.clearAllSubscriptions();
+            // 停止音频播放
+            this.stopAudio();
 
-                // 重置状态
-                const conditionState: ConditionState = {
+            // 重置状态
+            this.setData({
+                messages: [],
+                formattedMessages: [],
+                currentEventId: '',
+                isPlaying: false,
+                isComplete: false,
+                showAssessment: false,
+                conditionState: {
                     messageCount: 0,
                     correctAnswerCount: 0,
                     wrongAnswerCount: 0,
                     lastEventId: '',
                     customFlags: {},
                     userAnswers: {}
-                };
-
-                this.setData({
-                    messages: [],
-                    formattedMessages: [],
-                    isComplete: false,
-                    isPlaying: false,
-                    showAssessment: false,
-                    currentAssessment: null,
-                    currentEventId: '',
-                    conditionState,
-                    allowInput: true // 确保重启后可以输入
-                });
-
-                this.triggerEvent('restart');
-
-                // 如果设置了自动播放，则开始播放
-                if (this.properties.autoPlay) {
-                    this.startPlayback();
                 }
-            } catch (e) {
-                console.error('Failed to restart:', e);
-                wx.showToast({
-                    title: '重新开始失败',
-                    icon: 'none'
-                });
-            } finally {
-                wx.hideLoading();
-            }
+            });
+
+            // 触发重新开始事件
+            this.triggerEvent('restart');
+
+            // 开始播放
+            this.startPlayback();
         },
 
         // 跳过当前事件
@@ -1020,7 +993,7 @@ Component({
                 conditionState
             });
 
-            // 延迟关闭评估对话框并继续播放
+            // 短暂显示结果后关闭评估对话框并继续播放
             const timerId = setTimeout(() => {
                 // 从活动定时器列表中移除
                 const activeTimers = [...this.data.activeTimers];
@@ -1089,22 +1062,8 @@ Component({
                 conditionState
             });
 
-            // 延迟转到下一个事件
-            const delay = event.delay || 500;
-            if (delay > 0) {
-                const adjustedDelay = delay / this.properties.playbackSpeed;
-                const timerId = setTimeout(() => {
-                    this.transitionToNextEvent(event);
-                }, adjustedDelay);
-
-                // 添加到活动计时器列表
-                this.setData({
-                    activeTimers: [...this.data.activeTimers, timerId]
-                });
-            } else {
-                // 立即转到下一个事件
-                this.transitionToNextEvent(event);
-            }
+            // 转到下一个事件
+            this.transitionToNextEvent(event);
         },
 
         // 组件挂载
@@ -1117,9 +1076,9 @@ Component({
         // 组件卸载
         detached() {
             console.log('事件播放器组件已卸载，清理资源');
-            // 清除所有计时器和订阅
             this.clearAllTimers();
             this.clearAllSubscriptions();
+            this.stopAudio();
         },
 
         // 处理加号按钮点击
@@ -1189,58 +1148,29 @@ Component({
             }
         },
 
-        // 检查标志并根据条件转到下一个事件
+        // 检查自定义标志并根据当前状态进行转换
         checkAndTransitionBasedOnFlags() {
-            const { conditionState, currentEventId } = this.data;
-            const currentEvent = this.data.eventMap[currentEventId];
+            const { currentEventId } = this.data;
 
-            console.log('检查标志并转换:', {
-                currentEventId,
-                flags: conditionState.customFlags,
-                hasUserClickedPlus: conditionState.customFlags.userClickedPlus
-            });
-
-            if (!currentEvent) {
-                console.error('当前事件不存在:', currentEventId);
+            // 如果没有当前事件ID，从第一个事件开始
+            if (!currentEventId) {
+                if (this.data.metadata.startId) {
+                    this.processEvent(this.data.metadata.startId);
+                } else if (this.data.allEvents.length > 0) {
+                    this.processEvent(this.data.allEvents[0].id);
+                }
                 return;
             }
 
-            // 检查是否有转换
-            if (currentEvent.transitions && currentEvent.transitions.length > 0) {
-                console.log(`事件 ${currentEventId} 有 ${currentEvent.transitions.length} 个可能的转换`);
-
-                // 查找匹配条件的转换
-                for (const transition of currentEvent.transitions) {
-                    if (!transition.conditions || transition.conditions.length === 0) {
-                        // 无条件转换
-                        console.log(`找到无条件转换到 ${transition.targetId}`);
-                        this.processEvent(transition.targetId);
-                        return;
-                    }
-
-                    // 检查所有条件是否满足
-                    const conditionResults = transition.conditions.map(condition => {
-                        const result = this.evaluateCondition(condition);
-                        console.log(`条件检查 ${condition.type} ${condition.key || ''}: ${result}`);
-                        return result;
-                    });
-
-                    const allConditionsMet = conditionResults.every(result => result === true);
-
-                    if (allConditionsMet) {
-                        // 条件满足，转到目标事件
-                        console.log(`所有条件满足，转换到 ${transition.targetId}`);
-                        this.processEvent(transition.targetId);
-                        return;
-                    } else {
-                        console.log(`条件不满足，不能转换到 ${transition.targetId}`);
-                    }
-                }
-
-                console.log('没有找到满足条件的转换，保持当前状态');
-            } else {
-                console.log(`事件 ${currentEventId} 没有定义任何转换`);
+            // 获取当前事件
+            const currentEvent = this.data.eventMap[currentEventId];
+            if (!currentEvent) {
+                console.error(`未找到当前事件: ${currentEventId}`);
+                return;
             }
+
+            // 转到下一个事件
+            this.transitionToNextEvent(currentEvent);
         },
 
         // 处理红包发送
@@ -1294,6 +1224,62 @@ Component({
 
                 this.setData({
                     inputText: characters.join('')
+                });
+            }
+        },
+
+        // 播放音频
+        playAudio(uri: string) {
+            // 停止之前的音频播放
+            this.stopAudio();
+
+            if (!uri) return;
+
+            console.log('播放音频:', uri);
+
+            // 创建音频上下文
+            const audioContext = wx.createInnerAudioContext();
+            audioContext.src = uri;
+            audioContext.autoplay = true;
+
+            audioContext.onPlay(() => {
+                console.log('音频开始播放');
+                this.setData({
+                    audioContext,
+                    isAudioPlaying: true,
+                    currentAudioUri: uri
+                });
+            });
+
+            audioContext.onEnded(() => {
+                console.log('音频播放结束');
+                this.setData({
+                    isAudioPlaying: false
+                });
+                // 释放资源
+                audioContext.destroy();
+            });
+
+            audioContext.onError((err) => {
+                console.error('音频播放错误:', err);
+                this.setData({
+                    isAudioPlaying: false
+                });
+                // 释放资源
+                audioContext.destroy();
+            });
+        },
+
+        // 停止音频播放
+        stopAudio() {
+            if (this.data.audioContext) {
+                console.log('停止音频播放');
+                this.data.audioContext.stop();
+                this.data.audioContext.destroy();
+                this.setData({
+                    audioContext: null,
+                    isAudioPlaying: false,
+                    currentAudioUri: ''
                 });
             }
         }

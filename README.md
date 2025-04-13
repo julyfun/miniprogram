@@ -94,3 +94,16 @@ UI 高亮系统用于在教学过程中引导用户点击特定按钮或元素�
 - aliyun 新一套 api 只需要 api token. (如 paraformer cosyvoice)，且不需要配置 api 权限.
 - 加入第三方 npm: https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html
     - 但是很可能第三方 js 不合法。例如 openai npm
+
+## AI 功能
+
+- 与 AI 服务器进行 https 通信
+
+- 语音识别: paraformer 大模型
+    - 输入音频流
+    - 输出文字流
+- 其实还用了阿里云语音识别 Restful API
+- 对话功能：Deepseek 模型和 Qwen 模型
+    - 输入文字片段
+    - 输出文字流
+- 文字转语音 TTS: CosyVoice 大模型或 aliyun Restful API

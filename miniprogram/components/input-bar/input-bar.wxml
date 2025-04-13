@@ -2,7 +2,7 @@
     <view class="input-container">
         <!-- 语音/键盘切换按钮 -->
         <view class="voice-switch" bind:tap="toggleVoiceMode">
-            <image class="icon" src="/assets/icons/{{voiceMode ? 'keyboard' : 'voice'}}.svg" mode="aspectFit" />
+            <image class="icon dark-gray-icon" src="/assets/icons/{{voiceMode ? 'keyboard' : 'voice'}}.svg" mode="aspectFit" />
         </view>
         <!-- 文本输入框 - 在非语音模式下显示 -->
         <input wx:if="{{!voiceMode}}" class="text-input" value="{{value}}" placeholder="{{placeholder}}" placeholder-class="placeholder" disabled="{{disabled}}" bind:input="onInput" confirm-type="send" bind:confirm="onSend" />
@@ -12,7 +12,7 @@
         </view>
         <!-- 表情按钮 -->
         <view class="emoji-button" bind:tap="onEmojiButton">
-            <image class="icon" src="/assets/icons/emoji.svg" mode="aspectFit" />
+            <image class="icon dark-gray-icon" src="/assets/icons/emoji.svg" mode="aspectFit" />
         </view>
         <!-- 发送/更多按钮 -->
         <view class="{{value.trim() ? 'send-button' : 'more-button'}} {{highlight === 'more-button' && showHighlight ? 'highlight-active' : ''}}" bind:tap="{{value.trim() ? 'onSend' : 'onMoreFunction'}}">
@@ -41,50 +41,50 @@
             <!-- 第一行 -->
             <view class="feature-item" bind:tap="handleFeature" data-feature="album">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-img.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">相册</view>
             </view>
             <view class="feature-item" bind:tap="handleFeature" data-feature="camera">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-camera.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">拍摄</view>
             </view>
             <view class="feature-item" bind:tap="handleFeature" data-feature="video">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-phone.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">视频通话</view>
             </view>
             <view class="feature-item" bind:tap="handleFeature" data-feature="location">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-position.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">位置</view>
             </view>
             <!-- 第二行 -->
             <view class="feature-item {{highlight === 'redpacket' && showHighlight ? 'highlight-active' : ''}}" bind:tap="handleFeature" data-feature="redpacket">
                 <view class="feature-icon">
-                    <image src="/assets/icons/message-redpacket.png" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-redpack.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">红包</view>
             </view>
             <view class="feature-item" bind:tap="handleFeature" data-feature="gift">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-present.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">礼物</view>
             </view>
             <view class="feature-item" bind:tap="handleFeature" data-feature="transfer">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-trans.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">转账</view>
             </view>
             <view class="feature-item" bind:tap="handleFeature" data-feature="voice">
                 <view class="feature-icon">
-                    <image src="/assets/icons/default-avatar.svg" mode="aspectFit"></image>
+                    <image src="/assets/icons/wx-voice.svg" class="dark-gray-icon" mode="aspectFit"></image>
                 </view>
                 <view class="feature-name">语音输入</view>
             </view>

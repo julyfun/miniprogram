@@ -13,7 +13,7 @@ module.exports = {
         "updatedAt": "2023-04-15T10:00:00.000Z",
         "tags": ["教学", "红包", "微信功能", "新手指引"],
         "startId": "welcome",
-        "defaultDelay": 1000
+        "defaultDelay": 2000
     },
     "events": [
         // 欢迎事件
@@ -21,10 +21,13 @@ module.exports = {
             "id": "welcome",
             "type": "message",
             "role": "assistant",
-            "content": "👋 欢迎使用微信红包教学！我将指导您如何发送微信红包。",
-            "delay": 1500,
+            "content": "👋 您好，我将指导您如何发送微信红包",
+            "audioUri": "assets/voice/redpacket_tutorial/iwill.mp3",
             "transitions": [
-                { "targetId": "step1_instruction" }
+                {
+                    "targetId": "step1_instruction",
+                    "delay": 3500
+                }
             ]
         },
 
@@ -33,10 +36,13 @@ module.exports = {
             "id": "step1_instruction",
             "type": "message",
             "role": "assistant",
-            "content": "第一步：请点击右下角的 + 号按钮",
-            "delay": 1000,
+            "content": "首先，请点击右下角的加号按钮",
+            "audioUri": "assets/voice/redpacket_tutorial/plusbutton.mp3",
             "transitions": [
-                { "targetId": "step1_highlight" }
+                {
+                    "targetId": "step1_highlight",
+                    "delay": 2500
+                }
             ]
         },
 
@@ -73,10 +79,13 @@ module.exports = {
             "id": "step2_instruction",
             "type": "message",
             "role": "assistant",
-            "content": "太好了！现在请在弹出的菜单中点击“红包”按钮",
-            "delay": 1000,
+            "content": "太棒啦！现在请点击红包按钮",
+            "audioUri": "assets/voice/redpacket_tutorial/redpacketbutton.mp3",
             "transitions": [
-                { "targetId": "step2_highlight" }
+                {
+                    "targetId": "step2_highlight",
+                    "delay": 500
+                }
             ]
         },
 
@@ -103,7 +112,67 @@ module.exports = {
                     "conditions": [
                         { "type": "flag", "key": "userClickedRedPacket", "value": true }
                     ],
-                    "targetId": "completion"
+                    "targetId": "step3_instruction"
+                }
+            ]
+        },
+
+        // 第三步: 点击金额数字
+        {
+            "id": "step3_instruction",
+            "type": "message",
+            "role": "assistant",
+            "content": "接下来请点击金额数字",
+            "audioUri": "assets/voice/redpacket_tutorial/number.mp3",
+            "transitions": [
+                {
+                    "targetId": "step4_instruction",
+                    "delay": 2500
+                }
+            ]
+        },
+
+        // 第四步: 输入金额
+        {
+            "id": "step4_instruction",
+            "type": "message",
+            "role": "assistant",
+            "content": "然后用下面的数字键盘输入红包金额",
+            "audioUri": "assets/voice/redpacket_tutorial/number2.mp3",
+            "transitions": [
+                {
+                    "targetId": "step5_instruction",
+                    "delay": 2500
+                }
+            ]
+        },
+
+        // 第五步: 塞钱进红包
+        {
+            "id": "step5_instruction",
+            "type": "message",
+            "role": "assistant",
+            "content": "输入金额以后，点击塞钱进红包",
+            "audioUri": "assets/voice/redpacket_tutorial/into.mp3",
+            "transitions": [
+                {
+                    "targetId": "step6_instruction",
+                    "delay": 2500
+                }
+            ]
+        },
+
+        // 第六步: 最后确认支付
+        {
+            "id": "step6_instruction",
+            "type": "message",
+            "role": "assistant",
+            "content": "最后确认支付就可以发送啦。这里的红包教学不会扣除您的金额，请放心发送",
+            "audioUri": "assets/voice/redpacket_tutorial/confirm.mp3",
+            "transitions": [
+                {
+                    "targetId": "completion",
+                    "delay": 3000
                 }
             ]
         },
@@ -113,10 +182,13 @@ module.exports = {
             "id": "completion",
             "type": "message",
             "role": "assistant",
-            "content": "🎉 恭喜！您已经学会了如何发送微信红包。\n\n在实际操作中，下一步您会进入红包金额设置页面，输入金额并添加祝福语后，点击确认即可完成发送。",
-            "delay": 2000,
+            "content": "恭喜您已经学会了如何发红包，您可以到微信聊天尝试一下啦~",
+            "audioUri": "assets/voice/redpacket_tutorial/cong.mp3",
             "transitions": [
-                { "targetId": "tutorial_end" }
+                {
+                    "targetId": "tutorial_end",
+                    "delay": 3000
+                }
             ]
         },
 
@@ -126,7 +198,7 @@ module.exports = {
             "type": "message",
             "role": "assistant",
             "content": "感谢您完成微信红包发送教学！如果您有其他问题，随时可以向我提问。",
-            "delay": 1500
+            "transitions": []
         }
     ]
 } 

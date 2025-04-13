@@ -3,6 +3,7 @@
     <!-- 顶部标题栏 -->
     <navigation-bar title="{{metadata.opponent.nickname}}" back="{{true}}" delta="1" bindback="onBack">
         <view slot="right">
+            <!-- 删除音频播放指示器 -->
             <view class="nav-more">
                 <view class="nav-more-icon">
                     <view class="nav-more-dot"></view>

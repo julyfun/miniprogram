@@ -103,6 +103,11 @@
     height: 24px;
 }
 
+/* SVG深灰色滤镜 */
+.dark-gray-icon {
+    filter: brightness(0) saturate(100%) invert(25%) sepia(0%) saturate(0%) hue-rotate(346deg) brightness(94%) contrast(92%);
+}
+
 /* 表情面板 */
 .emoji-panel {
     background-color: #f9f9f9;

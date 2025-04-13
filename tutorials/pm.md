@@ -31,6 +31,11 @@ o首页改为一个语音助手对话界面，
 - 任务描述
    - 每句话和对应 MP3 文件名
 
+
+### 
+
+为 event-demo 添加语音播放功能，可输入 URI 播放音频。每个对方对话可以绑定一个音频。目前每个对话对应音频 URI 都是 assets/voice/redpacket_tutorial/iwill.mp3 。当前仅修改 redpacket_tutorial 相关教学 
+
 ## 步骤修改为
 
 1. 您好，我将指导您如何发送微信红包 (iwill.mp3)
@@ -49,6 +54,9 @@ o首页改为一个语音助手对话界面，
 
 8. 恭喜您已经学会了如何发红包，您可以到微信聊天尝试一下啦~ (cong.mp3)
 
-### 
+## 
 
-为 event-demo 添加语音播放功能，可输入 URI 播放音频。每个对方对话可以绑定一个音频。目前每个对话对应音频 URI 都是 assets/voice/redpacket_tutorial/iwill.mp3 。当前仅修改 redpacket_tutorial 相关教学 
+红包教学 redpacket_tutorial
+1. 根据说话文字多少调整 delay，现在大部分 delay 都偏少
+2. 红包输入金额界面允许高亮，并等待用户修改金额后 2s 再执行下一事件
+3. 添加转账确认界面（如 Image 图片所示）
