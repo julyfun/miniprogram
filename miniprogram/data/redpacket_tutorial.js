@@ -50,8 +50,6 @@ module.exports = {
         {
             "id": "step1_highlight",
             "type": "ui_highlight",
-            "role": "system",
-            "content": "高亮右下角加号按钮",
             "highlightTarget": "more-button",
             "transitions": [
                 { "targetId": "waiting_for_plus_click" }
@@ -62,8 +60,6 @@ module.exports = {
         {
             "id": "waiting_for_plus_click",
             "type": "waiting_for_input",
-            "role": "system",
-            "content": "等待用户点击加号按钮...",
             "transitions": [
                 {
                     "conditions": [
@@ -93,8 +89,6 @@ module.exports = {
         {
             "id": "step2_highlight",
             "type": "ui_highlight",
-            "role": "system",
-            "content": "高亮红包按钮",
             "highlightTarget": "redpacket",
             "transitions": [
                 { "targetId": "waiting_for_redpacket_click" }
@@ -105,8 +99,6 @@ module.exports = {
         {
             "id": "waiting_for_redpacket_click",
             "type": "waiting_for_input",
-            "role": "system",
-            "content": "等待用户点击红包按钮...",
             "transitions": [
                 {
                     "conditions": [
@@ -136,8 +128,6 @@ module.exports = {
         {
             "id": "step3_highlight",
             "type": "ui_highlight",
-            "role": "system",
-            "content": "高亮金额输入区",
             "highlightTarget": "amount-input",
             "transitions": [
                 { "targetId": "step4_instruction" }
@@ -162,8 +152,6 @@ module.exports = {
         {
             "id": "waiting_for_amount_input",
             "type": "waiting_for_input",
-            "role": "system",
-            "content": "等待用户输入金额...",
             "transitions": [
                 {
                     "conditions": [
@@ -199,8 +187,22 @@ module.exports = {
             "audioUri": "assets/voice/redpacket_tutorial/into.mp3",
             "transitions": [
                 {
-                    "targetId": "step6_instruction",
+                    "targetId": "waiting_for_send_redpacket",
                     "delay": 4000
+                }
+            ]
+        },
+
+        // 等待用户点击塞钱进红包
+        {
+            "id": "waiting_for_send_redpacket",
+            "type": "waiting_for_input",
+            "transitions": [
+                {
+                    "conditions": [
+                        { "type": "flag", "key": "userClickedSendRedpacket", "value": true }
+                    ],
+                    "targetId": "step6_instruction"
                 }
             ]
         },
@@ -238,13 +240,22 @@ module.exports = {
         {
             "id": "step7_highlight_pay",
             "type": "ui_highlight",
-            "role": "system",
-            "content": "高亮支付按钮",
             "highlightTarget": "pay-button",
             "transitions": [
+                { "targetId": "waiting_for_payment_confirm" }
+            ]
+        },
+
+        // 等待用户点击支付
+        {
+            "id": "waiting_for_payment_confirm",
+            "type": "waiting_for_input",
+            "transitions": [
                 {
-                    "targetId": "completion",
-                    "delay": 4000
+                    "conditions": [
+                        { "type": "flag", "key": "userConfirmedPayment", "value": true }
+                    ],
+                    "targetId": "completion"
                 }
             ]
         },

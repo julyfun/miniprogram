@@ -1,29 +1,31 @@
 <!-- 红包发送页面 -->
 <view class="redpacket-page">
-    <!-- 顶部导航栏 -->
-    <view class="nav-bar">
-        <view class="nav-back" bindtap="onBack">
-            <view class="back-icon"></view>
+    <!-- 内容容器 -->
+    <view class="content-container">
+        <!-- 单个金额输入 -->
+        <view class="amount-section {{highlight === 'amount-input' && showHighlight ? 'highlight-active' : ''}}">
+            <view class="page-subtitle">单个金额</view>
+            <view class="amount-input-container" bindtap="showAmountKeyboard">
+                <text class="currency-symbol">¥</text>
+                <view class="amount-value">{{amount || '0.00'}}</view>
+            </view>
         </view>
-        <view class="nav-title">发红包</view>
-        <view class="nav-more">
-            <view class="more-dots"></view>
+        <!-- 红包祝福语输入 -->
+        <view class="greeting-section">
+            <input class="greeting-input" type="text" placeholder="恭喜发财，大吉大利" placeholder-class="placeholder" disabled="{{true}}" value="{{greeting}}" bindinput="onGreetingInput" />
+            <view class="emoji-button" bindtap="onEmojiSelect">
+                <image src="/assets/icons/emoji.svg" mode="aspectFit"></image>
+            </view>
         </view>
-    </view>
-    <!-- 单个金额输入 -->
-    <view class="amount-section {{highlight === 'amount-input' && showHighlight ? 'highlight-active' : ''}}" bindtap="showAmountKeyboard">
-        <view class="amount-label">单个金额</view>
-        <view class="amount-input-container">
-            <text class="currency-symbol">¥</text>
-            <view class="amount-value">{{amount || '0.00'}}</view>
+        <!-- 底部金额显示和发送按钮 -->
+        <view class="redpacket-footer">
+            <view class="total-amount">¥{{amount || '0.00'}}</view>
+            <view class="send-button {{highlight === 'pay-button' && showHighlight ? 'highlight-active' : ''}}" bindtap="onSendRedpacket">
+                塞钱进红包
+            </view>
         </view>
-    </view>
-    <!-- 红包祝福语输入 -->
-    <view class="greeting-section">
-        <input class="greeting-input" type="text" placeholder="恭喜发财，大吉大利" placeholder-class="placeholder" disabled="{{true}}" value="{{greeting}}" bindinput="onGreetingInput" />
-        <view class="emoji-button" bindtap="onEmojiSelect">
-            <image src="/assets/icons/emoji.svg" mode="aspectFit"></image>
-        </view>
+        <!-- 未领取红包提示 -->
+        <view class="unreceived-hint">可直接使用收到的零钱发红包</view>
     </view>
     <!-- 自定义数字键盘 -->
     <view class="numeric-keyboard {{showAmountKeyboard ? 'keyboard-show' : 'keyboard-hide'}}">
@@ -56,21 +58,6 @@
             </view>
         </view>
     </view>
-    <!-- 红包封面 -->
-    <!-- <view class="redpacket-cover">
-        <image src="/assets/images/cat-cover.jpg" mode="aspectFill" class="cover-image"></image>
-        <view class="cover-label">红包封面</view>
-        <view class="cover-hint">无故又因了</view>
-    </view> -->
-    <!-- 底部金额显示和发送按钮 -->
-    <view class="redpacket-footer">
-        <view class="total-amount">¥{{amount || '0.00'}}</view>
-        <view class="send-button {{highlight === 'pay-button' && showHighlight ? 'highlight-active' : ''}}" bindtap="onSendRedpacket">
-            塞钱进红包
-        </view>
-    </view>
-    <!-- 未领取红包提示 -->
-    <view class="unreceived-hint">可直接使用收到的零钱发红包</view>
     <!-- 转账确认界面 (模拟微信支付界面) -->
     <view class="payment-overlay" wx:if="{{showPaymentConfirm}}">
         <view class="payment-dialog">
@@ -79,7 +66,7 @@
                 <view class="payment-use-password">使用密码</view>
             </view>
             <view class="payment-content">
-                <view class="payment-title">向{{recipientName || '茹茹宝宝(**珠)'}}转账</view>
+                <view class="payment-title">向{{recipientName ? recipientName : '微信好友'}}转账</view>
                 <view class="payment-amount">¥{{amount || '1.00'}}</view>
                 <view class="payment-method">
                     <view class="payment-method-item">

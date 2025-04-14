@@ -2,74 +2,25 @@
 .redpacket-page {
     display: flex;
     flex-direction: column;
-    background-color: #f7f7f7;
+    background-color: #ffffff;
     height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-/* 顶部导航栏样式 */
-.nav-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 44px;
-    background-color: #f7f7f7;
-    position: relative;
-    padding: 0 10px;
-    border-bottom: 1px solid #eaeaea;
-}
-
-.nav-back {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.back-icon {
-    width: 12px;
-    height: 12px;
-    border-left: 2px solid #000;
-    border-bottom: 2px solid #000;
-    transform: rotate(45deg);
-}
-
-.nav-title {
-    font-size: 17px;
-    font-weight: 500;
-    color: #000;
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    padding-top: 0;
+    /* 导航栏已处理顶部间距 */
 }
 
-.nav-more {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.more-dots {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: center;
-}
-
-.more-dots::before,
-.more-dots::after {
-    content: '';
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background-color: #000;
-}
-
-.more-dots::before {
-    box-shadow: 0 -8px 0 #000;
+/* 页面副标题 */
+.page-subtitle {
+    font-size: 14px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 /* 红包类型选择样式 */
@@ -158,9 +109,8 @@
 
 /* 单个金额输入样式 */
 .amount-section {
-    padding: 30px 20px;
+    padding: 20px 20px;
     background-color: #fff;
-    margin-top: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -584,4 +534,33 @@
     font-size: 17px;
     color: #fff;
     font-weight: 500;
+}
+
+/* 取消按钮样式 */
+.cancel-button {
+    width: 200rpx;
+    height: 80rpx;
+    line-height: 80rpx;
+    text-align: center;
+    margin: 30rpx auto 10rpx;
+    font-size: 30rpx;
+    color: #888;
+    background-color: #f5f5f5;
+    border-radius: 8rpx;
+}
+
+.cancel-button:active {
+    background-color: #e0e0e0;
+}
+
+/* 内容容器 - 顶部内边距已由父组件的导航栏处理 */
+.content-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-top: 88px;
+    /* 导航栏高度，确保内容不被遮挡 */
+    padding-bottom: 30px;
+    /* 底部间距 */
+    overflow-y: auto;
 }

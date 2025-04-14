@@ -44,6 +44,7 @@ interface IPageData {
     isEditing: boolean;             // Is the text input being edited?
     accumulatedText: string;        // Accumulated recognized text during recording
     showSettings: boolean;          // Controls the visibility of settings menu
+    isDebugMode: boolean;           // Controls debug mode to prevent API requests
 }
 
 // Helper function to play text with TTS
@@ -228,6 +229,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         isEditing: false,         // Add isEditing state
         accumulatedText: '',      // Accumulated recognized text during recording
         showSettings: false,      // Add showSettings state for settings menu
+        isDebugMode: true,        // Start with debug mode enabled by default
     },
 
     // Add a property to maintain the actual conversation history for API calls
@@ -282,8 +284,31 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     onLoad: function () {
         this.initSpeechRecognition(); // Will use the engine specified in data
 
-        // Send initial prompt to AI on load
-        this.sendInitialPromptToAI();
+        // Only send initial prompt if not in debug mode
+        if (!this.data.isDebugMode) {
+            this.sendInitialPromptToAI();
+        } else {
+            console.log('[Debug] Skipping initial API request in debug mode');
+
+            // 自定义的 Debug 模式问候语，包含按钮和记录标签
+            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:emergency] [record]";
+
+            // 处理文本中的标签，提取按钮和其他功能
+            const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
+
+            // 创建经过处理的调试消息
+            const debugMessage: ChatMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: processedText,
+                buttons: buttons.length > 0 ? buttons : undefined,
+                hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
+            };
+
+            this.setData({
+                chatHistory: [debugMessage]
+            });
+        }
     },
 
     onHide: function () {
@@ -768,6 +793,36 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             this.scrollToBottom();
         });
 
+        // If in debug mode, return a mock response instead of making an API call
+        if (this.data.isDebugMode) {
+            console.log('[Debug] Simulating API response in debug mode');
+            setTimeout(() => {
+                const debugResponse = `[DEBUG MODE] You said: "${this.latestRecognizedText}"`;
+
+                const assistantMessage: ChatMessage = {
+                    id: Date.now(),
+                    role: 'assistant',
+                    content: debugResponse
+                };
+
+                this.setData({
+                    chatHistory: [...this.data.chatHistory, assistantMessage],
+                    lastMessageId: `msg-${assistantMessage.id}`,
+                    debugDeepseekResponse: '',
+                    isWaitingForDeepseek: false,
+                    orbState: 'idle'
+                }, () => {
+                    this.scrollToBottom();
+                });
+            }, 1000);
+            return;
+        }
+
+        // Initialize conversationHistory if it doesn't exist
+        if (!this.conversationHistory) {
+            this.conversationHistory = [];
+        }
+
         // Add user's message to conversation history
         this.conversationHistory.push({
             role: 'user',
@@ -1050,10 +1105,34 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
     // Modified version of sendToDeepseek that doesn't add a user message
     callDeepseekWithoutUserMessage: function (prompt: string) {
+        // Skip API call if in debug mode
+        if (this.data.isDebugMode) {
+            console.log('[Debug] Skipping Deepseek API call in debug mode');
+
+            const debugMessage: ChatMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: '🐞 Debug mode active. This would be an API response from Deepseek.'
+            };
+
+            this.setData({
+                chatHistory: [debugMessage],
+                isWaitingForDeepseek: false,
+                orbState: 'idle'
+            });
+            return;
+        }
+
+        // Continue with regular API call
         this.setData({
             isWaitingForDeepseek: true,
             orbState: 'processing'
         });
+
+        // Initialize conversationHistory if it doesn't exist
+        if (!this.conversationHistory) {
+            this.conversationHistory = [];
+        }
 
         wx.request({
             url: DEEPSEEK_SECRETS.API_URL,
@@ -1145,12 +1224,35 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
     // Modified version for Qwen API
     callQwenWithoutUserMessage: function (prompt: string) {
+        // Skip API call if in debug mode
+        if (this.data.isDebugMode) {
+            console.log('[Debug] Skipping Qwen API call in debug mode');
+
+            const debugMessage: ChatMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: '🐞 Debug mode active. This would be an API response from Qwen.'
+            };
+
+            this.setData({
+                chatHistory: [debugMessage],
+                isWaitingForDeepseek: false,
+                orbState: 'idle'
+            });
+            return;
+        }
+
+        // Continue with regular API call
         this.setData({
             isWaitingForDeepseek: true,
             orbState: 'processing'
         });
 
         // Initialize conversation history with the system prompt
+        if (!this.conversationHistory) {
+            this.conversationHistory = [];
+        }
+
         this.conversationHistory = [
             { role: 'system', content: 'You are a helpful assistant.' },
             { role: 'user', content: prompt }
@@ -1182,7 +1284,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 };
 
                 this.setData({
-                    chatHistory: [assistantMessage], // For initial message, just set one message
+                    chatHistory: [...this.data.chatHistory, assistantMessage],
                     lastMessageId: `msg-${assistantMessage.id}`,
                     isWaitingForDeepseek: false
                 });
@@ -1223,6 +1325,56 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             title: `已切换到 ${nextProvider === 'ali' ? '阿里云' : 'CosyVoice'} TTS引擎`,
             icon: 'none',
             duration: 2000
+        });
+    },
+
+    // Add method to toggle debug mode
+    toggleDebugMode: function () {
+        const newDebugMode = !this.data.isDebugMode;
+        console.log(`[Debug] Toggling debug mode: ${this.data.isDebugMode} -> ${newDebugMode}`);
+
+        // If turning off debug mode
+        if (!newDebugMode) {
+            // First clear chat history to allow the initial prompt to be sent
+            this.setData({
+                isDebugMode: newDebugMode,
+                chatHistory: []  // Clear the chat history
+            });
+
+            // Clear the API conversation history as well
+            if (this.conversationHistory) {
+                this.conversationHistory = [];
+            }
+
+            console.log('[Debug] Debug mode turned off, sending initial prompt to AI');
+            this.sendInitialPromptToAI();
+        } else {
+            // 切换到 Debug 模式，显示自定义问候语
+            // 自定义的 Debug 模式问候语，包含按钮和记录标签
+            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:emergency] [record]";
+
+            // 处理文本中的标签，提取按钮和其他功能
+            const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
+
+            // 创建经过处理的调试消息
+            const debugMessage: ChatMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: processedText,
+                buttons: buttons.length > 0 ? buttons : undefined,
+                hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
+            };
+
+            // Just update the debug mode flag and set the debug welcome message
+            this.setData({
+                isDebugMode: newDebugMode,
+                chatHistory: [debugMessage]
+            });
+        }
+
+        wx.showToast({
+            title: newDebugMode ? 'Debug mode enabled' : 'Debug mode disabled',
+            icon: 'none'
         });
     },
 

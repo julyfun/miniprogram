@@ -16,7 +16,7 @@
         </block>
       </view>
       <!-- 中间用户名 -->
-      <view class='weui-navigation-bar__center'>
+      <view class='weui-navigation-bar__center' style="{{titleCenterStyle}}">
         <view wx:if="{{loading}}" class="weui-navigation-bar__loading" aria-role="alert">
           <view class="weui-loading" aria-role="img" aria-label="加载中"></view>
         </view>
@@ -36,7 +36,6 @@
             </view>
           </view>
         </block>
-        <slot name="right"></slot>
       </view>
     </view>
   </view>

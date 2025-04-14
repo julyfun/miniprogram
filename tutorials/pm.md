@@ -83,6 +83,41 @@ redpacket_tutorial.js event-demo.ts
 
 使 transitions 中的 delay 允许多种形式，要么是一个直接的数字，和现在一样。要么是可以指定音频结束后多少时间播放。这种情况下 delay 的格式不同(指定 delay type)。将 redpacket_tutorial 中的语音播放大部分改为说完后延迟 0.8s 执行下一个事件（需要在 .ts 中获取音频长度）
 
+## [ok]
+
+@redpacket-page.ts 
+@event-player.ts 
+@redpacket_tutorial.js 
+阅读以上代码
+1. 发红包的界面不显示顶栏（“微信助手”和返回键）
+2. 在 redpacket_tutorial.js 与用户交互时，检测用户按下“塞钱进红包”和“支付”才触发下一个事件。因此你需要改写部分 conditions
+3. 发红包支付确认界面的用户名不是“茹茹宝宝”而是对方的用户名.
+
+## [ok]
+
+去除 class="weui-navigation-bar navigation-bar--weui-navigation-bar" 右边的 slot="right" 元素（不需要那个 more）
+@navigation-bar.scss
+@navigation-bar.wxml
+
+## [ok]
+
+class="page--amount-section" 并没有在 components/navigation-bar 下方，两者有些重合了。请修复此问题
+@redpacket-page.wxml
+
+- 样式描述文件后缀名为 .scss 页面逻辑通常写在 .ts 中，页面布局写在 .wxml 中.
+- /miniprogram/components 中有微信聊天的组件
+- 编写完后，我会使用微信小程序模拟器运行结果，不用 npm run
+
+##
+
+@redpacket_tutorial.js @photo_tutorial.js @event-player.ts
+
+type 不是 message 的事件不需要 content 和 role
+
+## 
+
+@config.ts 红包
+
 ## message 允许显示红包
 
 ## 发送照片功能
@@ -91,7 +126,7 @@ redpacket_tutorial.js event-demo.ts
 
 ## 发送照片教程
 
-- 模仿现有的红包教程 @redpacket_tutorial.js 中的教学数据格式，写一个 photo_tutorial ，通过 UI 、消息和语音提示教导用户使用发送图片功能。所有 audioUri 暂时留空. 文案也可以模仿红包教程 
+- 模仿现有的红包教程 @redpacket_tutorial.js 中的教学数据格式，写一个 photo_tutorial ，通过 UI 、消息和语音提示教导用户使用发送图片功能。所有 audioUri 暂时留空. 文案模仿红包教程 
 
 ## 发送语音功能
 

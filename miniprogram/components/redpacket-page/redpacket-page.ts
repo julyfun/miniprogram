@@ -68,7 +68,8 @@ Component({
                 return;
             }
 
-            // 触发关闭事件
+            // 触发关闭事件，让父组件处理关闭逻辑
+            // 不直接调用wx.navigateBack，让父组件决定如何处理返回行为
             this.triggerEvent('close');
         },
 
@@ -212,6 +213,12 @@ Component({
                 return;
             }
 
+            // 设置自定义标志
+            const customFlags = {
+                userClickedSendRedpacket: true
+            };
+            this.triggerEvent('sendRedpacketClicked', { customFlags });
+
             // 隐藏键盘，显示转账确认界面
             this.setData({
                 showAmountKeyboard: false,
@@ -228,6 +235,12 @@ Component({
 
         // 确认支付
         onConfirmPayment() {
+            // 设置自定义标志
+            const customFlags = {
+                userConfirmedPayment: true
+            };
+            this.triggerEvent('paymentConfirmed', { customFlags });
+
             // 发送红包逻辑
             this.triggerEvent('send', {
                 type: 'single', // 单个红包

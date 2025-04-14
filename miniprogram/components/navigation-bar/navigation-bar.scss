@@ -118,14 +118,27 @@
   font-weight: bold;
   height: 100%;
   z-index: 1;
-  /* 将绝对定位改为flex布局 */
-  position: relative;
-  left: auto;
-  right: auto;
-  top: auto;
-  bottom: auto;
+  /* 修改为绝对定位，使标题在整个屏幕中居中 */
+  position: absolute;
+  width: 100vw;
+  /* 使用视口宽度 */
+  left: 0;
+  top: 0;
+  bottom: 0;
+  /* 确保标题文本居中显示 */
   overflow: hidden;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  /* 使标题不影响下层元素的点击事件 */
+}
+
+/* 标题文本应该是可点击的 */
+.weui-navigation-bar__center text {
+  pointer-events: auto;
+  max-width: 50%;
+  /* 限制最大宽度避免过长 */
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 

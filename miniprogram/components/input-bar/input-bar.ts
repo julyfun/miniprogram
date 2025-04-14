@@ -65,7 +65,6 @@ Component({
         showFeaturePanel: false, // 是否显示功能面板
         touchStartY: 0, // 触摸开始的Y坐标
         isCancelled: false, // 是否取消录音
-        showRedpacketPage: false, // 是否显示红包发送页面
         showPhotoSelector: false // 是否显示照片选择器
     },
 
@@ -115,8 +114,18 @@ Component({
 
             // 针对特定功能执行特殊处理
             if (feature === 'redpacket') {
-                this.setData({ showRedpacketPage: true });
+                // 触发显示红包页面事件，由父组件处理
+                this.triggerEvent('showredpacket');
+
+                // 通知父组件更新导航栏标题
+                this.triggerEvent('updateNavTitle', { title: '发红包' });
             } else if (feature === 'album') {
+                // 更新自定义标记，用于照片选择教程
+                const customFlags = {
+                    userClickedAlbum: true
+                };
+                this.triggerEvent('featureClick', { feature, customFlags });
+
                 // 显示照片选择器
                 this.setData({ showPhotoSelector: true });
             }
@@ -125,18 +134,20 @@ Component({
             this.triggerEvent('featureclick', { feature });
         },
 
-        // 处理红包页面关闭
+        // 处理红包页面关闭 - 不再直接管理红包页面，改为触发事件
         onRedpacketPageClose() {
-            this.setData({ showRedpacketPage: false });
+            // 触发隐藏红包页面事件，由父组件处理
+            this.triggerEvent('hideredpacket');
+
+            // 通知父组件恢复导航栏标题
+            this.triggerEvent('updateNavTitle', { title: '' });
         },
 
-        // 处理红包发送
+        // 处理红包发送 - 不再直接管理红包页面，保留传递数据的功能
         onRedpacketSend(e: WechatMiniprogram.CustomEvent) {
             const redpacketData = e.detail;
             // 将红包数据传递给父组件
             this.triggerEvent('redpacketsend', redpacketData);
-            // 关闭红包页面
-            this.setData({ showRedpacketPage: false });
         },
 
         // 处理照片选择器关闭
@@ -149,6 +160,13 @@ Component({
             const photoData = e.detail;
             // 将照片数据传递给父组件
             this.triggerEvent('photosend', photoData);
+
+            // 发送照片标记，用于照片选择教程
+            const customFlags = {
+                userSentPhotos: true
+            };
+            this.triggerEvent('photoSent', { photos: photoData.photos, customFlags });
+
             // 关闭照片选择器
             this.setData({ showPhotoSelector: false });
         },

@@ -73,11 +73,23 @@ Component({
             safeAreaTop = `height: calc(var(--height) + ${topPadding}px); padding-top: ${topPadding}px`
           }
 
+          // 计算标题居中位置
+          // 1. 获取右侧胶囊按钮位置信息
+          const menuButtonWidth = rect.width + (res.windowWidth - rect.left) * 2;  // 胶囊按钮宽度加两侧留白
+
+          // 2. 计算标题居中所需的左偏移量
+          // 我们需要确保标题在整个屏幕的中心，而不是内容区域的中心
+          const titleCenterPosition = res.windowWidth / 2;  // 屏幕中间点
+
+          // 3. 计算标题居中样式
+          const titleCenterStyle = `left: ${titleCenterPosition}px; transform: translateX(-50%);`;
+
           this.setData({
             ios: !isAndroid,
             innerPaddingRight: `padding-right: ${res.windowWidth - rect.left}px`,
             leftWidth: `width: ${res.windowWidth - rect.left}px`,
-            safeAreaTop: safeAreaTop
+            safeAreaTop: safeAreaTop,
+            titleCenterStyle: titleCenterStyle // 新增标题居中样式
           })
         }
       })

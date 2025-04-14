@@ -180,7 +180,11 @@ Component({
         // 音频相关
         audioContext: null as WechatMiniprogram.InnerAudioContext | null,
         isAudioPlaying: false,
-        currentAudioUri: ''
+        currentAudioUri: '',
+        // 导航栏标题
+        navTitle: '',
+        // 红包页面状态
+        showRedpacketPage: false,
     },
 
     /**
@@ -846,6 +850,12 @@ Component({
 
         // 返回上一页
         onBack() {
+            // 如果红包页面正在显示，则关闭红包页面而不是返回上一页
+            if (this.data.showRedpacketPage) {
+                this.onRedpacketPageClose();
+                return;
+            }
+
             // 清除所有定时器和订阅
             this.clearAllTimers();
             this.clearAllSubscriptions();
@@ -1117,11 +1127,39 @@ Component({
         // 处理功能按钮点击
         onFeatureClick(e: WechatMiniprogram.CustomEvent) {
             const feature = e.detail.feature;
+            const customFlags = e.detail.customFlags;
             console.log('用户点击了功能按钮:', feature);
             console.log('当前高亮状态:', {
                 highlightTarget: this.data.highlightTarget,
                 showHighlight: this.data.showHighlight
             });
+
+            // 处理自定义标志
+            if (customFlags) {
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+
+                // 合并自定义标志
+                for (const [key, value] of Object.entries(customFlags)) {
+                    conditionState.customFlags[key] = value;
+                }
+
+                // 更新状态
+                this.setData({
+                    conditionState
+                }, () => {
+                    // 检查条件转换
+                    this.checkAndTransitionBasedOnFlags();
+                });
+            }
+
+            // 处理红包功能
+            if (feature === 'redpacket') {
+                this.setData({
+                    showRedpacketPage: true,
+                    navTitle: '发红包'
+                });
+            }
 
             // 检查是否在等待用户点击红包按钮
             if (feature === 'redpacket' && this.data.highlightTarget === 'redpacket' && this.data.showHighlight) {
@@ -1148,48 +1186,105 @@ Component({
             }
         },
 
-        // 检查自定义标志并根据当前状态进行转换
-        checkAndTransitionBasedOnFlags() {
-            const { currentEventId } = this.data;
+        // 处理照片发送
+        onPhotoSent(e: WechatMiniprogram.CustomEvent) {
+            const { photos, customFlags } = e.detail;
+            console.log(`收到照片发送事件，共 ${photos?.length || 0} 张照片`, customFlags);
 
-            // 如果没有当前事件ID，从第一个事件开始
-            if (!currentEventId) {
-                if (this.data.metadata.startId) {
-                    this.processEvent(this.data.metadata.startId);
-                } else if (this.data.allEvents.length > 0) {
-                    this.processEvent(this.data.allEvents[0].id);
+            // 创建一个新的消息
+            const newMessage: EventMessage = {
+                id: `msg-${Date.now()}`,
+                type: 'photo_message',
+                role: 'self',
+                content: `发送了 ${photos?.length || 0} 张照片`
+            };
+
+            // 添加消息到消息列表
+            const messages = [...this.data.messages, newMessage];
+            const formattedMessages = this.formatMessages(messages);
+
+            // 更新数据
+            this.setData({
+                messages,
+                formattedMessages,
+                scrollToView: `msg-${formattedMessages.length - 1}`
+            });
+
+            if (customFlags) {
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+
+                // 合并自定义标志
+                for (const [key, value] of Object.entries(customFlags)) {
+                    conditionState.customFlags[key] = value;
                 }
-                return;
-            }
 
-            // 获取当前事件
-            const currentEvent = this.data.eventMap[currentEventId];
-            if (!currentEvent) {
-                console.error(`未找到当前事件: ${currentEventId}`);
-                return;
+                // 更新状态
+                this.setData({
+                    conditionState
+                }, () => {
+                    // 检查条件转换
+                    this.checkAndTransitionBasedOnFlags();
+                });
             }
-
-            // 转到下一个事件
-            this.transitionToNextEvent(currentEvent);
         },
 
-        // 添加处理金额修改事件
-        onAmountChanged() {
-            console.log('用户修改了红包金额');
+        // 处理发送红包按钮点击
+        onSendRedpacketClicked(e: WechatMiniprogram.CustomEvent) {
+            const { customFlags } = e.detail;
+            console.log('发送红包按钮被点击', customFlags);
 
             // 更新条件状态
             const conditionState = { ...this.data.conditionState };
+
+            // 直接设置 userClickedSendRedpacket 标志
             conditionState.customFlags = conditionState.customFlags || {};
-            conditionState.customFlags.userChangedAmount = true;
+            conditionState.customFlags.userClickedSendRedpacket = true;
+
+            console.log('设置 userClickedSendRedpacket 标志为 true', conditionState);
+
+            // 如果有自定义标志，则合并
+            if (customFlags) {
+                // 合并自定义标志
+                for (const [key, value] of Object.entries(customFlags)) {
+                    conditionState.customFlags[key] = value;
+                }
+            }
 
             // 更新状态
             this.setData({
-                conditionState
+                conditionState,
+                showHighlight: false // 如果有高亮状态，清除高亮
             }, () => {
-                // 在状态更新完成后检查转换
-                console.log('金额已修改，更新标志状态，检查转换');
+                // 检查条件转换
+                console.log('检查塞钱进红包后的条件转换');
                 this.checkAndTransitionBasedOnFlags();
             });
+        },
+
+        // 处理支付确认
+        onPaymentConfirmed(e: WechatMiniprogram.CustomEvent) {
+            const { customFlags } = e.detail;
+            console.log('支付按钮被点击', customFlags);
+
+            if (customFlags) {
+                // 更新条件状态
+                const conditionState = { ...this.data.conditionState };
+
+                // 合并自定义标志
+                for (const [key, value] of Object.entries(customFlags)) {
+                    conditionState.customFlags[key] = value;
+                }
+
+                // 更新状态并隐藏高亮
+                this.setData({
+                    conditionState,
+                    showHighlight: false
+                }, () => {
+                    // 检查条件转换
+                    this.checkAndTransitionBasedOnFlags();
+                });
+            }
         },
 
         // 修改 onRedpacketSend 方法，确保它可以正确处理转账确认步骤
@@ -1240,6 +1335,50 @@ Component({
             }
         },
 
+        // 检查自定义标志并根据当前状态进行转换
+        checkAndTransitionBasedOnFlags() {
+            const { currentEventId } = this.data;
+
+            // 如果没有当前事件ID，从第一个事件开始
+            if (!currentEventId) {
+                if (this.data.metadata.startId) {
+                    this.processEvent(this.data.metadata.startId);
+                } else if (this.data.allEvents.length > 0) {
+                    this.processEvent(this.data.allEvents[0].id);
+                }
+                return;
+            }
+
+            // 获取当前事件
+            const currentEvent = this.data.eventMap[currentEventId];
+            if (!currentEvent) {
+                console.error(`未找到当前事件: ${currentEventId}`);
+                return;
+            }
+
+            // 转到下一个事件
+            this.transitionToNextEvent(currentEvent);
+        },
+
+        // 添加处理金额修改事件
+        onAmountChanged() {
+            console.log('用户修改了红包金额');
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.userChangedAmount = true;
+
+            // 更新状态
+            this.setData({
+                conditionState
+            }, () => {
+                // 在状态更新完成后检查转换
+                console.log('金额已修改，更新标志状态，检查转换');
+                this.checkAndTransitionBasedOnFlags();
+            });
+        },
+
         // 处理表情选择
         onSelectEmoji(e: WechatMiniprogram.CustomEvent) {
             const emoji = e.detail.emoji;
@@ -1265,6 +1404,12 @@ Component({
                     inputText: characters.join('')
                 });
             }
+        },
+
+        // 处理导航栏标题更新
+        onUpdateNavTitle(e: WechatMiniprogram.CustomEvent) {
+            const { title } = e.detail;
+            this.setData({ navTitle: title });
         },
 
         // 播放音频
@@ -1321,6 +1466,30 @@ Component({
                     currentAudioUri: ''
                 });
             }
-        }
+        },
+
+        // 处理显示红包页面事件
+        onShowRedpacket() {
+            this.setData({
+                showRedpacketPage: true,
+                navTitle: '发红包'
+            });
+        },
+
+        // 处理红包页面关闭
+        onRedpacketPageClose() {
+            this.setData({
+                showRedpacketPage: false,
+                navTitle: ''
+            });
+        },
+
+        // 处理隐藏红包页面事件
+        onHideRedpacket() {
+            this.setData({
+                showRedpacketPage: false,
+                navTitle: ''
+            });
+        },
     }
 }); 

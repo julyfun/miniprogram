@@ -62,6 +62,14 @@
       <view class="settings-item" bindtap="switchTtsProvider">
         <text>语音引擎: {{currentTtsProvider === 'ali' ? '阿里云' : 'CosyVoice'}}</text>
       </view>
+      <!-- Debug模式切换按钮 -->
+      <view class="settings-item" bindtap="toggleDebugMode">
+        <text>调试模式: {{isDebugMode ? '开启' : '关闭'}}</text>
+      </view>
+    </view>
+    <!-- Debug模式指示器 -->
+    <view class="debug-button {{isDebugMode ? 'active' : ''}}" catchtap="toggleDebugMode">
+      <text>🐞</text>
     </view>
     <!-- 设置按钮 -->
     <view class="settings-button" catchtap="toggleSettingsMenu">

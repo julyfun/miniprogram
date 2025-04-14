@@ -1,18 +1,7 @@
 <!-- 聊天界面容器 -->
 <view class="chat-page" style="width:100%; margin:0; padding:0;">
     <!-- 顶部标题栏 -->
-    <navigation-bar title="{{metadata.opponent.nickname}}" back="{{true}}" delta="1" bindback="onBack">
-        <view slot="right">
-            <!-- 删除音频播放指示器 -->
-            <view class="nav-more">
-                <view class="nav-more-icon">
-                    <view class="nav-more-dot"></view>
-                    <view class="nav-more-dot"></view>
-                    <view class="nav-more-dot"></view>
-                </view>
-            </view>
-        </view>
-    </navigation-bar>
+    <navigation-bar title="{{navTitle || metadata.opponent.nickname}}" back="{{true}}" delta="1" bindback="onBack"></navigation-bar>
     <!-- 内容区域 - 添加独立容器确保正确的层级关系 -->
     <view class="chat-content-wrapper">
         <view class="chat-content full-width-content">
@@ -21,7 +10,9 @@
         </view>
     </view>
     <!-- 底部输入区域 -->
-    <input-bar value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" bindamountChanged="onAmountChanged" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
+    <input-bar wx:if="{{!showRedpacketPage}}" value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" bindamountChanged="onAmountChanged" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" bindphotosend="onPhotoSent" bindsendRedpacketClicked="onSendRedpacketClicked" bindpaymentConfirmed="onPaymentConfirmed" bindupdateNavTitle="onUpdateNavTitle" bindshowredpacket="onShowRedpacket" bindhideredpacket="onHideRedpacket" />
+    <!-- 红包发送页面 - 作为chat-page的直接子元素 -->
+    <redpacket-page wx:if="{{showRedpacketPage}}" visible="{{showRedpacketPage}}" bindclose="onRedpacketPageClose" bindsend="onRedpacketSend" bindamountChanged="onAmountChanged" bindsendRedpacketClicked="onSendRedpacketClicked" bindpaymentConfirmed="onPaymentConfirmed" isTutorial="{{showHighlight && (highlightTarget === 'amount-input' || highlightTarget === 'pay-button')}}" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
     <!-- 控制栏 隐藏 -->
     <view class="control-bar" style="display: none;">
         <view class="control-button" bindtap="onRestart">
