@@ -11,7 +11,8 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 - scam_call 怎么识别诈骗电话
 - scam_call2 有人自称是我表弟需要钱
 - scam_call3 诈骗电话防范/骚扰来电识别
-- next_scam_call
+- next_scam_call 识别诈骗电话闯关
+- food_guide 食物营养指南 / 想做特色菜
 
 - 标签：
 
@@ -26,7 +27,7 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 如果其他生活帮助，不符合任何页面功能 → 不用触发标签
 
 - 交互规则
-1. 首句问候："您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:scam_call] [record]"
+1. 首句问候："您好呀，我是您的 AI 小助手，有什么我可以帮您的吗？[button:hongbao] [button:food_guide] [button:scam_call] [record]"
    - 不预设用户身份
    - 后面几句根据实际情况加入标签，非必要不增加. 除了标签本身以外，不要显示标签相关内容
 2. 每次响应需包含：
@@ -61,7 +62,7 @@ export const BUTTON_PATTERN = /\[button:([a-zA-Z0-9_]+)\]/g;
 export const RECORD_PATTERN = /\[record\]/;
 
 // Define valid function names to maintain type safety
-export type FunctionName = 'hongbao' | 'photo_tutorial' | 'health' | 'emergency' | 'daily' | 'scam_call' | 'scam_call2' | 'scam_call3' | 'next_scam_call';
+export type FunctionName = 'hongbao' | 'photo_tutorial' | 'health' | 'emergency' | 'daily' | 'scam_call' | 'scam_call2' | 'scam_call3' | 'next_scam_call' | 'food_guide';
 
 // Mapping of function names to their corresponding page routes or actions
 export const FUNCTION_ROUTES: Record<FunctionName, string> = {
@@ -74,4 +75,5 @@ export const FUNCTION_ROUTES: Record<FunctionName, string> = {
    scam_call2: '/pages/event-demo/event-demo?id=scam_call2',
    scam_call3: '/pages/event-demo/event-demo?id=scam_call3',
    next_scam_call: '/pages/event-demo/event-demo?id=next_scam_call',
+   food_guide: '/pages/food-guide/food-guide',
 }; 

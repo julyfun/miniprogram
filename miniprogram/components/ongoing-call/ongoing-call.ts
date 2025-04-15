@@ -1,3 +1,5 @@
+import { downloadCloudAudio, getCloudFileID } from '../../utils/cloudAudio';
+
 Component({
     /**
      * Component properties
@@ -21,7 +23,7 @@ Component({
         },
         audioPath: {
             type: String,
-            value: '/assets/audio/ringtone.mp3'
+            value: 'cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/ringtone.mp3'
         }
     },
 
@@ -34,7 +36,9 @@ Component({
         callDuration: '00:00',
         isMicrophoneMuted: false,
         isSpeakerOn: false,
-        durationTimer: null as number | null
+        durationTimer: null as number | null,
+        localAudioPath: '', // Store the local temporary file path
+        isDownloading: false // Track download state to prevent multiple downloads
     },
 
     /**
@@ -127,9 +131,39 @@ Component({
             // 停止之前的音频
             this.stopCallAudio();
 
+            // 设置下载状态
+            this.setData({ isDownloading: true });
+
+            console.log('尝试播放通话音频:', this.data.audioPath);
+
+            // 确保是云存储路径，如果不是则转换
+            const fileID = this.data.audioPath.startsWith('cloud://') ?
+                this.data.audioPath :
+                getCloudFileID(this.data.audioPath);
+
+            // 从云存储下载文件
+            downloadCloudAudio(fileID)
+                .then(tempFilePath => {
+                    this.setData({
+                        localAudioPath: tempFilePath,
+                        isDownloading: false
+                    });
+                    console.log('通话音频下载成功，本地路径:', tempFilePath);
+                    this.playLocalCallAudio(tempFilePath);
+                })
+                .catch(error => {
+                    console.error('通话音频下载失败:', error);
+                    this.setData({ isDownloading: false });
+                    // 播放失败自动结束通话
+                    this.endCall();
+                });
+        },
+
+        // 播放本地临时文件中的通话音频
+        playLocalCallAudio(filePath: string) {
             // 创建新的音频上下文
             const audioContext = wx.createInnerAudioContext();
-            audioContext.src = this.data.audioPath;
+            audioContext.src = filePath;
             audioContext.loop = false; // 只播放一次，不循环
             audioContext.autoplay = true;
 

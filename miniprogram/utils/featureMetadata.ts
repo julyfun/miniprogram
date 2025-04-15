@@ -12,15 +12,10 @@ export const FEATURE_METADATA: Record<string, FeatureMetadata> = {
         description: '教我发微信红包',
         image: '/assets/icons/message-redpacket.png'
     },
-    cheat: {
-        name: '防诈骗',
-        description: '如何防范诈骗',
-        image: '/assets/icons/customer-service1.png'
-    },
-    health: {
-        name: '健康咨询',
-        description: '健康和医疗相关问题',
-        image: '/assets/icons/dog.jpg'
+    food_guide: {
+        name: '美食指南',
+        description: '美食推荐和制作方法',
+        image: '/assets/icons/food.svg'
     },
     emergency: {
         name: '紧急求助',

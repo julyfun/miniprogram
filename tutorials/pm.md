@@ -144,21 +144,62 @@ type 不是 message 的事件不需要 content 和 role
 
  @config.ts @index.ts @event-player.ts 当跳转标签为 scam_call 时，并不是需要跳转到固定路由，而是检测当前学习进度中首个没有完成的任务并进入其中。
 
-## 显示进度界面添加一个按钮重置进度
+
+## 进度界面新增“微信功能教学进度”
+
+为“学习进度”栏目中的一部分，目前一共 2 个学习，包括发红包 @redpacket_tutorial.js 和发图片 @photo_tutorial.js 教学。这两个完成后自动更新进度 @event-player.ts 。模仿现有的诈骗防范课程进度，添加功能。
+
+## 进度界面从关闭到显示时，自动从数据库请求刷新
 
 @index.ts 
 
-## 
+## 数据迁移 [2]
 
-## 发送语音功能
+assets/ 中的文件已经全部迁移到云存储中。请将原来直接使用 png 本地 URI 的方式替换为请求云存储资源 URI
+
+file_id 形如：cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/ringtone.mp3
+
+注：组件支持
+小程序组件支持传入云文件 ID，支持列表如下：
+
+组件	属性
+image	src
+video	src、poster
+cover-image	src
+接口	参数
+getBackgroundAudioManager	src
+createInnerAudioContext	src
+previewImage	urls、current
+
+@photo-selector.ts 先修改这个文件中的图片的 URI，其他我们以后再说
+
+## 数据迁移 2
+
+assets/ 中的文件已经全部迁移到云存储中。请将原来直接使用 mp3 本地 URI 的方式替换为请求云存储资源 URI，获取文件后播放. 可能需要再 utils 下创建函数
+
+```
+// 可以根据文件 ID 下载文件，用户仅可下载其有访问权限的文件：
+wx.cloud.downloadFile({
+  fileID: '', // 文件 ID
+  success: res => {
+    // 返回临时文件路径
+    console.log(res.tempFilePath)
+  },
+  fail: console.error
+})
+```
+
+file_id 形如：cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/ringtone.mp3
+
+@scam_call.js @event-player-ts @ongoing-call.ts @incoming-call.ts 先在这些文件里修改必要代码
+
+## 微信聊天界面发送语音功能
 
 - @index.ts @index.wxml 左下角目前有一个发送语音按钮。点击后，原本的文字输入框替换为“按住说话”。长按进入录音模式，界面如图所示。松开可以发送录音。拖到左边“取消”圆圈内则取消发送。拖到右边“转文字 发送”暂时不用实现，我们之后再实现.
 
 ## [optional] 单独 tts
 
 @cosyvoice.md不再使用现有的 tts.ts, ttsProvider 等，其逻辑已经太过复杂，需要彻底抛弃。 @index.ts  保留现在类似的接口，仿照 @cosyvoice.md 的写法重写一个接口.秘钥在 @secrets.ts 中使用 
-
-## 诈骗来电模拟
 
 ## AI 智能食谱
 

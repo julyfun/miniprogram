@@ -26,7 +26,7 @@ Component({
      */
     data: {
         // 照片列表（这里使用同一张照片）
-        photos: Array(12).fill('/assets/images/photo-alnum-example/farm.png'),
+        photos: Array(12).fill('cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/images/photo-alnum-example/farm.png'),
         // 选中的照片索引数组 - This will be the single source of truth for checkbox state
         selectedPhotos: [] as number[],
         // 每行显示的照片数量

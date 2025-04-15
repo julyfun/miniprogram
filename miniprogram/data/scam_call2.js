@@ -50,8 +50,10 @@ module.exports = {
             callerName: "侄子小明",
             callerAvatar: "/assets/icons/unknown-caller.svg",
             callerId: "relative_scam",
-            callRingtone: "/assets/audio/ringtone.mp3",
-            callAudio: "/assets/audio/scam_call/scam_call2.mp3",
+            callRingtone: "cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/ringtone.mp3",
+            callAudio: "cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/scam_call/scam_call2.mp3",
+            callDuration: 30,
+            audioContent: "喂，大舅，是我，小明。我出事了...我在外面被警察抓了...我在派出所，说我嫖娼...我没有啊，是被人冤枉的。他们要我交两万块钱罚款才放我走...我不想让我妈知道这事，她知道了得气死...求你帮我交钱，警察说半小时内处理好就不会立案...你把钱转到这个账户...回去我马上还你钱，千万别告诉我妈...",
             setFlags: {
                 callType: "relative_scam"
             },

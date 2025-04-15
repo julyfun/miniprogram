@@ -1,12 +1,32 @@
 /* 全局容器 */
 .container {
+    position: relative;
+    width: 100%;
     height: 100vh;
-    width: 100vw;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
-    position: relative;
     overflow: hidden;
+}
+
+/* 背景图片样式 */
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    object-fit: cover;
+}
+
+/* 确保其他元素在背景图之上 */
+.login-banner,
+.progress-card,
+.chat-history,
+.orb-container,
+.settings-container {
+    position: relative;
+    z-index: 1;
 }
 
 /* 顶部标题 */
@@ -812,11 +832,12 @@
     gap: 16px;
     z-index: 100;
     /* Ensure orb stays above other content */
-    background: rgba(255, 255, 255, 0.95);
-    /* More opaque to ensure visibility */
+    background: transparent;
+    /* Changed from rgba(255, 255, 255, 0.95) to transparent */
     padding-top: 20px;
     /* Reduced from 30px to save space */
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: none;
+    /* Removed border to make it fully transparent */
 }
 
 .orb {
@@ -1063,13 +1084,15 @@
     opacity: 1;
     animation: none;
     /* Disable animation from message class */
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: transparent;
+    /* Changed from rgba(255, 255, 255, 0.8) to transparent */
     border-radius: 16rpx;
 }
 
 /* Simple text prompt without borders or background */
 .text-input-prompt {
-    color: #777;
+    color: #333;
+    /* Darkened text color for better visibility on background image */
     font-size: 30rpx;
     text-align: center;
     width: 100%;
@@ -1079,6 +1102,8 @@
     margin-top: 20rpx;
     margin-bottom: 20rpx;
     letter-spacing: 1rpx;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    /* Added text shadow for better readability */
 }
 
 /* Active container when editing */
@@ -1086,8 +1111,9 @@
     position: relative;
     width: 100%;
     min-height: 80rpx;
-    background-color: #f5f5f5;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: rgba(245, 245, 245, 0.7);
+    /* Made semi-transparent */
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 20rpx;
     padding: 10rpx 20rpx;
     box-sizing: border-box;
@@ -1095,6 +1121,8 @@
     align-items: center;
     text-align: left !important;
     box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(5px);
+    /* Added blur effect for better text readability */
 }
 
 .text-input {

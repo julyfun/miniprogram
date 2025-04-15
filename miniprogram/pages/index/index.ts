@@ -516,17 +516,18 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
             // 检查新文本是否已包含在累积文本中，或累积文本是否是新文本的一部分
             if (currentAccumulated && text) {
-                if (text.includes(currentAccumulated)) {
-                    // 新文本包含旧文本，使用新文本
-                    updatedText = text;
-                } else if (!currentAccumulated.includes(text)) {
-                    // 如果新文本不是旧文本的一部分，也不包含旧文本，则累加
-                    // 可能是新的句子开始
-                    updatedText = currentAccumulated + ' ' + text;
-                } else {
-                    // 旧文本包含新文本，保持旧文本
-                    updatedText = currentAccumulated;
-                }
+                // if (text.includes(currentAccumulated)) {
+                //     // 新文本包含旧文本，使用新文本
+                //     updatedText = text;
+                // } else if (!currentAccumulated.includes(text)) {
+                //     // 如果新文本不是旧文本的一部分，也不包含旧文本，则累加
+                //     // 可能是新的句子开始
+                //     updatedText = currentAccumulated + ' ' + text;
+                // } else {
+                //     // 旧文本包含新文本，保持旧文本
+                //     updatedText = currentAccumulated;
+                // }
+                updatedText = text;
             }
 
             // 更新界面显示和状态

@@ -1,3 +1,5 @@
+import { downloadCloudAudio, getCloudFileID } from '../../utils/cloudAudio';
+
 Component({
     /**
      * Component properties
@@ -25,7 +27,7 @@ Component({
         },
         ringtonePath: {
             type: String,
-            value: '/assets/audio/ringtone.mp3'
+            value: 'cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/ringtone.mp3'
         }
     },
 
@@ -34,7 +36,9 @@ Component({
      */
     data: {
         audioContext: null as WechatMiniprogram.InnerAudioContext | null,
-        isRinging: false
+        isRinging: false,
+        localRingtonePath: '', // Store the local temporary file path
+        isDownloading: false   // Track download state to prevent multiple downloads
     },
 
     /**
@@ -87,15 +91,43 @@ Component({
             // 停止之前的铃声
             this.stopRingtone();
 
+            // 设置下载状态
+            this.setData({ isDownloading: true });
+
             // 记录铃声路径以便调试
             console.log('尝试播放铃声:', this.data.ringtonePath);
 
+            // 确保是云存储路径，如果不是则转换
+            const fileID = this.data.ringtonePath.startsWith('cloud://') ?
+                this.data.ringtonePath :
+                getCloudFileID(this.data.ringtonePath);
+
+            // 从云存储下载文件
+            downloadCloudAudio(fileID)
+                .then(tempFilePath => {
+                    this.setData({
+                        localRingtonePath: tempFilePath,
+                        isDownloading: false
+                    });
+                    console.log('铃声下载成功，本地路径:', tempFilePath);
+                    this.playLocalRingtone(tempFilePath);
+                })
+                .catch(error => {
+                    console.error('铃声下载失败:', error);
+                    this.setData({ isDownloading: false });
+                    // 尝试使用备用铃声
+                    this.tryFallbackRingtone(error);
+                });
+        },
+
+        // 播放本地临时文件中的铃声
+        playLocalRingtone(filePath: string) {
             try {
                 // 创建新的音频上下文
                 const audioContext = wx.createInnerAudioContext();
 
                 // 配置音频属性
-                audioContext.src = this.data.ringtonePath;
+                audioContext.src = filePath;
                 audioContext.loop = true; // 循环播放直到接听或拒绝
                 audioContext.volume = 1.0; // 设置最大音量
 
@@ -148,10 +180,10 @@ Component({
         tryFallbackRingtone(originalError: any) {
             console.log('尝试使用备用铃声');
 
-            // 备用铃声路径列表
+            // 备用铃声路径列表 - 使用云存储路径
             const fallbackPaths = [
-                '/assets/audio/ringtone.mp3',
-                '/assets/audio/default_ringtone.mp3',
+                'cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/ringtone.mp3',
+                'cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/default_ringtone.mp3',
                 // 可以添加更多备用铃声
             ];
 
@@ -174,55 +206,14 @@ Component({
             const nextRingtonePath = fallbackPaths[nextPathIndex];
             console.log(`尝试备用铃声 ${nextPathIndex + 1}/${fallbackPaths.length}: ${nextRingtonePath}`);
 
-            try {
-                // 创建新的音频上下文
-                const audioContext = wx.createInnerAudioContext();
-                audioContext.src = nextRingtonePath;
-                audioContext.loop = true;
-                audioContext.volume = 1.0;
-
-                // 设置回调
-                audioContext.onCanplay(() => {
-                    console.log('备用铃声已准备好播放');
-                    audioContext.play();
-                });
-
-                audioContext.onPlay(() => {
-                    console.log('备用铃声开始播放:', nextRingtonePath);
-                    this.setData({
-                        audioContext,
-                        isRinging: true,
-                        ringtonePath: nextRingtonePath
-                    });
-                });
-
-                audioContext.onError((err) => {
-                    console.error('备用铃声播放错误:', err);
-                    // 递归尝试下一个备用铃声
-                    this.setData({ ringtonePath: nextRingtonePath }, () => {
-                        this.tryFallbackRingtone(err);
-                    });
-                });
-
-                // 开始播放
-                audioContext.autoplay = true;
-                audioContext.play();
-
-                // 安全检查
-                setTimeout(() => {
-                    if (!this.data.isRinging) {
-                        console.log('备用铃声可能未成功播放，尝试下一个');
-                        audioContext.destroy();
-                        // 递归尝试下一个备用铃声
-                        this.setData({ ringtonePath: nextRingtonePath }, () => {
-                            this.tryFallbackRingtone({ reason: '备用铃声未开始播放' });
-                        });
-                    }
-                }, 1000);
-            } catch (error) {
-                console.error('创建备用音频上下文失败:', error);
-                this.setData({ isRinging: false });
-            }
+            // 设置新的铃声路径
+            this.setData({
+                ringtonePath: nextRingtonePath,
+                isDownloading: false
+            }, () => {
+                // 然后重新尝试播放
+                this.playRingtone();
+            });
         },
 
         // 停止铃声

@@ -1,5 +1,7 @@
 <!-- 聊天助手页面 -->
 <view class="container" bindtap="hideSettingsMenu">
+  <!-- 背景图片 -->
+  <image class="bg-image" src="cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/images/bg2.jpg" mode="aspectFill"></image>
   <!-- 登录提示横幅 - 未登录时显示 -->
   <view class="login-banner" wx:if="{{!isLogged}}" catchtap="login">
     <image class="login-icon" src="/assets/icons/user.svg" mode="aspectFit"></image>

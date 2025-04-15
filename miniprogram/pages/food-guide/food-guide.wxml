@@ -1,0 +1,33 @@
+<view class="food-guide-container">
+    <!-- Navigation bar with back button -->
+    <navigation-bar title="美食指南" back="{{true}}" color="#ffffff" backgroundColor="transparent"></navigation-bar>
+    <!-- Main content area -->
+    <view class="content-area">
+        <!-- Video player -->
+        <view class="video-section">
+            <video id="foodVideo" src="{{videoUrl}}" controls="{{false}}" show-center-play-btn="{{true}}" show-play-btn="{{true}}" bindplay="onVideoPlay" bindpause="onVideoPause" bindended="onVideoEnded" bindtimeupdate="onVideoTimeUpdate" bindtap="onVideoTap" object-fit="contain" autoplay="{{true}}"></video>
+            <!-- Custom progress bar -->
+            <view class="progress-container">
+                <view class="progress-bar">
+                    <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+                </view>
+                <view class="progress-time">{{currentTime}}/{{duration}}</view>
+            </view>
+        </view>
+        <!-- Interaction buttons overlaid on the right -->
+        <view class="interaction-buttons">
+            <view class="button-item" bindtap="onLikeClick">
+                <image src="/assets/icons/video/like.svg" class="icon {{isLiked ? 'liked' : ''}}"></image>
+                <text>喜欢</text>
+            </view>
+            <view class="button-item" bindtap="onSaveClick">
+                <image src="/assets/icons/video/collect.svg" class="icon {{isSaved ? 'saved' : ''}}"></image>
+                <text>收藏</text>
+            </view>
+            <view class="button-item" bindtap="onCommentClick">
+                <image src="/assets/icons/video/comment.svg" class="icon"></image>
+                <text>评论</text>
+            </view>
+        </view>
+    </view>
+</view>
