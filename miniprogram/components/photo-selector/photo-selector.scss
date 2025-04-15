@@ -64,48 +64,50 @@
     object-fit: cover;
 }
 
-/* 复选框样式 - 未选中状态：白色透明边框 */
-.selector--checkbox {
+/* Completely new checkbox implementation */
+/* Unchecked state - Empty circle with white border */
+.checkbox-unchecked {
     position: absolute;
     top: 10rpx;
     right: 10rpx;
-    width: 44rpx;
-    height: 44rpx;
+    width: 48rpx;
+    height: 48rpx;
     border-radius: 50%;
     border: 3rpx solid rgba(255, 255, 255, 0.9);
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+    z-index: 10;
+    box-shadow: 0 0 6rpx rgba(0, 0, 0, 0.3);
+}
+
+/* Checked state - Solid green circle */
+.checkbox-checked {
+    position: absolute;
+    top: 10rpx;
+    right: 10rpx;
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: 50%;
+    background-color: #07C160;
+    border: 3rpx solid #07C160;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box;
-    z-index: 10;
-    /* 添加阴影以增强可见性 */
-    box-shadow: 0 0 4rpx rgba(0, 0, 0, 0.2);
+    z-index: 11;
+    /* Higher z-index to ensure it's above unchecked */
+    box-shadow: 0 0 8rpx rgba(0, 0, 0, 0.3);
 }
 
-/* 勾选图标 - 默认隐藏 */
-.check-icon {
-    width: 24rpx;
-    height: 16rpx;
-    border: 0;
-    display: none;
-}
-
-/* 选中状态：绿色背景 */
-.selector--checkbox.selector--checked {
-    background-color: #07C160;
-    border-color: #07C160;
-}
-
-/* 勾选图标 - 选中状态下显示 */
-.selector--checkbox.selector--checked .check-icon {
-    width: 24rpx;
-    height: 16rpx;
-    border-left: 4rpx solid #ffffff;
-    border-bottom: 4rpx solid #ffffff;
-    transform: rotate(-45deg);
-    margin-top: -5rpx;
-    display: block;
+/* White checkmark inside the green circle */
+.checkmark-icon {
+    width: 16rpx;
+    height: 26rpx;
+    border-right: 4rpx solid white;
+    border-bottom: 4rpx solid white;
+    transform: rotate(45deg);
+    margin-bottom: 4rpx;
+    margin-right: 2rpx;
 }
 
 /* 底部操作栏 */

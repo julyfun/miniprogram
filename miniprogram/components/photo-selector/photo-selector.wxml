@@ -5,12 +5,16 @@
         <!-- 照片网格 -->
         <scroll-view class="photo-grid-container" scroll-y="{{true}}">
             <view class="photo-grid">
-                <block wx:for="{{photos}}" wx:key="index">
+                <block wx:for="{{photos}}" wx:for-item="photoUrl" wx:key="index">
                     <view class="photo-item-wrapper" catchtap="onSelectPhoto" data-index="{{index}}">
                         <view class="photo-item">
-                            <image class="photo-image" src="{{item}}" mode="aspectFill"></image>
-                            <view id="checkbox-{{index}}" class="selector--checkbox {{selectedPhotos.indexOf(index) >= 0 ? 'selector--checked' : ''}}" style="{{selectedPhotos.indexOf(index) >= 0 ? 'background-color: #07C160; border-color: #07C160;' : ''}}">
-                                <view class="check-icon" style="{{selectedPhotos.indexOf(index) >= 0 ? 'display: block;' : 'display: none;'}}"></view>
+                            <image class="photo-image" src="{{photoUrl}}" mode="aspectFill"></image>
+                            <!-- 使用selectedMap数组来确定选中状态 -->
+                            <!-- Unchecked state (empty circle) -->
+                            <view class="checkbox-unchecked" wx:if="{{!selectedMap[index]}}"></view>
+                            <!-- Checked state (green circle with checkmark) -->
+                            <view class="checkbox-checked" wx:if="{{selectedMap[index]}}">
+                                <view class="checkmark-icon"></view>
                             </view>
                         </view>
                     </view>
