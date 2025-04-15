@@ -11,6 +11,8 @@ module.exports = {
     events: [
         {
             id: "welcome",
+            type: "message",
+            role: "assistant",
             transitions: [
                 {
                     event: "wait",
@@ -18,9 +20,7 @@ module.exports = {
                     delay: 2000
                 }
             ],
-            message: {
-                content: "欢迎来到诈骗来电防范训练。在本训练中，你将学习如何识别和应对可能的电话诈骗。请认真听取来电内容，并选择正确的应对方式。"
-            }
+            content: "欢迎来到诈骗来电防范训练。在本训练中，你将学习如何识别和应对可能的电话诈骗。请认真听取来电内容，并选择正确的应对方式。"
         },
         {
             id: "scam_call_incoming",

@@ -20,7 +20,7 @@ module.exports = {
         // 开始事件
         {
             id: "start",
-            type: "system",
+            type: "message",
             content: "欢迎参加冒充公检法诈骗防范教学。在这个教学中，您将接到一个冒充公安局的诈骗电话，请注意对方的言辞，学习如何识别和应对此类诈骗。",
             transitions: [
                 {
@@ -75,7 +75,8 @@ module.exports = {
         // 拒接电话的提示
         {
             id: "call_declined_tips",
-            type: "system",
+            type: "message",
+            role: "assistant",
             content: "您选择了拒绝接听。对于自称执法机构的陌生来电保持警惕是非常好的做法！真正的公安机关不会通过电话告知涉案情况，也不会要求您登录所谓的'安全账户核查系统'。",
             transitions: [
                 {
@@ -87,7 +88,8 @@ module.exports = {
         // 警示提示
         {
             id: "warning_tips",
-            type: "system",
+            type: "message",
+            role: "assistant",
             content: "⚠️ 警告：您刚刚听到的是典型的冒充公检法诈骗话术。诈骗分子通过以下方式诱导受害者：\n1. 谎称您涉嫌犯罪（\"涉及重大洗钱案件\"）\n2. 提及具体金额制造震慑（\"涉案金额高达268万元\"）\n3. 使用专业术语营造权威感（\"最高检已发布通缉令\"，\"案件编号\"）\n4. 制造紧迫感（\"两小时内未完成认证将冻结账户\"）\n5. 要求登录虚假网站（\"最高检安全账户核查系统\"）\n6. 恐吓禁止向他人透露（\"按泄密罪处理\"）",
             transitions: [
                 {
@@ -119,7 +121,8 @@ module.exports = {
         // 安全提示
         {
             id: "safety_tips",
-            type: "system",
+            type: "message",
+            role: "assistant",
             content: "冒充公检法诈骗识别要点：" +
                 "\n1. 通过电话通知涉案情况（真实公安不会这样做）" +
                 "\n2. 要求登录特定网站或APP（如'最高检安全账户核查系统'）" +
@@ -143,7 +146,8 @@ module.exports = {
         // 结论
         {
             id: "conclusion",
-            type: "system",
+            type: "message",
+            role: "assistant",
             content: "恭喜您完成了冒充公检法诈骗防范教学！" +
                 "\n\n切记，真正的公安机关、检察院和法院：" +
                 "\n· 不会通过电话告知您涉嫌违法犯罪" +

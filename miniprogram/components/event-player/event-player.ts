@@ -1684,6 +1684,14 @@ Component({
                 showIncomingCall: true
             });
 
+            // 获取来电组件实例并调用显示方法
+            const incomingCallComponent = this.selectComponent('#incomingCall');
+            if (incomingCallComponent) {
+                incomingCallComponent.showIncomingCall(incomingCallData);
+            } else {
+                console.error('未找到来电组件实例');
+            }
+
             // 更新条件状态
             const conditionState = { ...this.data.conditionState };
             conditionState.lastEventId = event.id;

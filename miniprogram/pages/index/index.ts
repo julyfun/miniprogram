@@ -424,8 +424,12 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         } else {
             console.log('[Debug] Skipping initial API request in debug mode');
 
-            // 自定义的 Debug 模式问候语，包含按钮和记录标签
-            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:scam_call] [button:scam_call2] [record]";
+            // 增强的 Debug 模式问候语，包含更多种类的按钮和标签
+            const debugWelcomeText = "Debug 模式已启用! 您可以测试以下功能：\n\n" +
+                "1. 点击按钮跳转: [button:hongbao] [button:health] [button:scam_call]\n" +
+                "2. 询问功能: 试试问\"你有什么功能\"\n" +
+                "3. 直接命令: 试试说\"打开红包教程\"\n" +
+                "4. 语音回复: 试试说\"我要用语音回答\" [record]";
 
             // 处理文本中的标签，提取按钮和其他功能
             const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
@@ -931,12 +935,36 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         if (this.data.isDebugMode) {
             console.log('[Debug] Simulating API response in debug mode');
             setTimeout(() => {
-                const debugResponse = `[DEBUG MODE] You said: "${this.latestRecognizedText}"`;
+                // Create a more interactive debug response with button and function tags
+                const userInput = this.latestRecognizedText.trim();
+                let debugResponse = `[DEBUG MODE] 您说: "${userInput}"`;
+
+                // Add relevant buttons based on user input
+                if (userInput.includes('功能') || userInput.includes('介绍') || userInput.includes('可以做什么')) {
+                    debugResponse += " [button:hongbao] [button:health] [button:scam_call]";
+                }
+
+                // Add navigation function tag if user asks to go somewhere
+                if (userInput.includes('红包') || userInput.includes('发红包')) {
+                    debugResponse += " [function:hongbao]";
+                } else if (userInput.includes('诈骗') || userInput.includes('防诈') || userInput.includes('电话诈骗')) {
+                    debugResponse += " [function:scam_call]";
+                }
+
+                // Add recording tag if appropriate
+                if (userInput.includes('语音') || userInput.includes('说话')) {
+                    debugResponse += " [record]";
+                }
+
+                // Process the response the same way as regular API responses
+                const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugResponse);
 
                 const assistantMessage: ChatMessage = {
                     id: Date.now(),
                     role: 'assistant',
-                    content: debugResponse
+                    content: processedText,
+                    buttons: buttons.length > 0 ? buttons : undefined,
+                    hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                 };
 
                 this.setData({
@@ -947,6 +975,13 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     orbState: 'idle'
                 }, () => {
                     this.scrollToBottom();
+
+                    // If should auto record, start recording after a delay
+                    if (shouldAutoRecord) {
+                        setTimeout(() => {
+                            this.startRecordingAndRecognition();
+                        }, 500);
+                    }
                 });
             }, 1000);
             return;
@@ -1483,9 +1518,13 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             console.log('[Debug] Debug mode turned off, sending initial prompt to AI');
             this.sendInitialPromptToAI();
         } else {
-            // 切换到 Debug 模式，显示自定义问候语
-            // 自定义的 Debug 模式问候语，包含按钮和记录标签
-            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:scam_call] [record]";
+            // 切换到 Debug 模式，显示增强的问候语
+            // 自定义的 Debug 模式问候语，包含更多种类的按钮和标签
+            const debugWelcomeText = "Debug 模式已启用! 您可以测试以下功能：\n\n" +
+                "1. 点击按钮跳转: [button:hongbao] [button:health] [button:scam_call]\n" +
+                "2. 询问功能: 试试问\"你有什么功能\"\n" +
+                "3. 直接命令: 试试说\"打开红包教程\"\n" +
+                "4. 语音回复: 试试说\"我要用语音回答\" [record]";
 
             // 处理文本中的标签，提取按钮和其他功能
             const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
