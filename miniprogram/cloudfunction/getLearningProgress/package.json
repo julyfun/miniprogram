@@ -1,0 +1,14 @@
+{
+    "name": "getLearningProgress",
+    "version": "1.0.0",
+    "description": "Retrieve user learning progress for scam call tutorials",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "wx-server-sdk": "~3.0.1"
+    }
+}

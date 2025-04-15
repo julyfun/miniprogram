@@ -124,6 +124,7 @@ Component({
                 const customFlags = {
                     userClickedAlbum: true
                 };
+                this.triggerEvent('updateNavTitle', { title: '照片和视频' });
                 this.triggerEvent('featureClick', { feature, customFlags });
 
                 // 显示照片选择器

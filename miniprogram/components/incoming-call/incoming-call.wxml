@@ -1,0 +1,19 @@
+<view class="incoming-call-container {{visible ? 'visible' : 'hidden'}}">
+    <view class="call-content">
+        <view class="caller-info">
+            <image class="caller-avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+            <view class="caller-name">{{callerName}}</view>
+            <view class="call-status">{{callStatus}}</view>
+        </view>
+        <view class="call-actions">
+            <view class="call-button decline" bindtap="onDeclineCall">
+                <image class="call-button-icon" src="/assets/icons/call-decline.svg" mode="aspectFit"></image>
+                <text>挂断</text>
+            </view>
+            <view class="call-button accept" bindtap="onAcceptCall">
+                <image class="call-button-icon" src="/assets/icons/call-accept.svg" mode="aspectFit"></image>
+                <text>接听</text>
+            </view>
+        </view>
+    </view>
+</view>

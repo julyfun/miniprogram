@@ -1,0 +1,26 @@
+<view class="ongoing-call-container {{visible ? 'visible' : 'hidden'}}">
+    <view class="call-content">
+        <!-- 通话信息区域 -->
+        <view class="caller-info">
+            <image class="caller-avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+            <view class="caller-name">{{callerName}}</view>
+            <view class="call-status">通话中</view>
+            <view class="call-duration">{{callDuration}}</view>
+        </view>
+        <!-- 通话控制区域 -->
+        <view class="call-actions">
+            <view class="call-button microphone {{isMicrophoneMuted ? 'muted' : ''}}" bindtap="toggleMicrophone">
+                <image class="call-button-icon" src="/assets/icons/call-decline.svg" mode="aspectFit"></image>
+                <text>{{isMicrophoneMuted ? '麦克风已关闭' : '麦克风'}}</text>
+            </view>
+            <view class="call-button end-call" bindtap="endCall">
+                <image class="call-button-icon" src="/assets/icons/call-decline.svg" mode="aspectFit"></image>
+                <text>挂断</text>
+            </view>
+            <view class="call-button speaker {{isSpeakerOn ? 'on' : ''}}" bindtap="toggleSpeaker">
+                <image class="call-button-icon" src="/assets/icons/call-accept.svg" mode="aspectFit"></image>
+                <text>{{isSpeakerOn ? '扬声器已开启' : '扬声器'}}</text>
+            </view>
+        </view>
+    </view>
+</view>

@@ -3,62 +3,25 @@
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #f5f5f5;
+    width: 100%;
+    height: 100%;
+    background-color: #f8f8f8;
     z-index: 1000;
     display: flex;
     flex-direction: column;
 }
 
-/* 导航栏样式 */
-.nav-bar {
-    height: 44px;
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #ffffff;
-    border-bottom: 1rpx solid #e6e6e6;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-}
-
-.nav-back {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.back-icon {
-    width: 12px;
-    height: 12px;
-    border-left: 2px solid #000;
-    border-bottom: 2px solid #000;
-    transform: rotate(45deg);
-}
-
-.nav-title {
-    font-size: 17px;
-    font-weight: 500;
-    color: #000000;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-/* 内容容器 - 添加顶部内边距以避免与导航栏重叠 */
+/* 内容容器 - No top padding needed as the page navigation bar handles it */
 .content-container {
     flex: 1;
-    padding-top: 44px;
-    /* 与导航栏高度相同 */
     display: flex;
     flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding-top: 88px;
+    /* Remove padding-top as it's handled by the page */
+    padding-bottom: 30px;
+    /* Keep bottom padding */
 }
 
 /* 照片网格容器 */
@@ -101,33 +64,48 @@
     object-fit: cover;
 }
 
-/* 复选框样式 */
-.checkbox {
+/* 复选框样式 - 未选中状态：白色透明边框 */
+.selector--checkbox {
     position: absolute;
     top: 10rpx;
     right: 10rpx;
-    width: 40rpx;
-    height: 40rpx;
+    width: 44rpx;
+    height: 44rpx;
     border-radius: 50%;
-    border: 2rpx solid rgba(255, 255, 255, 0.8);
-    background-color: rgba(0, 0, 0, 0.2);
+    border: 3rpx solid rgba(255, 255, 255, 0.9);
+    background-color: rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    z-index: 10;
+    /* 添加阴影以增强可见性 */
+    box-shadow: 0 0 4rpx rgba(0, 0, 0, 0.2);
 }
 
-.checkbox.checked {
+/* 勾选图标 - 默认隐藏 */
+.check-icon {
+    width: 24rpx;
+    height: 16rpx;
+    border: 0;
+    display: none;
+}
+
+/* 选中状态：绿色背景 */
+.selector--checkbox.selector--checked {
     background-color: #07C160;
     border-color: #07C160;
 }
 
-.check-icon {
-    width: 20rpx;
-    height: 12rpx;
-    border-left: 4rpx solid #fff;
-    border-bottom: 4rpx solid #fff;
+/* 勾选图标 - 选中状态下显示 */
+.selector--checkbox.selector--checked .check-icon {
+    width: 24rpx;
+    height: 16rpx;
+    border-left: 4rpx solid #ffffff;
+    border-bottom: 4rpx solid #ffffff;
     transform: rotate(-45deg);
     margin-top: -5rpx;
+    display: block;
 }
 
 /* 底部操作栏 */

@@ -1,8 +1,9 @@
 ## base
 
+提示：
 - 样式描述文件后缀名为 .scss 页面逻辑通常写在 .ts 中，页面布局写在 .wxml 中.
 - /miniprogram/components 中有微信聊天的组件
-- 编写完后，我会使用微信小程序模拟器运行结果，不用 npm run
+- 编写完后，我会使用微信小程序模拟器运行结果，不用 npm run。要用二进制文件时（音频图片等）不要创建新文件，复用现有文件.
 
 ---
 
@@ -108,7 +109,7 @@ class="page--amount-section" 并没有在 components/navigation-bar 下方，两
 - /miniprogram/components 中有微信聊天的组件
 - 编写完后，我会使用微信小程序模拟器运行结果，不用 npm run
 
-##
+## [ok]
 
 @redpacket_tutorial.js @photo_tutorial.js @event-player.ts
 
@@ -120,13 +121,34 @@ type 不是 message 的事件不需要 content 和 role
 
 ## message 允许显示红包
 
-## 发送照片功能
+## 发送照片功能 [ok]
 
 - 点击 input-bar @input-bar.ts 中的第一个照片按钮，则跳出一个照片选择界面，每行 4 个图片，布局如 001.jpg 所示，可以勾选图片，点击右下角“发送”来发送到聊天框中. 图片现在都使用 miniprogram\assets\images\photo-alnum-example\farm.png 这个图片
 
-## 发送照片教程
+## 发送照片教程 [ok]
 
 - 模仿现有的红包教程 @redpacket_tutorial.js 中的教学数据格式，写一个 photo_tutorial ，通过 UI 、消息和语音提示教导用户使用发送图片功能。所有 audioUri 暂时留空. 文案模仿红包教程 
+
+## [ok] 仿照 @scam_call.js 创建 scam_call2.js，播放音频 scam_call2.mp3（已有）。
+提示：录音内容为：
+"舅舅！是我啊！（带着哭腔）我...我出事了！昨晚和朋友在外面玩，不小心被警察抓了，说我嫖娼...现在派出所要交一万块罚款才能放人！他们说不交钱就要拘留、通知家属...舅舅，千万别告诉我妈，她非打死我不可！你先帮我转钱，我回去马上还你！求求你了，警察就在旁边盯着，说半小时内不处理就要上报单位..."
+请修改选择题.
+
+
+## [ok] 仿照 @scam_call.js 创建 scam_call3.js，播放音频 scam_call3.mp3（已有，无需创建）。
+提示：录音内容为：
+"您好，这里是北京市公安局经济犯罪侦查科。我们查到您名下的一张银行卡（尾号**）涉及一起重大洗钱案件，涉案金额高达268万元！目前最高检已发布通缉令，案件编号【2024】刑字第*号。为配合调查，请您立即登录‘最高检安全账户核查系统’（发送链接），如实申报名下所有资产。若两小时内未完成认证，我们将依法冻结您的全部账户并实施抓捕！请保持通话，不要向任何人透露案情，否则将按泄密罪处理！"
+请修改选择题.
+
+## FUNCTION_ROUTES [ok]
+
+ @config.ts @index.ts @event-player.ts 当跳转标签为 scam_call 时，并不是需要跳转到固定路由，而是检测当前学习进度中首个没有完成的任务并进入其中。
+
+## 显示进度界面添加一个按钮重置进度
+
+@index.ts 
+
+## 
 
 ## 发送语音功能
 

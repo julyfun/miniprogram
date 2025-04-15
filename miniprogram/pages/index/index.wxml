@@ -1,5 +1,43 @@
 <!-- 聊天助手页面 -->
 <view class="container" bindtap="hideSettingsMenu">
+  <!-- 登录提示横幅 - 未登录时显示 -->
+  <view class="login-banner" wx:if="{{!isLogged}}" catchtap="login">
+    <image class="login-icon" src="/assets/icons/user.svg" mode="aspectFit"></image>
+    <text class="login-text">登录后可保存学习进度</text>
+    <button class="login-button">立即登录</button>
+  </view>
+  <!-- 学习进度卡片 -->
+  <view class="progress-card" wx:if="{{showLearningProgress}}">
+    <view class="progress-header">
+      <text class="progress-title">诈骗防范课程进度</text>
+      <text class="progress-counter">{{learningProgress.totalCompleted || 0}}/3</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{(learningProgress.totalCompleted || 0) * 33.33}}%;"></view>
+    </view>
+    <!-- 登录状态提示 -->
+    <view class="login-status" wx:if="{{!isLogged}}" bindtap="login">
+      <text class="login-prompt">登录后可保存学习进度 - 点击登录</text>
+    </view>
+    <view class="progress-modules">
+      <view class="module-item {{learningProgress && learningProgress.modules && learningProgress.modules['scam_call'] && learningProgress.modules['scam_call'].completed ? 'completed' : ''}}" bindtap="navigateToModule" data-module="scam_call">
+        <image class="module-icon" src="/assets/icons/{{learningProgress && learningProgress.modules && learningProgress.modules['scam_call'] && learningProgress.modules['scam_call'].completed ? 'check' : 'lock'}}.svg" />
+        <text class="module-name">诈骗来电防范</text>
+      </view>
+      <view class="module-item {{learningProgress && learningProgress.modules && learningProgress.modules['scam_call2'] && learningProgress.modules['scam_call2'].completed ? 'completed' : ''}}" bindtap="navigateToModule" data-module="scam_call2">
+        <image class="module-icon" src="/assets/icons/{{learningProgress && learningProgress.modules && learningProgress.modules['scam_call2'] && learningProgress.modules['scam_call2'].completed ? 'check' : 'lock'}}.svg" />
+        <text class="module-name">亲属求助诈骗</text>
+      </view>
+      <view class="module-item {{learningProgress && learningProgress.modules && learningProgress.modules['scam_call3'] && learningProgress.modules['scam_call3'].completed ? 'completed' : ''}}" bindtap="navigateToModule" data-module="scam_call3">
+        <image class="module-icon" src="/assets/icons/{{learningProgress && learningProgress.modules && learningProgress.modules['scam_call3'] && learningProgress.modules['scam_call3'].completed ? 'check' : 'lock'}}.svg" />
+        <text class="module-name">冒充公检法诈骗</text>
+      </view>
+    </view>
+    <view class="progress-actions">
+      <button class="refresh-button" bindtap="refreshLearningProgress">刷新</button>
+      <button class="reset-button" bindtap="resetLearningProgress">重置进度</button>
+    </view>
+  </view>
   <!-- Chat History -->
   <scroll-view class="chat-history" scroll-y scroll-into-view="{{lastMessageId}}" scroll-with-animation="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" bounces="{{true}}" scroll-anchoring="{{true}}" refresher-enabled="{{false}}">
     <view class="messages">
@@ -54,15 +92,33 @@
   <view class="settings-container">
     <!-- 设置菜单 -->
     <view class="settings-menu {{showSettings ? 'show' : ''}}" catchtap="preventBubble">
-      <!-- 模型切换按钮 -->
+      <!-- 登录状态区域 -->
+      <view class="settings-user-section">
+        <block wx:if="{{isLogged}}">
+          <view class="settings-user-info">
+            <image class="settings-avatar" src="{{userInfo.avatarUrl || '/assets/icons/default-avatar.svg'}}" mode="aspectFill"></image>
+            <text class="settings-username">{{userInfo.nickName || '已登录用户'}}</text>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="settings-login-prompt" bindtap="login">
+            <image class="settings-login-icon" src="/assets/icons/default-avatar.svg" mode="aspectFill"></image>
+            <text class="settings-login-text">点击登录账号</text>
+          </view>
+        </block>
+      </view>
+      <!-- 设置选项分隔线 -->
+      <view class="settings-divider"></view>
+      <!-- 其他设置项 -->
+      <view class="settings-item" bindtap="toggleLearningProgress">
+        <text>学习进度: {{showLearningProgress ? '隐藏' : '显示'}}</text>
+      </view>
       <view class="settings-item" bindtap="switchAiModel">
         <text>AI模型: {{currentAiModel}}</text>
       </view>
-      <!-- 语音引擎切换按钮 -->
       <view class="settings-item" bindtap="switchTtsProvider">
         <text>语音引擎: {{currentTtsProvider === 'ali' ? '阿里云' : 'CosyVoice'}}</text>
       </view>
-      <!-- Debug模式切换按钮 -->
       <view class="settings-item" bindtap="toggleDebugMode">
         <text>调试模式: {{isDebugMode ? '开启' : '关闭'}}</text>
       </view>

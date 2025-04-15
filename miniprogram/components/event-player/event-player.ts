@@ -13,6 +13,12 @@ interface EventMessage {
     setFlags?: Record<string, any>; // 用于设置自定义标志
     highlightTarget?: string; // 高亮目标元素
     audioUri?: string;    // 用于语音播放的音频URI
+    // 来电相关信息
+    callerName?: string;  // 来电者姓名
+    callerAvatar?: string; // 来电者头像
+    callerId?: string;    // 来电者ID
+    callRingtone?: string; // 来电铃声路径
+    callAudio?: string;   // 通话中播放的音频路径
 }
 
 // 过渡条件定义
@@ -185,6 +191,25 @@ Component({
         navTitle: '',
         // 红包页面状态
         showRedpacketPage: false,
+        // 来电相关
+        showIncomingCall: false,
+        incomingCallData: {
+            callerName: '',
+            avatarUrl: '',
+            callerId: '',
+            callStatus: '来电',
+            ringtonePath: ''
+        },
+        // 通话中相关
+        showOngoingCall: false,
+        ongoingCallData: {
+            callerName: '',
+            avatarUrl: '',
+            callerId: '',
+            audioPath: '/assets/audio/scam_call/scam_call1.mp3'
+        },
+        // 显示照片选择器
+        showPhotoSelector: false,
     },
 
     /**
@@ -510,6 +535,9 @@ Component({
                 case 'system_display':
                     this.handleSystemEvent(event);
                     break;
+                case 'incoming_call':
+                    this.handleIncomingCallEvent(event);
+                    break;
                 default:
                     console.warn(`未知的事件类型: ${event.type}`);
                     // 未知类型的事件，直接转到下一个
@@ -605,8 +633,12 @@ Component({
             // 评估事件通常等待用户交互，无需自动转到下一个事件
         },
 
-        // 处理任务完成类型事件
+        /**
+         * 处理任务完成事件
+         */
         handleTaskCompleteEvent(event: EventMessage) {
+            console.log('任务完成：', event.content);
+
             // 显示提示
             wx.showToast({
                 title: event.content || '任务完成！',
@@ -614,8 +646,145 @@ Component({
                 duration: 2000
             });
 
+            // 设置完成状态
+            this.setData({
+                isComplete: true
+            });
+
+            // 标记学习进度为已完成
+            this.recordLearningProgress(true);
+
+            // 播放音频（如果有）
+            if (event.audioUri) {
+                this.playAudio(event.audioUri);
+            }
+
             // 转到下一个事件
             this.transitionToNextEvent(event);
+        },
+
+        // 记录用户学习进度
+        recordLearningProgress(completed: boolean, score?: number) {
+            // 获取当前模块ID（从URL参数中获取）
+            const currentPageUrl = getCurrentPages().pop()?.route || '';
+            const queryString = getCurrentPages().pop()?.options || {};
+
+            // 从URL获取id参数
+            let moduleId = queryString.id || '';
+
+            // 如果没有id参数，尝试从路径中推断
+            if (!moduleId && currentPageUrl.includes('event-demo')) {
+                moduleId = 'default_event_demo';
+            }
+
+            // 确保有moduleId和openid才进行记录
+            if (!moduleId) {
+                console.warn('无法确定当前模块ID，无法记录学习进度');
+                return;
+            }
+
+            // 获取openid
+            const openid = wx.getStorageSync('user_openid');
+            if (!openid) {
+                console.warn('用户未登录，无法记录学习进度');
+                wx.showToast({
+                    title: '请先登录以保存进度',
+                    icon: 'none',
+                    duration: 2000
+                });
+                return;
+            }
+
+            console.log(`记录学习进度: 模块=${moduleId}, 完成=${completed}, 分数=${score || 0}`);
+
+            try {
+                // 确保云函数已初始化
+                if (!wx.cloud || !wx.cloud.callFunction) {
+                    console.error('云服务未初始化');
+                    wx.showToast({
+                        title: '云服务不可用',
+                        icon: 'none'
+                    });
+                    return;
+                }
+
+                // 调用云函数更新学习进度
+                wx.cloud.callFunction({
+                    name: 'updateLearningProgress',
+                    data: {
+                        openid: openid,
+                        moduleId: moduleId,
+                        completed: completed,
+                        score: score || 0
+                    },
+                    success: (res: any) => {
+                        if (res.result && res.result.success === false) {
+                            console.error('学习进度记录失败:', res.result.error);
+                            wx.showToast({
+                                title: '进度保存失败',
+                                icon: 'none',
+                                duration: 2000
+                            });
+                            return;
+                        }
+                        console.log('学习进度记录成功:', res);
+                        if (completed) {
+                            wx.showToast({
+                                title: '恭喜完成学习！',
+                                icon: 'success',
+                                duration: 2000
+                            });
+                        }
+                    },
+                    fail: (err) => {
+                        console.error('学习进度记录失败:', err);
+
+                        // 如果是数据库集合不存在的错误，尝试初始化数据库
+                        if (err && err.errMsg &&
+                            (err.errMsg.includes('database collection not exists') ||
+                                err.errMsg.includes('-502005'))) {
+                            console.log('检测到数据库集合不存在，尝试初始化数据库...');
+
+                            // 调用初始化数据库云函数
+                            wx.cloud.callFunction({
+                                name: 'initDatabase',
+                                success: (res: any) => {
+                                    console.log('数据库初始化结果:', res);
+
+                                    // 数据库初始化成功后，重新尝试记录学习进度
+                                    if (res.result && res.result.success) {
+                                        console.log('数据库初始化成功，重新尝试记录学习进度');
+                                        setTimeout(() => {
+                                            this.recordLearningProgress(completed, score);
+                                        }, 1000); // 延迟1秒后重试
+                                    }
+                                },
+                                fail: (initErr) => {
+                                    console.error('初始化数据库失败:', initErr);
+                                    wx.showToast({
+                                        title: '数据库初始化失败',
+                                        icon: 'none',
+                                        duration: 2000
+                                    });
+                                }
+                            });
+                        } else {
+                            wx.showToast({
+                                title: '进度保存失败',
+                                icon: 'none',
+                                duration: 2000
+                            });
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('云函数调用异常:', error);
+                wx.showToast({
+                    title: '云服务调用异常',
+                    icon: 'none',
+                    duration: 2000
+                });
+            }
         },
 
         // 评估条件是否满足
@@ -1126,39 +1295,32 @@ Component({
 
         // 处理功能按钮点击
         onFeatureClick(e: WechatMiniprogram.CustomEvent) {
-            const feature = e.detail.feature;
-            const customFlags = e.detail.customFlags;
-            console.log('用户点击了功能按钮:', feature);
-            console.log('当前高亮状态:', {
-                highlightTarget: this.data.highlightTarget,
-                showHighlight: this.data.showHighlight
-            });
+            const { feature, customFlags = {} } = e.detail;
+            console.log('功能点击:', feature, customFlags);
 
-            // 处理自定义标志
-            if (customFlags) {
+            // 处理键盘上菜单的各功能
+            if (feature === 'photo') {
+                // 打开照片选择器
+                this.setData({
+                    showPhotoSelector: true
+                });
+                // Set the page navigation title when photo selector opens
+                wx.setNavigationBarTitle({ title: '照片和视频' });
+
                 // 更新条件状态
-                const conditionState = { ...this.data.conditionState };
+                if (this.data.highlightTarget === 'photo' && this.data.showHighlight) {
+                    const conditionState = { ...this.data.conditionState };
+                    conditionState.customFlags = conditionState.customFlags || {};
+                    conditionState.customFlags.userClickedPhoto = true;
 
-                // 合并自定义标志
-                for (const [key, value] of Object.entries(customFlags)) {
-                    conditionState.customFlags[key] = value;
+                    this.setData({
+                        conditionState,
+                        showHighlight: false
+                    }, () => {
+                        // 检查条件转换
+                        this.checkAndTransitionBasedOnFlags();
+                    });
                 }
-
-                // 更新状态
-                this.setData({
-                    conditionState
-                }, () => {
-                    // 检查条件转换
-                    this.checkAndTransitionBasedOnFlags();
-                });
-            }
-
-            // 处理红包功能
-            if (feature === 'redpacket') {
-                this.setData({
-                    showRedpacketPage: true,
-                    navTitle: '发红包'
-                });
             }
 
             // 检查是否在等待用户点击红包按钮
@@ -1186,47 +1348,52 @@ Component({
             }
         },
 
-        // 处理照片发送
+        // 处理发送照片
         onPhotoSent(e: WechatMiniprogram.CustomEvent) {
-            const { photos, customFlags } = e.detail;
-            console.log(`收到照片发送事件，共 ${photos?.length || 0} 张照片`, customFlags);
+            const { photos } = e.detail;
+            console.log('照片已发送:', photos);
 
-            // 创建一个新的消息
-            const newMessage: EventMessage = {
-                id: `msg-${Date.now()}`,
-                type: 'photo_message',
-                role: 'self',
-                content: `发送了 ${photos?.length || 0} 张照片`
+            // 创建照片消息并添加到消息列表
+            const photoMessage: FormattedMessage = {
+                _id: `msg-${Date.now()}`,
+                type: 'photo',
+                content: JSON.stringify(photos),
+                role: 'user',
+                timestamp: Date.now()
             };
 
-            // 添加消息到消息列表
-            const messages = [...this.data.messages, newMessage];
-            const formattedMessages = this.formatMessages(messages);
-
-            // 更新数据
+            // 更新消息列表
             this.setData({
-                messages,
-                formattedMessages,
-                scrollToView: `msg-${formattedMessages.length - 1}`
+                formattedMessages: [...this.data.formattedMessages, photoMessage],
+                showPhotoSelector: false, // 关闭照片选择器
+                scrollToView: photoMessage._id // 自动滚动到新消息
             });
 
-            if (customFlags) {
-                // 更新条件状态
-                const conditionState = { ...this.data.conditionState };
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.messageCount += 1;
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.userSentPhoto = true;
 
-                // 合并自定义标志
-                for (const [key, value] of Object.entries(customFlags)) {
-                    conditionState.customFlags[key] = value;
-                }
+            // 记录发送的照片数量
+            conditionState.customFlags.photoCount = (conditionState.customFlags.photoCount || 0) + photos.length;
 
-                // 更新状态
-                this.setData({
-                    conditionState
-                }, () => {
-                    // 检查条件转换
-                    this.checkAndTransitionBasedOnFlags();
-                });
-            }
+            this.setData({
+                conditionState
+            }, () => {
+                // 检查条件转换
+                this.checkAndTransitionBasedOnFlags();
+            });
+        },
+
+        // 处理照片选择器关闭
+        onPhotoSelectorClose() {
+            this.setData({
+                showPhotoSelector: false
+            });
+            // Restore the original page navigation title
+            const originalTitle = this.data.metadata?.title || '聊天';
+            wx.setNavigationBarTitle({ title: originalTitle });
         },
 
         // 处理发送红包按钮点击
@@ -1471,25 +1638,280 @@ Component({
         // 处理显示红包页面事件
         onShowRedpacket() {
             this.setData({
-                showRedpacketPage: true,
-                navTitle: '发红包'
+                showRedpacketPage: true
             });
         },
 
         // 处理红包页面关闭
         onRedpacketPageClose() {
             this.setData({
-                showRedpacketPage: false,
-                navTitle: ''
+                showRedpacketPage: false
             });
+            // Restore the original page navigation title
+            const originalTitle = this.data.metadata?.title || '聊天';
+            wx.setNavigationBarTitle({ title: originalTitle });
         },
 
         // 处理隐藏红包页面事件
         onHideRedpacket() {
             this.setData({
-                showRedpacketPage: false,
-                navTitle: ''
+                showRedpacketPage: false
             });
+            // Restore the original page navigation title
+            const originalTitle = this.data.metadata?.title || '聊天';
+            wx.setNavigationBarTitle({ title: originalTitle });
+        },
+
+        // 处理来电类型事件
+        handleIncomingCallEvent(event: EventMessage) {
+            console.log(`处理来电事件: ${event.id}`);
+
+            // 停止当前正在播放的音频
+            this.stopAudio();
+
+            // 准备来电数据
+            const incomingCallData = {
+                callerName: event.callerName || event.content || this.data.metadata.opponent.nickname,
+                avatarUrl: event.callerAvatar || this.data.metadata.opponent.avatarUrl || '/assets/icons/default-avatar.svg',
+                callerId: event.callerId || event.id,
+                callStatus: '来电',
+                ringtonePath: event.callRingtone || '/assets/audio/ringtone.mp3'
+            };
+
+            // 更新状态
+            this.setData({
+                incomingCallData,
+                showIncomingCall: true
+            });
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.lastEventId = event.id;
+
+            // 设置自定义标志
+            if (event.setFlags && typeof event.setFlags === 'object') {
+                console.log(`设置自定义标志:`, event.setFlags);
+                for (const [key, value] of Object.entries(event.setFlags)) {
+                    conditionState.customFlags[key] = value;
+                }
+            }
+
+            // 更新状态
+            this.setData({ conditionState });
+
+            // 注意：不自动转到下一个事件，等待用户操作（接听或拒绝）
+        },
+
+        // 处理接听来电
+        onCallAccepted(e: WechatMiniprogram.CustomEvent) {
+            console.log('用户接听了来电:', e.detail);
+
+            // 隐藏来电界面
+            this.setData({ showIncomingCall: false });
+
+            // 从事件对象中获取当前事件
+            const currentEvent = this.data.eventMap[this.data.currentEventId];
+
+            // 准备通话中数据
+            const ongoingCallData = {
+                callerName: e.detail.callerName || this.data.incomingCallData.callerName,
+                avatarUrl: this.data.incomingCallData.avatarUrl,
+                callerId: e.detail.callerId || this.data.incomingCallData.callerId,
+                audioPath: currentEvent.callAudio || '/assets/audio/scam_call/scam_call1.mp3' // 使用事件中指定的音频
+            };
+
+            console.log('使用通话音频路径:', ongoingCallData.audioPath);
+
+            // 显示通话中界面
+            this.setData({
+                ongoingCallData,
+                showOngoingCall: true
+            });
+
+            // 获取通话组件实例并调用显示方法
+            const ongoingCallComponent = this.selectComponent('#ongoingCall');
+            if (ongoingCallComponent) {
+                ongoingCallComponent.showOngoingCall(ongoingCallData);
+            }
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.callAccepted = true;
+            conditionState.customFlags.callStatus = 'accepted';
+            conditionState.customFlags.callerName = e.detail.callerName;
+            conditionState.customFlags.callerId = e.detail.callerId;
+
+            // 更新状态
+            this.setData({ conditionState }, () => {
+                // 在状态更新完成后检查转换
+                this.checkAndTransitionBasedOnFlags();
+            });
+
+            // 创建一条系统消息，表示接听了来电
+            const newMessage: EventMessage = {
+                id: `call-accepted-${Date.now()}`,
+                type: 'message',
+                role: 'system',
+                content: `接听了 ${e.detail.callerName} 的来电`
+            };
+
+            // 添加消息到列表
+            const messages = [...this.data.messages, newMessage];
+            const formattedMessages = this.formatMessages(messages);
+
+            // 更新视图
+            this.setData({
+                messages,
+                formattedMessages,
+                scrollToView: `msg-${messages.length - 1}`
+            });
+        },
+
+        // 处理拒绝来电
+        onCallDeclined(e: WechatMiniprogram.CustomEvent) {
+            console.log('用户拒绝了来电:', e.detail);
+
+            // 隐藏来电界面
+            this.setData({ showIncomingCall: false });
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.callAccepted = false;
+            conditionState.customFlags.callStatus = 'declined';
+            conditionState.customFlags.callerName = e.detail.callerName;
+            conditionState.customFlags.callerId = e.detail.callerId;
+
+            // 更新状态
+            this.setData({ conditionState }, () => {
+                // 在状态更新完成后检查转换
+                this.checkAndTransitionBasedOnFlags();
+            });
+
+            // 创建一条系统消息，表示拒绝了来电
+            const newMessage: EventMessage = {
+                id: `call-declined-${Date.now()}`,
+                type: 'message',
+                role: 'system',
+                content: `拒绝了 ${e.detail.callerName} 的来电`
+            };
+
+            // 添加消息到列表
+            const messages = [...this.data.messages, newMessage];
+            const formattedMessages = this.formatMessages(messages);
+
+            // 更新视图
+            this.setData({
+                messages,
+                formattedMessages,
+                scrollToView: `msg-${messages.length - 1}`
+            });
+        },
+
+        // 处理来电开始
+        onCallStarted(e: WechatMiniprogram.CustomEvent) {
+            console.log('来电开始:', e.detail);
+        },
+
+        // 处理通话结束
+        onCallEnded(e: WechatMiniprogram.CustomEvent) {
+            console.log('通话已结束:', e.detail);
+
+            // 隐藏通话中界面
+            this.setData({ showOngoingCall: false });
+
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.callEnded = true;
+            conditionState.customFlags.callDuration = e.detail.duration;
+            conditionState.customFlags.formattedCallDuration = e.detail.formattedDuration;
+
+            // 更新状态
+            this.setData({ conditionState }, () => {
+                // 在状态更新完成后立即检查转换，不等待用户交互
+                setTimeout(() => {
+                    this.checkAndTransitionBasedOnFlags();
+                }, 500);
+            });
+
+            // 创建一条系统消息，表示通话已结束
+            const newMessage: EventMessage = {
+                id: `call-ended-${Date.now()}`,
+                type: 'message',
+                role: 'system',
+                content: `结束了与 ${e.detail.callerName} 的通话，通话时长 ${e.detail.formattedDuration}`
+            };
+
+            // 添加消息到列表
+            const messages = [...this.data.messages, newMessage];
+            const formattedMessages = this.formatMessages(messages);
+
+            // 更新视图
+            this.setData({
+                messages,
+                formattedMessages,
+                scrollToView: `msg-${messages.length - 1}`
+            });
+        },
+
+        // 处理通话中事件
+        onCallOngoing(e: WechatMiniprogram.CustomEvent) {
+            console.log('通话中事件:', e.detail);
+        },
+
+        // 处理麦克风状态切换
+        onMicrophoneToggled(e: WechatMiniprogram.CustomEvent) {
+            console.log('麦克风状态切换:', e.detail);
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.isMicrophoneMuted = e.detail.isMuted;
+
+            // 更新状态
+            this.setData({ conditionState });
+        },
+
+        // 处理扬声器状态切换
+        onSpeakerToggled(e: WechatMiniprogram.CustomEvent) {
+            console.log('扬声器状态切换:', e.detail);
+            // 更新条件状态
+            const conditionState = { ...this.data.conditionState };
+            conditionState.customFlags = conditionState.customFlags || {};
+            conditionState.customFlags.isSpeakerOn = e.detail.isOn;
+
+            // 更新状态
+            this.setData({ conditionState });
+        },
+
+        // 主动触发来电
+        showIncomingCall(options: {
+            callerName?: string;
+            avatarUrl?: string;
+            callerId?: string;
+            callStatus?: string;
+            ringtonePath?: string;
+        }) {
+            const incomingCallData = {
+                callerName: options.callerName || this.data.metadata.opponent.nickname,
+                avatarUrl: options.avatarUrl || this.data.metadata.opponent.avatarUrl || '/assets/icons/default-avatar.svg',
+                callerId: options.callerId || `call-${Date.now()}`,
+                callStatus: options.callStatus || '来电',
+                ringtonePath: options.ringtonePath || '/assets/audio/ringtone.mp3'
+            };
+
+            // 更新状态
+            this.setData({
+                incomingCallData,
+                showIncomingCall: true
+            });
+
+            // 获取来电组件实例并调用显示方法
+            const incomingCallComponent = this.selectComponent('#incomingCall');
+            if (incomingCallComponent) {
+                incomingCallComponent.showIncomingCall(incomingCallData);
+            }
         },
     }
 }); 

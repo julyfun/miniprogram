@@ -31,5 +31,15 @@ export const FEATURE_METADATA: Record<string, FeatureMetadata> = {
         name: '日常助手',
         description: '日常生活问题',
         image: '/assets/icons/default-avatar.svg'
+    },
+    scam_call: {
+        name: '诈骗来电',
+        description: '识别和应对诈骗电话',
+        image: '/assets/icons/police.svg'
+    },
+    scam_call2: {
+        name: '亲友求助诈骗',
+        description: '识别亲友求助诈骗电话',
+        image: '/assets/icons/unknown-caller.svg'
     }
 }; 

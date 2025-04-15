@@ -1255,7 +1255,7 @@
     position: absolute;
     top: 60px;
     right: 10px;
-    width: 200px;
+    width: 240px;
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -1273,6 +1273,64 @@
     }
 }
 
+/* 设置菜单用户部分 */
+.settings-user-section {
+    padding: 15rpx 0;
+    margin-bottom: 20rpx;
+}
+
+.settings-user-info {
+    display: flex;
+    align-items: center;
+    padding: 20rpx 0;
+}
+
+.settings-avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+    margin-right: 20rpx;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.settings-username {
+    font-size: 30rpx;
+    color: #333;
+    font-weight: 500;
+    flex: 1;
+}
+
+.settings-login-prompt {
+    display: flex;
+    align-items: center;
+    padding: 20rpx 0;
+    background-color: #f5f5f5;
+    border-radius: 10rpx;
+    margin: 10rpx 0;
+    padding: 20rpx;
+    cursor: pointer;
+}
+
+.settings-login-icon {
+    width: 60rpx;
+    height: 60rpx;
+    border-radius: 50%;
+    margin-right: 20rpx;
+    background-color: #e0e0e0;
+}
+
+.settings-login-text {
+    font-size: 28rpx;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.settings-divider {
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.1);
+    margin: 10rpx 0 20rpx 0;
+}
+
 .settings-item {
     padding: 12px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -1285,4 +1343,146 @@
     &:last-child {
         border-bottom: none;
     }
+}
+
+/* 学习进度卡片样式 */
+.progress-card {
+    margin: 20rpx;
+    padding: 30rpx;
+    background-color: #f9f9f9;
+    border-radius: 20rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+}
+
+.progress-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+}
+
+.progress-counter {
+    font-size: 28rpx;
+    color: #666;
+}
+
+.progress-bar {
+    height: 16rpx;
+    background-color: #e0e0e0;
+    border-radius: 8rpx;
+    margin-bottom: 30rpx;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    border-radius: 8rpx;
+    transition: width 0.5s ease;
+}
+
+.progress-modules {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20rpx;
+}
+
+.module-item {
+    flex: 1;
+    min-width: 300rpx;
+    padding: 20rpx;
+    background-color: #ffffff;
+    border-radius: 15rpx;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.module-item.completed {
+    background-color: #e8f5e9;
+}
+
+.module-icon {
+    width: 48rpx;
+    height: 48rpx;
+    margin-right: 16rpx;
+}
+
+.module-name {
+    font-size: 28rpx;
+    color: #333;
+}
+
+.progress-actions {
+    margin-top: 30rpx;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.refresh-button {
+    font-size: 24rpx;
+    padding: 10rpx 30rpx;
+    background-color: #f5f5f5;
+    color: #666;
+    border-radius: 30rpx;
+    border: none;
+}
+
+/* 登录状态提示 */
+.login-status {
+    margin-bottom: 20rpx;
+    padding: 15rpx;
+    background-color: #e3f2fd;
+    border-radius: 10rpx;
+    text-align: center;
+}
+
+.login-prompt {
+    font-size: 24rpx;
+    color: #1976d2;
+}
+
+/* 登录提示横幅 */
+.login-banner {
+    width: 100%;
+    padding: 15rpx 30rpx;
+    background-color: #e8f4ff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+    margin-bottom: 20rpx;
+    box-sizing: border-box;
+}
+
+.login-icon {
+    width: 40rpx;
+    height: 40rpx;
+    margin-right: 20rpx;
+}
+
+.login-text {
+    flex: 1;
+    font-size: 26rpx;
+    color: #1976d2;
+}
+
+.login-button {
+    background-color: #1976d2;
+    color: white;
+    font-size: 24rpx;
+    padding: 10rpx 30rpx;
+    border-radius: 30rpx;
+    line-height: 1.6;
+    margin: 0;
+    min-height: unset;
+    height: auto;
 }

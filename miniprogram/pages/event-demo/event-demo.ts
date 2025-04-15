@@ -33,13 +33,82 @@ Page({
 
         if (options.id) {
             dataId = options.id;
-            this.setData({
-                dataSource: dataId
-            });
-        }
 
-        // 加载场景元数据
-        this.loadMetadata(dataId);
+            // Special handling for next_scam_call route
+            if (dataId === 'next_scam_call') {
+                // Try to get user learning progress from storage
+                try {
+                    const userOpenId = wx.getStorageSync('user_openid');
+                    if (userOpenId) {
+                        // User is logged in, try to get their learning progress
+                        const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+                        let targetModule = 'scam_call'; // Default to first module
+
+                        // Try to access learning progress, if not available use first module
+                        wx.cloud.callFunction({
+                            name: 'getLearningProgress',
+                            data: { openid: userOpenId },
+                            success: (res: any) => {
+                                console.log('Got learning progress for module selection:', res);
+
+                                if (res.result && res.result.success && res.result.data) {
+                                    const modules = res.result.data.modules || {};
+
+                                    // Find the first incomplete module
+                                    for (const module of scamModules) {
+                                        if (!modules[module] || !modules[module].completed) {
+                                            targetModule = module;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                console.log(`动态选择诈骗防范模块: ${targetModule}`);
+
+                                // Update the data source
+                                this.setData({
+                                    dataSource: targetModule
+                                });
+
+                                // Load metadata for the selected module
+                                this.loadMetadata(targetModule);
+                            },
+                            fail: (err: any) => {
+                                console.error('Error getting learning progress:', err);
+                                // Use default first module
+                                this.setData({
+                                    dataSource: 'scam_call'
+                                });
+                                this.loadMetadata('scam_call');
+                            }
+                        });
+                    } else {
+                        // User not logged in, use default first module
+                        this.setData({
+                            dataSource: 'scam_call'
+                        });
+                        this.loadMetadata('scam_call');
+                    }
+                } catch (error) {
+                    console.error('Error checking learning progress:', error);
+                    // Fallback to default module
+                    this.setData({
+                        dataSource: 'scam_call'
+                    });
+                    this.loadMetadata('scam_call');
+                }
+            } else {
+                // Normal data source handling for other IDs
+                this.setData({
+                    dataSource: dataId
+                });
+                // Load metadata for this ID
+                this.loadMetadata(dataId);
+            }
+        } else {
+            // No ID specified, load default
+            this.loadMetadata(dataId);
+        }
 
         if (options.speed) {
             this.setData({

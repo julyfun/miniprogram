@@ -45,6 +45,13 @@ interface IPageData {
     accumulatedText: string;        // Accumulated recognized text during recording
     showSettings: boolean;          // Controls the visibility of settings menu
     isDebugMode: boolean;           // Controls debug mode to prevent API requests
+    showLearningProgress: boolean;  // Controls the visibility of learning progress
+    learningProgress: {            // User's learning progress
+        totalCompleted: number;
+        modules: Record<string, { completed: boolean; score: number; lastUpdated: Date }>;
+    }
+    userInfo: any;                  // Add user info
+    isLogged: boolean;              // Add login status
 }
 
 // Helper function to play text with TTS
@@ -153,6 +160,63 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
             });
             functionFound = true;
         }
+        // Special handling for scam_call function
+        else if (functionName === 'scam_call') {
+            // Get reference to the current page
+            const currentPages = getCurrentPages();
+            if (currentPages && currentPages.length > 0) {
+                const currentPage = currentPages[currentPages.length - 1];
+
+                // Safely get learning progress from page data
+                const learningProgress = currentPage.data?.learningProgress || { modules: {} };
+
+                // Find the first incomplete scam call module
+                const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+                let targetModule = 'scam_call'; // Default to first module
+
+                for (const module of scamModules) {
+                    // If module is not completed or doesn't exist in progress data
+                    if (!learningProgress.modules[module] || !learningProgress.modules[module].completed) {
+                        targetModule = module;
+                        break;
+                    }
+                }
+
+                console.log(`动态路由到首个未完成的诈骗防范模块: ${targetModule}`);
+
+                // Navigate to the identified target module
+                wx.navigateTo({
+                    url: `/pages/event-demo/event-demo?id=${targetModule}`,
+                    success: () => {
+                        console.log(`Successfully navigated to dynamic module: ${targetModule}`);
+                    },
+                    fail: (err) => {
+                        console.error('Navigation failed:', err);
+                        wx.showToast({
+                            title: '跳转失败',
+                            icon: 'none'
+                        });
+                    }
+                });
+                functionFound = true;
+            } else {
+                // Fallback to default behavior if we can't access page data
+                wx.navigateTo({
+                    url: '/pages/event-demo/event-demo?id=scam_call',
+                    success: () => {
+                        console.log('Fallback navigation to scam_call');
+                    },
+                    fail: (err) => {
+                        console.error('Navigation failed:', err);
+                        wx.showToast({
+                            title: '跳转失败',
+                            icon: 'none'
+                        });
+                    }
+                });
+                functionFound = true;
+            }
+        }
         // For all other functions, use the routes map
         else if (FUNCTION_ROUTES[functionName]) {
             // Navigate to the appropriate page
@@ -230,6 +294,13 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         accumulatedText: '',      // Accumulated recognized text during recording
         showSettings: false,      // Add showSettings state for settings menu
         isDebugMode: true,        // Start with debug mode enabled by default
+        showLearningProgress: false,  // Hide learning progress by default
+        learningProgress: {
+            totalCompleted: 0,
+            modules: {}
+        },
+        userInfo: {},             // Initialize user info
+        isLogged: false           // Initialize login status
     },
 
     // Add a property to maintain the actual conversation history for API calls
@@ -265,24 +336,87 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         });
 
         if (feature && FUNCTION_ROUTES[feature as FunctionName]) {
-            wx.navigateTo({
-                url: FUNCTION_ROUTES[feature as FunctionName],
-                success: () => {
-                    console.log(`Successfully navigated to feature: ${feature}`);
-                },
-                fail: (err) => {
-                    console.error('Navigation failed:', err);
-                    wx.showToast({
-                        title: '功能跳转失败',
-                        icon: 'none'
-                    });
+            // Check if this is the special scam_call feature
+            if (feature === 'scam_call') {
+                // For scam_call, find the first incomplete module and navigate there
+                const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+                let targetModule = 'scam_call'; // Default to first module
+
+                const modules = this.data.learningProgress.modules || {};
+
+                for (const module of scamModules) {
+                    // If module is not completed or doesn't exist in progress data
+                    if (!modules[module] || !modules[module].completed) {
+                        targetModule = module;
+                        break;
+                    }
                 }
-            });
+
+                console.log(`动态路由到首个未完成的诈骗防范模块: ${targetModule}`);
+
+                // Navigate to the identified target module
+                wx.navigateTo({
+                    url: `/pages/event-demo/event-demo?id=${targetModule}`,
+                    success: () => {
+                        console.log(`Successfully navigated to dynamic module: ${targetModule}`);
+                    },
+                    fail: (err) => {
+                        console.error('Navigation failed:', err);
+                        wx.showToast({
+                            title: '跳转失败',
+                            icon: 'none'
+                        });
+                    }
+                });
+            } else {
+                // Regular navigation for other features
+                wx.navigateTo({
+                    url: FUNCTION_ROUTES[feature as FunctionName],
+                    success: () => {
+                        console.log(`Successfully navigated to feature: ${feature}`);
+                    },
+                    fail: (err) => {
+                        console.error('Navigation failed:', err);
+                        wx.showToast({
+                            title: '功能跳转失败',
+                            icon: 'none'
+                        });
+                    }
+                });
+            }
         }
     },
 
     onLoad: function () {
         this.initSpeechRecognition(); // Will use the engine specified in data
+
+        // 检查云开发环境是否初始化
+        if (!wx.cloud) {
+            console.error('云开发环境未初始化，学习进度功能不可用');
+            wx.showToast({
+                title: '云服务初始化失败',
+                icon: 'none',
+                duration: 2000
+            });
+        }
+
+        // Check if user is already logged in
+        const storedOpenid = wx.getStorageSync('user_openid');
+        const storedUserInfo = wx.getStorageSync('user_info');
+
+        if (storedOpenid) {
+            this.setData({
+                isLogged: true,
+                userInfo: storedUserInfo || {}
+            });
+            console.log("User already logged in, openid:", storedOpenid);
+
+            // Load user learning progress now that we have the openid
+            this.loadLearningProgress();
+        } else {
+            console.log("User not logged in, showing login prompt");
+            this.showLoginPrompt();
+        }
 
         // Only send initial prompt if not in debug mode
         if (!this.data.isDebugMode) {
@@ -291,7 +425,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             console.log('[Debug] Skipping initial API request in debug mode');
 
             // 自定义的 Debug 模式问候语，包含按钮和记录标签
-            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:emergency] [record]";
+            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:scam_call] [button:scam_call2] [record]";
 
             // 处理文本中的标签，提取按钮和其他功能
             const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
@@ -1351,7 +1485,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         } else {
             // 切换到 Debug 模式，显示自定义问候语
             // 自定义的 Debug 模式问候语，包含按钮和记录标签
-            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:emergency] [record]";
+            const debugWelcomeText = "Debug: 您好呀，有什么我可以帮您的吗？[button:hongbao] [button:health] [button:scam_call] [record]";
 
             // 处理文本中的标签，提取按钮和其他功能
             const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
@@ -1376,6 +1510,395 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             title: newDebugMode ? 'Debug mode enabled' : 'Debug mode disabled',
             icon: 'none'
         });
+    },
+
+    // Toggle learning progress visibility
+    toggleLearningProgress: function () {
+        this.setData({
+            showLearningProgress: !this.data.showLearningProgress
+        });
+    },
+
+    // Load user learning progress from cloud
+    loadLearningProgress: function () {
+        // Get the user's OpenID from storage
+        const openid = wx.getStorageSync('user_openid');
+        if (!openid) {
+            console.log('用户未登录，无法加载学习进度');
+            return;
+        }
+
+        console.log('【客户端】开始加载学习进度，openid:', openid);
+
+        try {
+            // Make sure cloud is initialized
+            if (!wx.cloud || !wx.cloud.callFunction) {
+                console.error('Cloud service not initialized');
+                wx.showToast({
+                    title: '云服务不可用',
+                    icon: 'none'
+                });
+                return;
+            }
+
+            // Call cloud function to get learning progress
+            wx.cloud.callFunction({
+                name: 'getLearningProgress',
+                data: {
+                    openid: openid
+                },
+                success: (res: any) => {
+                    console.log('【客户端】加载学习进度返回结果:', JSON.stringify(res.result));
+                    if (res.result && res.result.success && res.result.data) {
+                        console.log('【客户端】学习进度数据有效，设置到UI');
+                        console.log('【客户端】进度模块详情:', JSON.stringify(res.result.data.modules));
+                        this.setData({
+                            learningProgress: res.result.data
+                        });
+                    } else if (res.result && res.result.success === false) {
+                        // 处理云函数返回 success: false 的情况
+                        console.log('【客户端】首次加载学习进度，用户暂无进度数据');
+                        // 初始化空的学习进度对象
+                        this.setData({
+                            learningProgress: {
+                                totalCompleted: 0,
+                                modules: {}
+                            }
+                        });
+                    } else {
+                        console.warn('【客户端】学习进度返回数据格式异常:', res);
+                    }
+                },
+                fail: (err) => {
+                    console.error('【客户端】加载学习进度失败:', err);
+                    wx.showToast({
+                        title: '加载学习进度失败',
+                        icon: 'none'
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('【客户端】Cloud function error:', error);
+            wx.showToast({
+                title: '云服务调用异常',
+                icon: 'none'
+            });
+        }
+    },
+
+    // Login and get OpenID if needed
+    loginAndGetOpenID: function () {
+        try {
+            // Make sure cloud is initialized
+            if (!wx.cloud || !wx.cloud.callFunction) {
+                console.error('Cloud service not initialized');
+                wx.showToast({
+                    title: '云服务不可用',
+                    icon: 'none'
+                });
+                return;
+            }
+
+            wx.cloud.callFunction({
+                name: 'login',
+                data: {},
+                success: (res: any) => {
+                    console.log('登录成功:', res.result);
+                    if (res.result && res.result.openid) {
+                        wx.setStorageSync('user_openid', res.result.openid);
+                        // Load learning progress after getting openid
+                        this.loadLearningProgress();
+                        // Show success message
+                        wx.showToast({
+                            title: '登录成功，进度已同步',
+                            icon: 'success',
+                            duration: 2000
+                        });
+
+                        // 刷新顶部的登录横幅
+                        this.setData({
+                            isLogged: true
+                        });
+                    } else {
+                        console.error('登录返回缺少openid');
+                        wx.showToast({
+                            title: '登录失败，请重试',
+                            icon: 'none'
+                        });
+                    }
+                },
+                fail: (err) => {
+                    console.error('登录失败:', err);
+                    wx.showToast({
+                        title: '登录失败，请检查网络',
+                        icon: 'none'
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Cloud function error:', error);
+            wx.showToast({
+                title: '云服务调用异常',
+                icon: 'none'
+            });
+        }
+    },
+
+    // Refresh learning progress
+    refreshLearningProgress: function () {
+        console.log('refreshLearningProgress');
+        this.loadLearningProgress();
+    },
+
+    // Reset learning progress
+    resetLearningProgress: function () {
+        wx.showModal({
+            title: '确认重置',
+            content: '确定要重置所有学习进度吗？重置后将无法恢复。',
+            success: (res) => {
+                if (res.confirm) {
+                    console.log('【客户端】用户确认重置学习进度');
+                    wx.showLoading({
+                        title: '重置中...',
+                    });
+
+                    // 获取OpenID
+                    const openid = wx.getStorageSync('user_openid');
+                    console.log('【客户端】重置进度的openid:', openid);
+
+                    wx.cloud.callFunction({
+                        name: 'resetLearningProgress',
+                        data: {
+                            openid: openid
+                        },
+                        success: (res) => {
+                            console.log('【客户端】重置学习进度返回结果:', JSON.stringify(res.result));
+
+                            // 检查返回的重置模块数据
+                            if (res.result && typeof res.result === 'object' && 'resetModules' in res.result) {
+                                console.log('【客户端】服务器返回的重置模块数据:', JSON.stringify(res.result.resetModules));
+                            }
+
+                            if (res.result && typeof res.result === 'object' && 'verifiedData' in res.result) {
+                                console.log('【客户端】服务器验证的数据库记录:', JSON.stringify(res.result.verifiedData));
+                            }
+
+                            // 首先清除本地缓存
+                            console.log('【客户端】清除本地缓存的学习进度数据');
+                            this.setData({
+                                learningProgress: {
+                                    totalCompleted: 0,
+                                    modules: {}
+                                }
+                            });
+
+                            // 立即从服务器刷新数据
+                            console.log('【客户端】重新从服务器加载最新进度数据');
+                            setTimeout(() => {
+                                this.loadLearningProgress();
+                            }, 500);
+
+                            wx.showToast({
+                                title: '重置成功',
+                                icon: 'success'
+                            });
+                        },
+                        fail: (err) => {
+                            console.error('【客户端】Reset learning progress failed:', err);
+                            wx.showToast({
+                                title: '重置失败',
+                                icon: 'error'
+                            });
+                        },
+                        complete: () => {
+                            wx.hideLoading();
+                        }
+                    });
+                }
+            }
+        });
+    },
+
+    // Navigate to a specific learning module
+    navigateToModule: function (e: WechatMiniprogram.CustomEvent) {
+        const moduleId = e.currentTarget.dataset.module;
+        if (!moduleId) return;
+
+        console.log(`跳转到学习模块: ${moduleId}`);
+
+        // 在导航前停止语音播放
+        stopTTSPlayback(true);
+
+        // Check if this is the special next_scam_call module
+        if (moduleId === 'next_scam_call') {
+            // Find the first incomplete scam call module
+            const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+            let targetModule = 'scam_call'; // Default to first module
+
+            const modules = this.data.learningProgress.modules || {};
+
+            for (const module of scamModules) {
+                // If module is not completed or doesn't exist in progress data
+                if (!modules[module] || !modules[module].completed) {
+                    targetModule = module;
+                    break;
+                }
+            }
+
+            console.log(`动态路由到首个未完成的诈骗防范模块: ${targetModule}`);
+
+            // Navigate to the identified target module
+            wx.navigateTo({
+                url: `/pages/event-demo/event-demo?id=${targetModule}`,
+                success: () => {
+                    console.log(`Successfully navigated to dynamic module: ${targetModule}`);
+                },
+                fail: (err) => {
+                    console.error('Navigation failed:', err);
+                    wx.showToast({
+                        title: '跳转失败',
+                        icon: 'none'
+                    });
+                }
+            });
+        } else {
+            // Normal navigation for other modules
+            wx.navigateTo({
+                url: `/pages/event-demo/event-demo?id=${moduleId}`,
+                success: () => {
+                    console.log(`Successfully navigated to ${moduleId}`);
+                },
+                fail: (err) => {
+                    console.error('Navigation failed:', err);
+                    wx.showToast({
+                        title: '跳转失败',
+                        icon: 'none'
+                    });
+                }
+            });
+        }
+    },
+
+    // Show login prompt to user
+    showLoginPrompt: function () {
+        wx.showModal({
+            title: '登录提示',
+            content: '登录后可以保存您的学习进度，是否立即登录？',
+            confirmText: '立即登录',
+            cancelText: '暂不登录',
+            success: (res) => {
+                if (res.confirm) {
+                    this.login();
+                } else {
+                    console.log('User declined to login');
+
+                    // Show toast to remind user they can login later
+                    wx.showToast({
+                        title: '您可以随时在右下角设置中登录',
+                        icon: 'none',
+                        duration: 2000
+                    });
+
+                    // Make sure learning progress is visible so they see it anyway
+                    this.setData({
+                        showLearningProgress: true
+                    });
+                }
+            }
+        });
+    },
+
+    // Handle user login
+    login: function () {
+        try {
+            wx.showLoading({
+                title: '登录中...',
+                mask: true
+            });
+
+            // First check if wx.getUserProfile is available
+            if (typeof wx.getUserProfile === 'function') {
+                wx.getUserProfile({
+                    desc: '用于完善用户资料和保存学习进度',
+                    success: (res) => {
+                        this.setData({
+                            userInfo: res.userInfo,
+                            isLogged: true,
+                            showSettings: false // 登录后关闭设置菜单
+                        });
+
+                        // Save user info to storage
+                        wx.setStorageSync('user_info', res.userInfo);
+
+                        // Get openid from cloud
+                        this.loginAndGetOpenID();
+                        wx.hideLoading();
+
+                        // 显示学习进度
+                        this.setData({
+                            showLearningProgress: true
+                        });
+                    },
+                    fail: (err) => {
+                        console.error('获取用户信息失败:', err);
+                        wx.hideLoading();
+                        wx.showToast({
+                            title: '登录失败，请允许授权',
+                            icon: 'none',
+                            duration: 2000
+                        });
+                    }
+                });
+            } else {
+                // Fallback to older getUserInfo method
+                wx.getUserInfo({
+                    success: (res) => {
+                        this.setData({
+                            userInfo: res.userInfo,
+                            isLogged: true,
+                            showSettings: false // 登录后关闭设置菜单
+                        });
+
+                        // Save user info to storage
+                        wx.setStorageSync('user_info', res.userInfo);
+
+                        // Get openid from cloud
+                        this.loginAndGetOpenID();
+                        wx.hideLoading();
+
+                        // 显示学习进度
+                        this.setData({
+                            showLearningProgress: true
+                        });
+                    },
+                    fail: (err) => {
+                        console.error('获取用户信息失败:', err);
+                        wx.hideLoading();
+
+                        // Prompt user to authorize in settings
+                        wx.showModal({
+                            title: '授权提示',
+                            content: '需要您的授权才能登录，请在设置中打开"用户信息"授权',
+                            confirmText: '前往设置',
+                            cancelText: '取消',
+                            success: (res) => {
+                                if (res.confirm) {
+                                    wx.openSetting();
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Login process error:', error);
+            wx.hideLoading();
+            wx.showToast({
+                title: '登录功能异常',
+                icon: 'none',
+                duration: 2000
+            });
+        }
     },
 
     // Removed: sendMessage, onMessageInput, scrollToBottom, saveChatHistory, loadChatHistory, clearChatHistory, activateDeepThinking, activateWebSearch, navigateToNewPage, initRecorderManager (now implicit)

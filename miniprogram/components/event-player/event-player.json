@@ -4,6 +4,8 @@
         "navigation-bar": "/components/navigation-bar/navigation-bar",
         "chat-container": "/components/chat-container/chat-container",
         "input-bar": "/components/input-bar/input-bar",
-        "redpacket-page": "/components/redpacket-page/redpacket-page"
+        "redpacket-page": "/components/redpacket-page/redpacket-page",
+        "incoming-call": "/components/incoming-call/incoming-call",
+        "ongoing-call": "/components/ongoing-call/ongoing-call"
     }
 }

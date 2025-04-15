@@ -6,6 +6,10 @@ const phishing_chat = require('./phishing_chat');
 const graph_demo = require('./graph_demo');
 const subscriber_demo = require('./subscriber_demo');
 const redpacket_tutorial = require('./redpacket_tutorial');
+const photo_tutorial = require('./photo_tutorial');
+const scam_call = require('./scam_call');
+const scam_call2 = require('./scam_call2');
+const scam_call3 = require('./scam_call3');
 
 // 所有可用的对话数据映射表
 const dataMap = {
@@ -13,7 +17,11 @@ const dataMap = {
     'phishing_chat': phishing_chat,
     'graph_demo': graph_demo,
     'subscriber_demo': subscriber_demo,
-    'redpacket_tutorial': redpacket_tutorial
+    'redpacket_tutorial': redpacket_tutorial,
+    'photo_tutorial': photo_tutorial,
+    'scam_call': scam_call,
+    'scam_call2': scam_call2,
+    'scam_call3': scam_call3
     // 添加更多数据模块时，在此处注册
 };
 
@@ -70,6 +78,30 @@ function getAvailableDataList() {
             title: '微信红包发送教学',
             description: '交互式教程：如何在微信中发送红包',
             tags: ['教学', '红包', '微信功能', '新手指引']
+        },
+        {
+            id: 'photo_tutorial',
+            title: '微信照片发送教学',
+            description: '交互式教程：如何在微信中发送照片',
+            tags: ['教学', '照片', '微信功能', '新手指引']
+        },
+        {
+            id: 'scam_call',
+            title: '诈骗来电防范教学',
+            description: '学习如何识别和应对可疑的诈骗电话',
+            tags: ['安全防护', '诈骗防范', '来电']
+        },
+        {
+            id: 'scam_call2',
+            title: '亲属求助诈骗防范教学',
+            description: '学习如何识别和应对亲友求助类诈骗电话',
+            tags: ['安全防护', '诈骗防范', '来电', '亲情诈骗']
+        },
+        {
+            id: 'scam_call3',
+            title: '冒充公检法诈骗防范教学',
+            description: '学习如何识别和应对冒充公检法机关的诈骗电话',
+            tags: ['安全防护', '诈骗防范', '来电', '冒充公检法']
         }
         // 添加更多数据模块时，在此处添加相应的描述
     ];

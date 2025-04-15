@@ -1,23 +1,16 @@
 <!-- 照片选择界面 -->
 <view class="photo-selector" wx:if="{{visible}}">
-    <!-- 顶部导航栏 -->
-    <view class="nav-bar">
-        <view class="nav-back" bindtap="onBack">
-            <view class="back-icon"></view>
-        </view>
-        <view class="nav-title">相册</view>
-    </view>
-    <!-- 内容容器 - 防止与顶部导航栏重叠 -->
+    <!-- 内容容器 -->
     <view class="content-container">
         <!-- 照片网格 -->
         <scroll-view class="photo-grid-container" scroll-y="{{true}}">
             <view class="photo-grid">
                 <block wx:for="{{photos}}" wx:key="index">
-                    <view class="photo-item-wrapper" bindtap="onSelectPhoto" data-index="{{index}}">
+                    <view class="photo-item-wrapper" catchtap="onSelectPhoto" data-index="{{index}}">
                         <view class="photo-item">
                             <image class="photo-image" src="{{item}}" mode="aspectFill"></image>
-                            <view class="checkbox {{selectedPhotos.indexOf(index) !== -1 ? 'checked' : ''}}">
-                                <view class="check-icon" wx:if="{{selectedPhotos.indexOf(index) !== -1}}"></view>
+                            <view id="checkbox-{{index}}" class="selector--checkbox {{selectedPhotos.indexOf(index) >= 0 ? 'selector--checked' : ''}}" style="{{selectedPhotos.indexOf(index) >= 0 ? 'background-color: #07C160; border-color: #07C160;' : ''}}">
+                                <view class="check-icon" style="{{selectedPhotos.indexOf(index) >= 0 ? 'display: block;' : 'display: none;'}}"></view>
                             </view>
                         </view>
                     </view>

@@ -10,9 +10,15 @@
         </view>
     </view>
     <!-- 底部输入区域 -->
-    <input-bar wx:if="{{!showRedpacketPage}}" value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" bindamountChanged="onAmountChanged" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" bindphotosend="onPhotoSent" bindsendRedpacketClicked="onSendRedpacketClicked" bindpaymentConfirmed="onPaymentConfirmed" bindupdateNavTitle="onUpdateNavTitle" bindshowredpacket="onShowRedpacket" bindhideredpacket="onHideRedpacket" />
+    <input-bar wx:if="{{!showRedpacketPage && !showOngoingCall}}" value="{{inputText}}" placeholder="输入消息..." disabled="{{!allowInput}}" bindinput="onInputChange" bindsend="onSendMessage" bindplusclick="onPlusClick" bindfeatureclick="onFeatureClick" bindredpacketsend="onRedpacketSend" bindselectemoji="onSelectEmoji" binddeleteemoji="onDeleteEmoji" bindamountChanged="onAmountChanged" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" bindphotosend="onPhotoSent" bindsendRedpacketClicked="onSendRedpacketClicked" bindpaymentConfirmed="onPaymentConfirmed" bindupdateNavTitle="onUpdateNavTitle" bindshowredpacket="onShowRedpacket" bindhideredpacket="onHideRedpacket" />
     <!-- 红包发送页面 - 作为chat-page的直接子元素 -->
     <redpacket-page wx:if="{{showRedpacketPage}}" visible="{{showRedpacketPage}}" bindclose="onRedpacketPageClose" bindsend="onRedpacketSend" bindamountChanged="onAmountChanged" bindsendRedpacketClicked="onSendRedpacketClicked" bindpaymentConfirmed="onPaymentConfirmed" isTutorial="{{showHighlight && (highlightTarget === 'amount-input' || highlightTarget === 'pay-button')}}" highlight="{{highlightTarget}}" showHighlight="{{showHighlight}}" />
+    <!-- 照片选择器 - 作为chat-page的直接子元素 -->
+    <photo-selector wx:if="{{showPhotoSelector}}" visible="{{showPhotoSelector}}" bindclose="onPhotoSelectorClose" bindsend="onPhotoSent" />
+    <!-- 来电界面 -->
+    <incoming-call id="incomingCall" visible="{{showIncomingCall}}" callerName="{{incomingCallData.callerName}}" avatarUrl="{{incomingCallData.avatarUrl}}" callerId="{{incomingCallData.callerId}}" callStatus="{{incomingCallData.callStatus}}" ringtonePath="{{incomingCallData.ringtonePath}}" bindcallAccepted="onCallAccepted" bindcallDeclined="onCallDeclined" bindcallStarted="onCallStarted"></incoming-call>
+    <!-- 通话中界面 -->
+    <ongoing-call id="ongoingCall" visible="{{showOngoingCall}}" callerName="{{ongoingCallData.callerName}}" avatarUrl="{{ongoingCallData.avatarUrl}}" callerId="{{ongoingCallData.callerId}}" audioPath="{{ongoingCallData.audioPath}}" bindcallEnded="onCallEnded" bindcallOngoing="onCallOngoing" bindmicrophoneToggled="onMicrophoneToggled" bindspeakerToggled="onSpeakerToggled"></ongoing-call>
     <!-- 控制栏 隐藏 -->
     <view class="control-bar" style="display: none;">
         <view class="control-button" bindtap="onRestart">
