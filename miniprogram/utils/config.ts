@@ -13,6 +13,7 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 - scam_call3 诈骗电话防范/骚扰来电识别
 - next_scam_call 识别诈骗电话闯关
 - food_guide 食物营养指南 / 想做特色菜
+- share 一键分享学习进度
 
 - 标签：
 

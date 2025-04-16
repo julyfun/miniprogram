@@ -145,13 +145,17 @@ type 不是 message 的事件不需要 content 和 role
  @config.ts @index.ts @event-player.ts 当跳转标签为 scam_call 时，并不是需要跳转到固定路由，而是检测当前学习进度中首个没有完成的任务并进入其中。
 
 
-## 进度界面新增“微信功能教学进度”
+## 进度界面新增“微信功能教学进度” [ok]
 
 为“学习进度”栏目中的一部分，目前一共 2 个学习，包括发红包 @redpacket_tutorial.js 和发图片 @photo_tutorial.js 教学。这两个完成后自动更新进度 @event-player.ts 。模仿现有的诈骗防范课程进度，添加功能。
 
 ## 增加选择题界面的宽度和勾选圆 所占宽度。目前 勾选圆 有时会被挤压成椭圆
 
 @event-player.scss @event-player.wxml @redpacket_tutorial.js
+
+## 添加一键分享学习进度功能
+
+@config.ts 添加 [goto:share] 功能标签，在 @index.ts 中解析。改功能为立刻生成诈骗和微信功能学习进度报告并可微信分享给好友。
 
 ## 进度界面从关闭到显示时，自动从数据库请求刷新
 
@@ -177,7 +181,7 @@ previewImage	urls、current
 
 @photo-selector.ts 先修改这个文件中的图片的 URI，其他我们以后再说
 
-## 数据迁移 2
+## 数据迁移 2 [ok]
 
 assets/ 中的文件已经全部迁移到云存储中。请将原来直接使用 mp3 本地 URI 的方式替换为请求云存储资源 URI，获取文件后播放. 可能需要再 utils 下创建函数
 
@@ -204,23 +208,3 @@ file_id 形如：cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-13
 ## [optional] 单独 tts
 
 @cosyvoice.md不再使用现有的 tts.ts, ttsProvider 等，其逻辑已经太过复杂，需要彻底抛弃。 @index.ts  保留现在类似的接口，仿照 @cosyvoice.md 的写法重写一个接口.秘钥在 @secrets.ts 中使用 
-
-## AI 智能食谱
-
-## sync
-
-[TTS Provider] Synthesizing with:
-ttsProvider.ts:101 [TTS Provider] Current TTS provider: cosyvoice
-ttsProvider.ts:106 [TTS Provider] Synthesizing with CosyVoice: {text: "您好呀，有什么我可以帮您的吗？", voice: "longwan", format: "mp3", sampleRate: 16000}
-cosyVoiceTts.ts:34 [CosyVoice] Starting synthesis for: 您好呀，有什么我可以帮您的吗？
-cosyVoiceTts.ts:74 [CosyVoice] WebSocket connection request sent successfully
-cosyVoiceTts.ts:89 [CosyVoice] WebSocket connection opened
-cosyVoiceTts.ts:122 [CosyVoice] Request payload: {voice: "longwan", format: "mp3", sample_rate: 16000, task_id: "ac7dbcc2-c564-4702-9441-0142200d2f5a"}
-cosyVoiceTts.ts:133 [CosyVoice] Sent run-task message
-cosyVoiceTts.ts:374 [CosyVoice] Received WebSocket message: undefined
-cosyVoiceTts.ts:375 [CosyVoice] Full message data: {header: {…}, payload: {…}}
-Sun Apr 13 2025 20:53:26 GMT+0800 (中国标准时间) 录音文件格式说明
-开发者工具上的录音文件与移动端格式不同，暂时只可在工具上进行播放调试，无法直接播放或者在客户端上播放
-cosyVoiceTts.ts:374 [CosyVoice] Received WebSocket message: undefined
-cosyVoiceTts.ts:375 [CosyVoice] Full message data: {header: {…}, payload: {…}}
-WebSocket connection to 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/' failed: Close received after close(env: Windows,mp,1.06.2412050; lib: 2.32.3)

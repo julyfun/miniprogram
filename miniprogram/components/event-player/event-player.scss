@@ -399,8 +399,9 @@ navigation-bar {
 }
 
 .assessment-dialog {
-    width: 80%;
-    max-width: 300px;
+    width: 85%;
+    max-width: 360px;
+    /* 增加对话框最大宽度，确保有足够的空间 */
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -430,7 +431,8 @@ navigation-bar {
 
 .assessment-option {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    /* 改为顶部对齐，允许文本换行时更好显示 */
     padding: 12px 0;
     border-bottom: 1px solid #f0f0f0;
 }
@@ -440,12 +442,21 @@ navigation-bar {
 }
 
 .option-checkbox {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    /* 增加宽度 */
+    height: 24px;
+    /* 增加高度 */
+    min-width: 24px;
+    /* 设置最小宽度确保不被压缩 */
+    flex-shrink: 0;
+    /* 防止被压缩 */
     border: 1px solid #ccc;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 12px;
+    /* 增加右边距 */
     position: relative;
+    box-sizing: border-box;
+    /* 确保边框计入宽高 */
 }
 
 .option-checkbox.checked {
@@ -460,13 +471,23 @@ navigation-bar {
     height: 10px;
     border-right: 2px solid #fff;
     border-bottom: 2px solid #fff;
-    top: 2px;
-    left: 6px;
+    top: 4px;
+    /* 调整对勾位置 */
+    left: 8px;
+    /* 调整对勾位置 */
     transform: rotate(45deg);
 }
 
 .assessment-option.selected {
     color: #07C160;
+}
+
+.assessment-option text {
+    flex: 1;
+    word-break: break-word;
+    /* 允许文本在任意字符处换行 */
+    padding-top: 2px;
+    /* 轻微顶部填充以对齐复选框 */
 }
 
 .assessment-result {
