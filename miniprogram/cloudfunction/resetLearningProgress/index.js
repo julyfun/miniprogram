@@ -11,6 +11,14 @@ exports.main = async (event, context) => {
         const openid = event.openid || wxContext.OPENID
         console.log('【RESET】开始重置学习进度, openid:', openid)
         const moduleId = event.moduleId
+        const progressType = event.progressType || 'scamPrevention' // 指定进度类型：scamPrevention(默认) 或 featureTutorials
+
+        // 确定是哪种类型的进度
+        const isFeatureTutorial = progressType === 'featureTutorials';
+        const progressField = isFeatureTutorial ? 'featureTutorials' : 'modules';
+        const totalField = isFeatureTutorial ? 'featureTutorialsCompleted' : 'totalCompleted';
+
+        console.log(`【RESET】重置进度类型: ${progressType}, 字段: ${progressField}, 总计字段: ${totalField}`);
 
         // 如果提供了特定模块ID，只重置该模块
         if (moduleId) {
@@ -21,25 +29,30 @@ exports.main = async (event, context) => {
             // 如果用户记录存在
             if (userRecord.data.length > 0) {
                 const existingRecord = userRecord.data[0]
-                const existingModules = existingRecord.modules || {}
+                const existingModules = isFeatureTutorial ?
+                    (existingRecord.featureTutorials || {}) :
+                    (existingRecord.modules || {})
 
                 // 检查模块是否已完成，如果是，更新总完成数
-                let totalCompleted = existingRecord.totalCompleted || 0
+                let totalCompleted = existingRecord[totalField] || 0
                 if (existingModules[moduleId] && existingModules[moduleId].completed) {
                     totalCompleted -= 1
                 }
 
+                // 构建更新数据对象
+                const updateData = {
+                    [`${progressField}.${moduleId}`]: {
+                        completed: false,
+                        score: 0,
+                        lastUpdated: new Date()
+                    },
+                    [totalField]: totalCompleted,
+                    lastUpdated: new Date()
+                };
+
                 // 重置特定模块
                 return await db.collection('learning_progress').doc(existingRecord._id).update({
-                    data: {
-                        [`modules.${moduleId}`]: {
-                            completed: false,
-                            score: 0,
-                            lastUpdated: new Date()
-                        },
-                        totalCompleted: totalCompleted,
-                        lastUpdated: new Date()
-                    }
+                    data: updateData
                 })
             }
 
@@ -50,7 +63,7 @@ exports.main = async (event, context) => {
         }
         // 重置所有学习进度
         else {
-            console.log('【RESET】执行全部重置')
+            console.log(`【RESET】执行${isFeatureTutorial ? '微信功能教学' : '诈骗防范课程'}全部重置`)
             const userRecord = await db.collection('learning_progress').where({
                 openid: openid
             }).get()
@@ -61,8 +74,13 @@ exports.main = async (event, context) => {
                 // 先获取当前模块列表
                 const existingRecord = userRecord.data[0]
                 console.log('【RESET】重置前的记录:', JSON.stringify(existingRecord))
-                const modulesList = Object.keys(existingRecord.modules || {})
-                console.log('【RESET】发现的模块列表:', modulesList)
+
+                const modules = isFeatureTutorial ?
+                    (existingRecord.featureTutorials || {}) :
+                    (existingRecord.modules || {})
+
+                const modulesList = Object.keys(modules)
+                console.log(`【RESET】发现的${isFeatureTutorial ? '微信功能教学' : '诈骗防范课程'}模块列表:`, modulesList)
 
                 // 创建重置后的模块对象
                 const resetModules = {}
@@ -76,16 +94,18 @@ exports.main = async (event, context) => {
 
                 console.log('【RESET】重置后的模块对象:', JSON.stringify(resetModules))
 
+                // 构建更新数据对象
+                const updateData = {
+                    [progressField]: resetModules,
+                    [totalField]: 0,
+                    lastUpdated: new Date()
+                };
+
                 // 使用全新对象替换数据库中的模块对象
                 try {
                     console.log('【RESET】尝试更新数据库...')
                     const result = await db.collection('learning_progress').doc(existingRecord._id).update({
-                        data: {
-                            // 完全替换modules对象
-                            modules: resetModules,
-                            totalCompleted: 0,
-                            lastUpdated: new Date()
-                        }
+                        data: updateData
                     })
 
                     console.log('【RESET】数据库更新结果:', result)
@@ -98,6 +118,7 @@ exports.main = async (event, context) => {
                     return {
                         success: true,
                         resetModules: resetModules,
+                        progressType: progressType,
                         verifiedData: verifyRecord.data,
                         message: '重置成功'
                     }

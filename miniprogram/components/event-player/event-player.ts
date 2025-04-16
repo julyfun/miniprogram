@@ -695,7 +695,10 @@ Component({
                 return;
             }
 
-            console.log(`记录学习进度: 模块=${moduleId}, 完成=${completed}, 分数=${score || 0}`);
+            // 判断是否是微信功能教学模块
+            const isFeatureTutorial = moduleId === 'redpacket_tutorial' || moduleId === 'photo_tutorial';
+
+            console.log(`记录学习进度: 模块=${moduleId}, 类型=${isFeatureTutorial ? '微信功能教学' : '诈骗防范课程'}, 完成=${completed}, 分数=${score || 0}`);
 
             try {
                 // 确保云函数已初始化
@@ -715,7 +718,8 @@ Component({
                         openid: openid,
                         moduleId: moduleId,
                         completed: completed,
-                        score: score || 0
+                        score: score || 0,
+                        progressType: isFeatureTutorial ? 'featureTutorials' : 'scamPrevention' // 指定进度类型
                     },
                     success: (res: any) => {
                         if (res.result && res.result.success === false) {

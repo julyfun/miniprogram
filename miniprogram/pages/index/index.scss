@@ -1382,6 +1382,18 @@
     box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
 }
 
+/* 微信功能教学进度卡片 */
+.feature-tutorials-card {
+    margin-top: 0;
+    background-color: #f5f8ff;
+    /* 稍微不同的背景色 */
+}
+
+.feature-fill {
+    background-color: #1976d2;
+    /* 不同的进度条颜色 */
+}
+
 .progress-header {
     display: flex;
     justify-content: space-between;

@@ -26,6 +26,8 @@ exports.main = async (event, context) => {
                     openid: openid,
                     modules: {},
                     totalCompleted: 0,
+                    featureTutorials: {}, // 添加微信功能教学进度
+                    featureTutorialsCompleted: 0, // 添加微信功能教学完成数量
                     createdAt: null,
                     lastUpdated: null
                 }
@@ -35,19 +37,42 @@ exports.main = async (event, context) => {
         // 记录数据以便调试
         console.log('【GET】找到用户记录:', JSON.stringify(userRecord.data[0]));
 
+        // 诈骗防范课程模块进度
         if (userRecord.data[0].modules) {
-            console.log('【GET】模块详情:', JSON.stringify(userRecord.data[0].modules));
+            console.log('【GET】诈骗防范课程模块详情:', JSON.stringify(userRecord.data[0].modules));
 
             // 检查每个模块的completed状态
             const modulesList = Object.keys(userRecord.data[0].modules);
-            console.log('【GET】模块列表:', modulesList);
+            console.log('【GET】诈骗防范课程模块列表:', modulesList);
 
             modulesList.forEach(moduleId => {
                 const module = userRecord.data[0].modules[moduleId];
-                console.log(`【GET】模块 ${moduleId} 完成状态:`, module.completed);
+                console.log(`【GET】诈骗防范课程模块 ${moduleId} 完成状态:`, module.completed);
             });
         } else {
-            console.log('【GET】用户没有模块数据');
+            console.log('【GET】用户没有诈骗防范课程模块数据');
+        }
+
+        // 微信功能教学进度
+        if (userRecord.data[0].featureTutorials) {
+            console.log('【GET】微信功能教学模块详情:', JSON.stringify(userRecord.data[0].featureTutorials));
+
+            // 检查每个模块的completed状态
+            const featuresList = Object.keys(userRecord.data[0].featureTutorials);
+            console.log('【GET】微信功能教学模块列表:', featuresList);
+
+            featuresList.forEach(moduleId => {
+                const module = userRecord.data[0].featureTutorials[moduleId];
+                console.log(`【GET】微信功能教学模块 ${moduleId} 完成状态:`, module.completed);
+            });
+        } else {
+            console.log('【GET】用户没有微信功能教学模块数据');
+
+            // 确保返回数据中包含微信功能教学相关字段
+            if (userRecord.data[0]) {
+                userRecord.data[0].featureTutorials = {};
+                userRecord.data[0].featureTutorialsCompleted = 0;
+            }
         }
 
         // 返回用户学习记录

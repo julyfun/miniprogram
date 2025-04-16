@@ -40,6 +40,34 @@
       <button class="reset-button" bindtap="resetLearningProgress">重置进度</button>
     </view>
   </view>
+  <!-- 微信功能教学进度卡片 -->
+  <view class="progress-card feature-tutorials-card" wx:if="{{showLearningProgress}}">
+    <view class="progress-header">
+      <text class="progress-title">微信功能教学进度</text>
+      <text class="progress-counter">{{featureTutorialsProgress.totalCompleted || 0}}/2</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill feature-fill" style="width: {{(featureTutorialsProgress.totalCompleted || 0) * 50}}%;"></view>
+    </view>
+    <!-- 登录状态提示 -->
+    <view class="login-status" wx:if="{{!isLogged}}" bindtap="login">
+      <text class="login-prompt">登录后可保存学习进度 - 点击登录</text>
+    </view>
+    <view class="progress-modules">
+      <view class="module-item {{featureTutorialsProgress && featureTutorialsProgress.modules && featureTutorialsProgress.modules['redpacket_tutorial'] && featureTutorialsProgress.modules['redpacket_tutorial'].completed ? 'completed' : ''}}" bindtap="navigateToModule" data-module="redpacket_tutorial">
+        <image class="module-icon" src="/assets/icons/{{featureTutorialsProgress && featureTutorialsProgress.modules && featureTutorialsProgress.modules['redpacket_tutorial'] && featureTutorialsProgress.modules['redpacket_tutorial'].completed ? 'check' : 'lock'}}.svg" />
+        <text class="module-name">微信红包发送</text>
+      </view>
+      <view class="module-item {{featureTutorialsProgress && featureTutorialsProgress.modules && featureTutorialsProgress.modules['photo_tutorial'] && featureTutorialsProgress.modules['photo_tutorial'].completed ? 'completed' : ''}}" bindtap="navigateToModule" data-module="photo_tutorial">
+        <image class="module-icon" src="/assets/icons/{{featureTutorialsProgress && featureTutorialsProgress.modules && featureTutorialsProgress.modules['photo_tutorial'] && featureTutorialsProgress.modules['photo_tutorial'].completed ? 'check' : 'lock'}}.svg" />
+        <text class="module-name">微信照片发送</text>
+      </view>
+    </view>
+    <view class="progress-actions">
+      <button class="refresh-button" bindtap="refreshFeatureTutorialsProgress">刷新</button>
+      <button class="reset-button" bindtap="resetFeatureTutorialsProgress">重置进度</button>
+    </view>
+  </view>
   <!-- Chat History -->
   <scroll-view class="chat-history" scroll-y scroll-into-view="{{lastMessageId}}" scroll-with-animation="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" bounces="{{true}}" scroll-anchoring="{{true}}" refresher-enabled="{{false}}">
     <view class="messages">

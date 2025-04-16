@@ -46,7 +46,11 @@ interface IPageData {
     showSettings: boolean;          // Controls the visibility of settings menu
     isDebugMode: boolean;           // Controls debug mode to prevent API requests
     showLearningProgress: boolean;  // Controls the visibility of learning progress
-    learningProgress: {            // User's learning progress
+    learningProgress: {             // 诈骗防范课程进度
+        totalCompleted: number;
+        modules: Record<string, { completed: boolean; score: number; lastUpdated: Date }>;
+    }
+    featureTutorialsProgress: {     // 微信功能教学进度
         totalCompleted: number;
         modules: Record<string, { completed: boolean; score: number; lastUpdated: Date }>;
     }
@@ -296,6 +300,10 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         isDebugMode: true,        // Start with debug mode enabled by default
         showLearningProgress: false,  // Hide learning progress by default
         learningProgress: {
+            totalCompleted: 0,
+            modules: {}
+        },
+        featureTutorialsProgress: {
             totalCompleted: 0,
             modules: {}
         },
@@ -1592,15 +1600,37 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     if (res.result && res.result.success && res.result.data) {
                         console.log('【客户端】学习进度数据有效，设置到UI');
                         console.log('【客户端】进度模块详情:', JSON.stringify(res.result.data.modules));
+
+                        // 处理诈骗防范课程进度
                         this.setData({
                             learningProgress: res.result.data
                         });
+
+                        // 处理微信功能教学进度
+                        if (res.result.data.featureTutorials) {
+                            console.log('【客户端】微信功能教学进度:', JSON.stringify(res.result.data.featureTutorials));
+                            this.setData({
+                                featureTutorialsProgress: res.result.data.featureTutorials
+                            });
+                        } else {
+                            // 初始化空的微信功能教学进度对象
+                            this.setData({
+                                featureTutorialsProgress: {
+                                    totalCompleted: 0,
+                                    modules: {}
+                                }
+                            });
+                        }
                     } else if (res.result && res.result.success === false) {
                         // 处理云函数返回 success: false 的情况
                         console.log('【客户端】首次加载学习进度，用户暂无进度数据');
                         // 初始化空的学习进度对象
                         this.setData({
                             learningProgress: {
+                                totalCompleted: 0,
+                                modules: {}
+                            },
+                            featureTutorialsProgress: {
                                 totalCompleted: 0,
                                 modules: {}
                             }
@@ -1939,6 +1969,73 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 duration: 2000
             });
         }
+    },
+
+    // 刷新微信功能教学进度
+    refreshFeatureTutorialsProgress: function () {
+        console.log('refreshFeatureTutorialsProgress');
+        this.loadLearningProgress(); // 使用同一个加载函数，因为它会加载所有进度数据
+    },
+
+    // 重置微信功能教学进度
+    resetFeatureTutorialsProgress: function () {
+        wx.showModal({
+            title: '确认重置',
+            content: '确定要重置微信功能教学进度吗？重置后将无法恢复。',
+            success: (res) => {
+                if (res.confirm) {
+                    console.log('【客户端】用户确认重置微信功能教学进度');
+                    wx.showLoading({
+                        title: '重置中...',
+                    });
+
+                    // 获取OpenID
+                    const openid = wx.getStorageSync('user_openid');
+                    console.log('【客户端】重置进度的openid:', openid);
+
+                    wx.cloud.callFunction({
+                        name: 'resetLearningProgress',
+                        data: {
+                            openid: openid,
+                            progressType: 'featureTutorials' // 指定只重置微信功能教学进度
+                        },
+                        success: (res) => {
+                            console.log('【客户端】重置微信功能教学进度返回结果:', JSON.stringify(res.result));
+
+                            // 首先清除本地缓存
+                            console.log('【客户端】清除本地缓存的微信功能教学进度数据');
+                            this.setData({
+                                featureTutorialsProgress: {
+                                    totalCompleted: 0,
+                                    modules: {}
+                                }
+                            });
+
+                            // 立即从服务器刷新数据
+                            console.log('【客户端】重新从服务器加载最新进度数据');
+                            setTimeout(() => {
+                                this.loadLearningProgress();
+                            }, 500);
+
+                            wx.showToast({
+                                title: '重置成功',
+                                icon: 'success'
+                            });
+                        },
+                        fail: (err) => {
+                            console.error('【客户端】Reset feature tutorials progress failed:', err);
+                            wx.showToast({
+                                title: '重置失败',
+                                icon: 'error'
+                            });
+                        },
+                        complete: () => {
+                            wx.hideLoading();
+                        }
+                    });
+                }
+            }
+        });
     },
 
     // Removed: sendMessage, onMessageInput, scrollToBottom, saveChatHistory, loadChatHistory, clearChatHistory, activateDeepThinking, activateWebSearch, navigateToNewPage, initRecorderManager (now implicit)

@@ -149,11 +149,15 @@ type 不是 message 的事件不需要 content 和 role
 
 为“学习进度”栏目中的一部分，目前一共 2 个学习，包括发红包 @redpacket_tutorial.js 和发图片 @photo_tutorial.js 教学。这两个完成后自动更新进度 @event-player.ts 。模仿现有的诈骗防范课程进度，添加功能。
 
+## 增加选择题界面的宽度和勾选圆 所占宽度。目前 勾选圆 有时会被挤压成椭圆
+
+@event-player.scss @event-player.wxml @redpacket_tutorial.js
+
 ## 进度界面从关闭到显示时，自动从数据库请求刷新
 
 @index.ts 
 
-## 数据迁移 [2]
+## 数据迁移 [2] [ok]
 
 assets/ 中的文件已经全部迁移到云存储中。请将原来直接使用 png 本地 URI 的方式替换为请求云存储资源 URI
 
