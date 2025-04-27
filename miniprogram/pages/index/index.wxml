@@ -34,6 +34,10 @@
         <image class="module-icon" src="/assets/icons/{{learningProgress && learningProgress.modules && learningProgress.modules['scam_call3'] && learningProgress.modules['scam_call3'].completed ? 'check' : 'lock'}}.svg" />
         <text class="module-name">冒充公检法诈骗</text>
       </view>
+      <view class="module-item {{learningProgress && learningProgress.modules && learningProgress.modules['scam_call4'] && learningProgress.modules['scam_call4'].completed ? 'completed' : ''}}" bindtap="navigateToModule" data-module="scam_call4">
+        <image class="module-icon" src="/assets/icons/{{learningProgress && learningProgress.modules && learningProgress.modules['scam_call4'] && learningProgress.modules['scam_call4'].completed ? 'check' : 'lock'}}.svg" />
+        <text class="module-name">冒充社保局诈骗</text>
+      </view>
     </view>
     <view class="progress-actions">
       <button class="refresh-button" bindtap="refreshLearningProgress">刷新</button>
@@ -75,11 +79,21 @@
         <view class="message {{item.role}}" id="msg-{{item.id}}">
           <text class="message-text">{{item.content}}</text>
           <text class="message-hint" wx:if="{{item.hint}}">{{item.hint}}</text>
+          <!-- Images in messages -->
+          <view class="message-images" wx:if="{{item.images && item.images.length > 0}}">
+            <image wx:for="{{item.images}}" wx:for-item="imageSrc" wx:key="index" class="message-image" src="{{imageSrc}}" mode="widthFix" bindtap="previewImage" data-src="{{imageSrc}}" />
+          </view>
           <!-- Feature Buttons -->
           <view class="feature-buttons" wx:if="{{item.buttons && item.buttons.length > 0}}">
             <view wx:for="{{item.buttons}}" wx:for-item="button" wx:key="id" class="feature-button" bindtap="handleFeatureButtonTap" data-feature="{{button.feature}}">
               <text class="feature-button-text">{{button.name}}</text>
               <image wx:if="{{button.image}}" class="feature-button-image" src="{{button.image}}" mode="aspectFit"></image>
+            </view>
+          </view>
+          <!-- Prompts -->
+          <view wx:if="{{item.prompts && item.prompts.length > 0}}" class="message-prompts">
+            <view wx:for="{{item.prompts}}" wx:for-item="prompt" wx:key="*this" class="message-prompt" data-prompt="{{prompt}}" bindtap="handlePromptTap">
+              {{prompt}}
             </view>
           </view>
         </view>

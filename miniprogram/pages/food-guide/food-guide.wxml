@@ -1,6 +1,6 @@
 <view class="food-guide-container">
-    <!-- Navigation bar with back button -->
-    <navigation-bar title="美食指南" back="{{true}}" color="#ffffff" backgroundColor="transparent"></navigation-bar>
+    <!-- Navigation bar with back button (explicitly setting back button color to white) -->
+    <navigation-bar title="美食指南" back="{{true}}" color="#ffffff" backgroundColor="transparent" backIconColor="#ffffff"></navigation-bar>
     <!-- Main content area -->
     <view class="content-area">
         <!-- Video player -->
@@ -16,11 +16,11 @@
         </view>
         <!-- Interaction buttons overlaid on the right -->
         <view class="interaction-buttons">
-            <view class="button-item" bindtap="onLikeClick">
+            <view class="button-item liked-button {{isLiked ? 'active' : ''}}" bindtap="onLikeClick">
                 <image src="/assets/icons/video/like.svg" class="icon {{isLiked ? 'liked' : ''}}"></image>
                 <text>喜欢</text>
             </view>
-            <view class="button-item" bindtap="onSaveClick">
+            <view class="button-item saved-button {{isSaved ? 'active' : ''}}" bindtap="onSaveClick">
                 <image src="/assets/icons/video/collect.svg" class="icon {{isSaved ? 'saved' : ''}}"></image>
                 <text>收藏</text>
             </view>
@@ -28,6 +28,13 @@
                 <image src="/assets/icons/video/comment.svg" class="icon"></image>
                 <text>评论</text>
             </view>
+        </view>
+    </view>
+    <!-- Comment input area (appears when comment button is clicked) -->
+    <view class="comment-area {{showCommentInput ? 'active' : ''}}">
+        <view class="comment-input-container">
+            <input class="comment-input" placeholder="说点什么..." value="{{commentText}}" bindinput="onCommentInput" confirm-type="send" bindconfirm="sendComment" focus="{{showCommentInput}}" />
+            <view class="comment-send-button" bindtap="sendComment">发送</view>
         </view>
     </view>
 </view>

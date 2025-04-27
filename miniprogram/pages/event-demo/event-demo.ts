@@ -41,7 +41,7 @@ Page({
                     const userOpenId = wx.getStorageSync('user_openid');
                     if (userOpenId) {
                         // User is logged in, try to get their learning progress
-                        const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+                        const scamModules = ['scam_call', 'scam_call2', 'scam_call3', 'scam_call4'];
                         let targetModule = 'scam_call'; // Default to first module
 
                         // Try to access learning progress, if not available use first module

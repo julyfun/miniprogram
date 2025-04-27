@@ -1,0 +1,142 @@
+/* 分享页面样式 */
+.share-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 12px;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.progress-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 10px;
+    background-color: #e9e9e9;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #07C160;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #666;
+}
+
+.modules-list {
+    margin-top: 16px;
+}
+
+.module-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.module-item:last-child {
+    border-bottom: none;
+}
+
+.module-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+}
+
+.module-icon image {
+    width: 100%;
+    height: 100%;
+}
+
+.module-info {
+    flex: 1;
+}
+
+.module-name {
+    font-size: 16px;
+    color: #333;
+}
+
+.module-status {
+    font-size: 14px;
+    color: #999;
+    margin-top: 4px;
+}
+
+.module-score {
+    font-size: 16px;
+    font-weight: bold;
+    color: #07C160;
+}
+
+.module-item.completed .module-name {
+    color: #07C160;
+}
+
+.actions {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.share-button {
+    background-color: #07C160;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.return-button {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 0;
+    font-size: 16px;
+}

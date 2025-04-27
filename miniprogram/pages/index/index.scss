@@ -1170,6 +1170,56 @@
     justify-content: flex-start;
 }
 
+/* Images in chat messages */
+.message-images {
+    display: flex;
+    flex-direction: column;
+    gap: 15rpx;
+    margin-top: 20rpx;
+    width: 100%;
+}
+
+.message-image {
+    width: 100%;
+    max-width: 500rpx;
+    border-radius: 8rpx;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message.user .message-images {
+    align-items: flex-end;
+}
+
+.message.assistant .message-images {
+    align-items: flex-start;
+}
+
+/* Prompts in chat messages */
+.message-prompts {
+    display: flex;
+    flex-direction: column; // Display prompts vertically
+    gap: 10rpx; // Space between prompts
+    margin-top: 15rpx; // Space above prompts
+    width: 100%;
+    align-items: center; // Center prompts horizontally
+}
+
+.message-prompt {
+    font-size: 32rpx; // Slightly smaller font size
+    color: #666666; // Dark gray color
+    padding: 8rpx 16rpx; // Some padding
+    background-color: rgba(0, 0, 0, 0.00); // Very subtle background
+    border-radius: 10rpx;
+    cursor: pointer;
+    text-align: center;
+    width: fit-content; // Adjust width to content
+    max-width: 90%; // Prevent very long prompts from overflowing
+
+    &:active {
+        background-color: rgba(0, 0, 0, 0.06); // Slightly darker on tap
+    }
+}
+
 .feature-button {
     display: flex;
     flex-direction: column;
@@ -1231,11 +1281,10 @@
 
 /* 设置按钮与菜单 */
 .settings-container {
-    position: absolute;
-    top: 20px;
+    position: fixed;
+    bottom: 60px;
     right: 20px;
     display: flex;
-    align-items: center;
     z-index: 1000;
 }
 
@@ -1281,7 +1330,7 @@
 
 .settings-menu {
     position: absolute;
-    top: 60px;
+    bottom: 60px;
     right: 10px;
     width: 240px;
     background-color: white;
@@ -1289,7 +1338,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     padding: 15px;
     z-index: 999;
-    transform: translateY(-10px);
+    transform: translateY(10px);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -1298,6 +1347,18 @@
         transform: translateY(0);
         opacity: 1;
         visibility: visible;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 20px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 10px solid white;
     }
 }
 

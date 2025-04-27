@@ -10,6 +10,7 @@ const photo_tutorial = require('./photo_tutorial');
 const scam_call = require('./scam_call');
 const scam_call2 = require('./scam_call2');
 const scam_call3 = require('./scam_call3');
+const scam_call4 = require('./scam_call4');
 
 // 所有可用的对话数据映射表
 const dataMap = {
@@ -21,7 +22,8 @@ const dataMap = {
     'photo_tutorial': photo_tutorial,
     'scam_call': scam_call,
     'scam_call2': scam_call2,
-    'scam_call3': scam_call3
+    'scam_call3': scam_call3,
+    'scam_call4': scam_call4
     // 添加更多数据模块时，在此处注册
 };
 
@@ -102,6 +104,12 @@ function getAvailableDataList() {
             title: '冒充公检法诈骗防范教学',
             description: '学习如何识别和应对冒充公检法机关的诈骗电话',
             tags: ['安全防护', '诈骗防范', '来电', '冒充公检法']
+        },
+        {
+            id: 'scam_call4',
+            title: '冒充社保局诈骗防范教学',
+            description: '学习如何识别和应对冒充社保局的诈骗电话',
+            tags: ['安全防护', '诈骗防范', '来电', '冒充社保局']
         }
         // 添加更多数据模块时，在此处添加相应的描述
     ];

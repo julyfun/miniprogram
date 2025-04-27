@@ -36,5 +36,10 @@ export const FEATURE_METADATA: Record<string, FeatureMetadata> = {
         name: '亲友求助诈骗',
         description: '识别亲友求助诈骗电话',
         image: '/assets/icons/unknown-caller.svg'
+    },
+    share: {
+        name: '分享学习进度',
+        description: '分享您的学习进度给好友',
+        image: '/assets/icons/share.svg'
     }
 }; 

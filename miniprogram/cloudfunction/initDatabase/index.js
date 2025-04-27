@@ -39,13 +39,13 @@ exports.main = async (event, context) => {
                 await db.collection('system_config').add({
                     data: {
                         configType: 'moduleSetup',
-                        modules: ['scam_call', 'scam_call2', 'scam_call3'],
+                        modules: ['scam_call', 'scam_call2', 'scam_call3', 'scam_call4'],
                         updatedAt: new Date()
                     }
                 });
                 results.moduleConfig = '默认模块配置创建成功';
             } else {
-                // 更新现有配置，确保包含scam_call3
+                // 更新现有配置，确保包含scam_call3和scam_call4
                 const existingConfig = moduleConfig.data[0];
                 const modules = existingConfig.modules || [];
 
@@ -58,8 +58,17 @@ exports.main = async (event, context) => {
                         }
                     });
                     results.moduleConfig = '模块配置已更新，新增scam_call3';
+                } else if (!modules.includes('scam_call4')) {
+                    modules.push('scam_call4');
+                    await db.collection('system_config').doc(existingConfig._id).update({
+                        data: {
+                            modules: modules,
+                            updatedAt: new Date()
+                        }
+                    });
+                    results.moduleConfig = '模块配置已更新，新增scam_call4';
                 } else {
-                    results.moduleConfig = '模块配置已存在且包含scam_call3';
+                    results.moduleConfig = '模块配置已存在且包含scam_call3和scam_call4';
                 }
             }
         } catch (err) {
@@ -72,7 +81,7 @@ exports.main = async (event, context) => {
                     await db.collection('system_config').add({
                         data: {
                             configType: 'moduleSetup',
-                            modules: ['scam_call', 'scam_call2', 'scam_call3'],
+                            modules: ['scam_call', 'scam_call2', 'scam_call3', 'scam_call4'],
                             updatedAt: new Date()
                         }
                     });

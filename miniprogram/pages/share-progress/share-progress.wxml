@@ -1,0 +1,63 @@
+<!-- 学习进度分享页面 -->
+<view class="share-container">
+    <view class="header">
+        <image class="logo" src="/assets/icons/logo.png" mode="aspectFit"></image>
+        <view class="title">我的学习进度</view>
+    </view>
+    <view class="progress-card">
+        <view class="card-title">防诈骗课程学习进度</view>
+        <view class="progress-bar">
+            <view class="progress-fill" style="width: {{scamProgressPercentage}}%"></view>
+        </view>
+        <view class="progress-stats">
+            <text>完成 {{scamCompletedCount}}/{{scamTotalModules}} 课程</text>
+            <text>{{scamProgressPercentage}}%</text>
+        </view>
+        <view class="modules-list">
+            <block wx:for="{{scamModules}}" wx:key="id">
+                <view class="module-item {{item.completed ? 'completed' : ''}}">
+                    <view class="module-icon">
+                        <image src="{{item.completed ? '/assets/icons/check-circle.svg' : '/assets/icons/circle.svg'}}"></image>
+                    </view>
+                    <view class="module-info">
+                        <view class="module-name">{{item.name}}</view>
+                        <view class="module-status">{{item.completed ? '已完成' : '未完成'}}</view>
+                    </view>
+                    <view class="module-score" wx:if="{{item.completed}}">
+                        <text>{{item.score}}分</text>
+                    </view>
+                </view>
+            </block>
+        </view>
+    </view>
+    <view class="progress-card">
+        <view class="card-title">微信功能教学进度</view>
+        <view class="progress-bar">
+            <view class="progress-fill" style="width: {{featureProgressPercentage}}%"></view>
+        </view>
+        <view class="progress-stats">
+            <text>完成 {{featureCompletedCount}}/{{featureTotalModules}} 功能</text>
+            <text>{{featureProgressPercentage}}%</text>
+        </view>
+        <view class="modules-list">
+            <block wx:for="{{featureModules}}" wx:key="id">
+                <view class="module-item {{item.completed ? 'completed' : ''}}">
+                    <view class="module-icon">
+                        <image src="{{item.completed ? '/assets/icons/check-circle.svg' : '/assets/icons/circle.svg'}}"></image>
+                    </view>
+                    <view class="module-info">
+                        <view class="module-name">{{item.name}}</view>
+                        <view class="module-status">{{item.completed ? '已完成' : '未完成'}}</view>
+                    </view>
+                    <view class="module-score" wx:if="{{item.completed}}">
+                        <text>{{item.score}}分</text>
+                    </view>
+                </view>
+            </block>
+        </view>
+    </view>
+    <view class="actions">
+        <button class="share-button" open-type="share">分享给好友</button>
+        <button class="return-button" bindtap="returnToHome">返回首页</button>
+    </view>
+</view>

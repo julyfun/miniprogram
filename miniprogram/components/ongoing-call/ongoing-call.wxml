@@ -10,7 +10,7 @@
         <!-- 通话控制区域 -->
         <view class="call-actions">
             <view class="call-button microphone {{isMicrophoneMuted ? 'muted' : ''}}" bindtap="toggleMicrophone">
-                <image class="call-button-icon" src="/assets/icons/call-decline.svg" mode="aspectFit"></image>
+                <image class="call-button-icon" src="/assets/icons/micro.svg" mode="aspectFit"></image>
                 <text>{{isMicrophoneMuted ? '麦克风已关闭' : '麦克风'}}</text>
             </view>
             <view class="call-button end-call" bindtap="endCall">
@@ -18,7 +18,7 @@
                 <text>挂断</text>
             </view>
             <view class="call-button speaker {{isSpeakerOn ? 'on' : ''}}" bindtap="toggleSpeaker">
-                <image class="call-button-icon" src="/assets/icons/call-accept.svg" mode="aspectFit"></image>
+                <image class="call-button-icon" src="/assets/icons/speaker.svg" mode="aspectFit"></image>
                 <text>{{isSpeakerOn ? '扬声器已开启' : '扬声器'}}</text>
             </view>
         </view>

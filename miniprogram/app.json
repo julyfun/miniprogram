@@ -5,7 +5,8 @@
     "pages/logs/logs",
     "pages/event-demo/event-demo",
     "pages/sample/sample",
-    "pages/food-guide/food-guide"
+    "pages/food-guide/food-guide",
+    "pages/share-progress/share-progress"
   ],
   "window": {
     "navigationBarTextStyle": "black",

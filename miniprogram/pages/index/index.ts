@@ -3,7 +3,7 @@ import DashScopeSpeechRecognizer from '../../utils/dashScopeSpeechRecognition'; 
 import { DEEPSEEK_SECRETS } from '../../utils/secrets';
 import { synthesizeAndPlay, stopPlayback as stopTTSPlayback, setTtsProvider, getCurrentTtsProvider, TtsProviderType } from '../../utils/ttsProvider'; // Import TTS functions from the provider
 import { callQwenApi, callQwenApiWithHistory } from '../../utils/qwenApi';
-import { AI_INITIAL_PROMPT, FUNCTION_PATTERN, BUTTON_PATTERN, RECORD_PATTERN, FUNCTION_ROUTES, FunctionName } from '../../utils/config'; // Import AI config
+import { AI_INITIAL_PROMPT, FUNCTION_PATTERN, BUTTON_PATTERN, RECORD_PATTERN, IMAGE_PATTERN, PROMPT_PATTERN, FUNCTION_ROUTES, FunctionName } from '../../utils/config'; // Import AI config and PROMPT_PATTERN
 import { FEATURE_METADATA } from '../../utils/featureMetadata'; // Import feature metadata
 
 // Define ASR engine types
@@ -27,6 +27,8 @@ interface ChatMessage {
     content: string;
     hint?: string;
     buttons?: Button[]; // Add buttons field
+    images?: string[]; // Add images field for displaying images
+    prompts?: string[]; // Add prompts field
 }
 
 interface IPageData {
@@ -130,12 +132,14 @@ interface ISpeechRecognizer {
 }
 
 // Add a function to check for and handle special function triggers in AI responses
-function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean } {
+function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean, images: string[], prompts: string[] } {
     // Don't modify the original text that is displayed to the user
     let processedText = text;
     let functionFound = false;
     let buttons: Button[] = [];
     let shouldAutoRecord = false;
+    let images: string[] = []; // Array to store image paths
+    let prompts: string[] = []; // Array to store prompt texts
 
     // Check for goto function pattern
     const match = text.match(FUNCTION_PATTERN);
@@ -158,6 +162,24 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
                     console.error('Navigation to hongbao failed:', err);
                     wx.showToast({
                         title: '跳转失败',
+                        icon: 'none'
+                    });
+                }
+            });
+            functionFound = true;
+        }
+        // Special handling for share function
+        else if (functionName === 'share') {
+            // Navigate to the share progress page
+            wx.navigateTo({
+                url: '/pages/share-progress/share-progress',
+                success: () => {
+                    console.log('Successfully navigated to share progress page');
+                },
+                fail: (err) => {
+                    console.error('Navigation to share progress failed:', err);
+                    wx.showToast({
+                        title: '分享功能加载失败',
                         icon: 'none'
                     });
                 }
@@ -251,6 +273,24 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
         processedText = processedText.replace(RECORD_PATTERN, '').trim();
     }
 
+    // Check for image patterns (can have multiple in one message)
+    let imageMatch;
+    // Reset lastIndex to avoid infinite loop
+    if (IMAGE_PATTERN) {
+        IMAGE_PATTERN.lastIndex = 0;
+        while ((imageMatch = IMAGE_PATTERN.exec(text)) !== null) {
+            const imageName = imageMatch[1];
+            console.log('Image tag detected:', imageName);
+
+            // Add the cloud storage path to the image
+            const imagePath = `cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/images/${imageName}`;
+            images.push(imagePath);
+        }
+
+        // Remove all image tags from the text
+        processedText = processedText.replace(IMAGE_PATTERN, '').trim();
+    }
+
     // Check for button patterns (can have multiple in one message)
     let buttonMatch;
     // Reset lastIndex to avoid infinite loop
@@ -278,7 +318,22 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
         buttons = buttons.slice(0, 3);
     }
 
-    return { processedText, functionFound, buttons, shouldAutoRecord };
+    // Check for prompt patterns (can have multiple in one message)
+    let promptMatch;
+    // Reset lastIndex to avoid infinite loop
+    PROMPT_PATTERN.lastIndex = 0;
+    while ((promptMatch = PROMPT_PATTERN.exec(text)) !== null) {
+        const promptText = promptMatch[1].trim();
+        if (promptText) {
+            console.log('Prompt tag detected:', promptText);
+            prompts.push(promptText);
+        }
+    }
+
+    // Remove all prompt tags from the text
+    processedText = processedText.replace(PROMPT_PATTERN, '').trim();
+
+    return { processedText, functionFound, buttons, shouldAutoRecord, images, prompts }; // Return prompts
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
@@ -297,7 +352,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         isEditing: false,         // Add isEditing state
         accumulatedText: '',      // Accumulated recognized text during recording
         showSettings: false,      // Add showSettings state for settings menu
-        isDebugMode: true,        // Start with debug mode enabled by default
+        isDebugMode: false,        // Start with debug mode enabled by default
         showLearningProgress: false,  // Hide learning progress by default
         learningProgress: {
             totalCompleted: 0,
@@ -333,69 +388,56 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
     // Handle feature button tap
     handleFeatureButtonTap: function (e: WechatMiniprogram.CustomEvent) {
-        const feature = e.currentTarget.dataset.feature;
-        console.log('Feature button tapped:', feature);
+        const feature = e.currentTarget.dataset.feature as FunctionName;
+        console.log('Feature button clicked:', feature);
 
-        // 在导航前停止语音播放
-        stopTTSPlayback(true); // true参数抑制错误提示
-        this.setData({
-            isSpeaking: false,
-            orbState: 'idle'
-        });
+        if (feature && FUNCTION_ROUTES[feature]) {
+            // 在任何导航前停止TTS播放
+            stopTTSPlayback(true); // true参数抑制错误提示
 
-        if (feature && FUNCTION_ROUTES[feature as FunctionName]) {
-            // Check if this is the special scam_call feature
-            if (feature === 'scam_call') {
-                // For scam_call, find the first incomplete module and navigate there
-                const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
-                let targetModule = 'scam_call'; // Default to first module
-
-                const modules = this.data.learningProgress.modules || {};
-
-                for (const module of scamModules) {
-                    // If module is not completed or doesn't exist in progress data
-                    if (!modules[module] || !modules[module].completed) {
-                        targetModule = module;
-                        break;
-                    }
+            // Navigate to the appropriate page
+            wx.navigateTo({
+                url: FUNCTION_ROUTES[feature],
+                success: () => {
+                    console.log(`Successfully navigated to feature: ${feature}`);
+                },
+                fail: (err) => {
+                    console.error('Navigation failed:', err);
+                    wx.showToast({
+                        title: '功能跳转失败',
+                        icon: 'none'
+                    });
                 }
-
-                console.log(`动态路由到首个未完成的诈骗防范模块: ${targetModule}`);
-
-                // Navigate to the identified target module
-                wx.navigateTo({
-                    url: `/pages/event-demo/event-demo?id=${targetModule}`,
-                    success: () => {
-                        console.log(`Successfully navigated to dynamic module: ${targetModule}`);
-                    },
-                    fail: (err) => {
-                        console.error('Navigation failed:', err);
-                        wx.showToast({
-                            title: '跳转失败',
-                            icon: 'none'
-                        });
-                    }
-                });
-            } else {
-                // Regular navigation for other features
-                wx.navigateTo({
-                    url: FUNCTION_ROUTES[feature as FunctionName],
-                    success: () => {
-                        console.log(`Successfully navigated to feature: ${feature}`);
-                    },
-                    fail: (err) => {
-                        console.error('Navigation failed:', err);
-                        wx.showToast({
-                            title: '功能跳转失败',
-                            icon: 'none'
-                        });
-                    }
-                });
-            }
+            });
         }
     },
 
+    // Handle image preview when user taps on an image
+    previewImage: function (e: any) {
+        const src = e.currentTarget.dataset.src;
+        console.log('Previewing image:', src);
+
+        // Use wx.previewImage to show the image in full screen
+        wx.previewImage({
+            current: src, // The URL of the current image
+            urls: [src], // Array of URLs of images to preview
+            success: () => {
+                console.log('Image preview opened successfully');
+            },
+            fail: (err) => {
+                console.error('Failed to preview image:', err);
+                wx.showToast({
+                    title: '图片预览失败',
+                    icon: 'none'
+                });
+            }
+        });
+    },
+
     onLoad: function () {
+        // 检测是否在模拟器上运行
+        this.detectDeviceTypeAndSetDebugMode();
+
         this.initSpeechRecognition(); // Will use the engine specified in data
 
         // 检查云开发环境是否初始化
@@ -432,15 +474,14 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         } else {
             console.log('[Debug] Skipping initial API request in debug mode');
 
-            // 增强的 Debug 模式问候语，包含更多种类的按钮和标签
-            const debugWelcomeText = "Debug 模式已启用! 您可以测试以下功能：\n\n" +
-                "1. 点击按钮跳转: [button:hongbao] [button:health] [button:scam_call]\n" +
-                "2. 询问功能: 试试问\"你有什么功能\"\n" +
-                "3. 直接命令: 试试说\"打开红包教程\"\n" +
-                "4. 语音回复: 试试说\"我要用语音回答\" [record]";
+            //增强的 Debug 模式问候语，包含更多种类的按钮和标签
+            const debugWelcomeText = "当前 AI 已关闭，请点击右上角虫子图标开启。\n" +
+                "开启后可以语音与 AI 交流。\n" +
+                "示例功能：教我发红包；教我防范诈骗；你有什么功能；教我做特色美食（直接语音输入就行）\n" +
+                "[button:hongbao][button:scam_call][prompt:你会做什么？][prompt:帮我看看菜单]"; // Add debug prompts
 
             // 处理文本中的标签，提取按钮和其他功能
-            const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
+            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(debugWelcomeText);
 
             // 创建经过处理的调试消息
             const debugMessage: ChatMessage = {
@@ -448,12 +489,50 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 role: 'assistant',
                 content: processedText,
                 buttons: buttons.length > 0 ? buttons : undefined,
+                images: images.length > 0 ? images : undefined,
+                prompts: prompts.length > 0 ? prompts : undefined, // Add prompts to debug message
                 hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
             };
 
             this.setData({
                 chatHistory: [debugMessage]
             });
+        }
+    },
+
+    // 检测设备类型并设置调试模式
+    detectDeviceTypeAndSetDebugMode: function () {
+        try {
+            const systemInfo = wx.getSystemInfoSync();
+            console.log('系统信息:', systemInfo);
+
+            // 检测设备类型，判断是否为真机
+            // 模拟器通常有明显特征，如 model 包含 "simulator" 或特定的品牌名称
+            const isSimulator =
+                // 检查模型名称是否包含模拟器关键词
+                /simulator/i.test(systemInfo.model) ||
+                // 检查设备品牌是否为 devtools
+                systemInfo.brand === 'devtools' ||
+                // Windows 上的开发者工具
+                systemInfo.platform === 'windows' ||
+                // Mac 上的开发者工具
+                systemInfo.platform === 'mac' ||
+                // 微信开发者工具
+                systemInfo.platform === 'devtools';
+
+            console.log('设备检测结果:', isSimulator ? '模拟器/开发者工具' : '真机');
+
+            // 根据设备类型设置调试模式 - 仅在模拟器/开发工具上默认启用调试模式
+            const debugMode = isSimulator ? true : false;
+
+            this.setData({
+                isDebugMode: debugMode
+            });
+
+            console.log(`调试模式已${debugMode ? '启用' : '禁用'}`);
+        } catch (error) {
+            console.error('获取系统信息失败:', error);
+            // 出错时保持默认的调试模式设置
         }
     },
 
@@ -950,14 +1029,14 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
                 // Add relevant buttons based on user input
                 if (userInput.includes('功能') || userInput.includes('介绍') || userInput.includes('可以做什么')) {
-                    debugResponse += " [button:hongbao] [button:health] [button:scam_call]";
+                    debugResponse += " [button:hongbao] [button:health] [button:scam_call] [prompt:详细介绍下诈骗防范] [prompt:红包怎么发？]";
                 }
 
                 // Add navigation function tag if user asks to go somewhere
                 if (userInput.includes('红包') || userInput.includes('发红包')) {
-                    debugResponse += " [function:hongbao]";
+                    debugResponse += " [goto:hongbao]";
                 } else if (userInput.includes('诈骗') || userInput.includes('防诈') || userInput.includes('电话诈骗')) {
-                    debugResponse += " [function:scam_call]";
+                    debugResponse += " [goto:scam_call]";
                 }
 
                 // Add recording tag if appropriate
@@ -965,14 +1044,21 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     debugResponse += " [record]";
                 }
 
+                // Add image tag example
+                if (userInput.includes('鸡翅')) {
+                    debugResponse += " 这是烤鸡翅的做法：... [image:烤鸡翅.jpg]";
+                }
+
                 // Process the response the same way as regular API responses
-                const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugResponse);
+                const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(debugResponse);
 
                 const assistantMessage: ChatMessage = {
                     id: Date.now(),
                     role: 'assistant',
                     content: processedText,
                     buttons: buttons.length > 0 ? buttons : undefined,
+                    images: images.length > 0 ? images : undefined,
+                    prompts: prompts.length > 0 ? prompts : undefined, // Add prompts to debug message
                     hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                 };
 
@@ -1059,14 +1145,16 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                                 } catch (e) { /* ignore json parse error */ }
                             }
 
-                            // Check for function triggers and buttons in the response
-                            const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(fullContent);
+                            // Check for function triggers, buttons, images, and prompts in the response
+                            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(fullContent);
 
                             const assistantMessage: ChatMessage = {
                                 id: Date.now(),
                                 role: 'assistant',
                                 content: processedText, // Use the processed text without function tags
                                 buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
+                                images: images.length > 0 ? images : undefined, // Add images if any
+                                prompts: prompts.length > 0 ? prompts : undefined, // Add prompts if any
                                 hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                             };
 
@@ -1121,15 +1209,17 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         content: response
                     });
 
-                    // Check for function triggers and buttons in the response
-                    const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(response);
-                    console.log('Initial prompt response with buttons:', buttons.length > 0);
+                    // Check for function triggers, buttons, images, and prompts in the response
+                    const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(response);
+                    console.log('Qwen response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                     const assistantMessage: ChatMessage = {
                         id: Date.now(),
                         role: 'assistant',
                         content: processedText, // Use processed text without function tags
                         buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
+                        images: images.length > 0 ? images : undefined, // Add images if any
+                        prompts: prompts.length > 0 ? prompts : undefined, // Add prompts if any
                         hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                     };
 
@@ -1312,6 +1402,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             this.conversationHistory = [];
         }
 
+        // Add the initial prompt to the history for context if needed later
+        this.conversationHistory = [{ role: 'user', content: prompt }];
+
         wx.request({
             url: DEEPSEEK_SECRETS.API_URL,
             method: 'POST',
@@ -1353,16 +1446,18 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             } catch (e) { /* ignore json parse error */ }
                         }
 
-                        // For initial prompt, extract the text, buttons, but skip function navigation
-                        const { processedText, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(fullContent);
-                        console.log('Initial prompt response with buttons:', buttons.length > 0);
+                        // For initial prompt, extract the text, buttons, images, prompts but skip function navigation
+                        const { processedText, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(fullContent);
+                        console.log('Initial prompt response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
-                        // Add the initial greeting from AI to chat with any buttons found
+                        // Add the initial greeting from AI to chat with any buttons/prompts found
                         const assistantMessage: ChatMessage = {
                             id: Date.now(),
                             role: 'assistant',
                             content: processedText,
                             buttons: buttons.length > 0 ? buttons : undefined,
+                            images: images.length > 0 ? images : undefined, // Handle images too
+                            prompts: prompts.length > 0 ? prompts : undefined, // Handle prompts
                             hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                         };
 
@@ -1426,7 +1521,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             orbState: 'processing'
         });
 
-        // Initialize conversation history with the system prompt
+        // Initialize conversation history with the system prompt and the user prompt
         if (!this.conversationHistory) {
             this.conversationHistory = [];
         }
@@ -1449,20 +1544,22 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     content: response
                 });
 
-                // For initial prompt, extract the text, buttons, but skip function navigation
-                const { processedText, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(response);
-                console.log('Initial prompt response with buttons:', buttons.length > 0);
+                // For initial prompt, extract the text, buttons, images, prompts but skip function navigation
+                const { processedText, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(response);
+                console.log('Initial prompt response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                 const assistantMessage: ChatMessage = {
                     id: Date.now(),
                     role: 'assistant',
                     content: processedText,
                     buttons: buttons.length > 0 ? buttons : undefined,
+                    images: images.length > 0 ? images : undefined, // Handle images too
+                    prompts: prompts.length > 0 ? prompts : undefined, // Handle prompts
                     hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                 };
 
                 this.setData({
-                    chatHistory: [...this.data.chatHistory, assistantMessage],
+                    chatHistory: [...this.data.chatHistory, assistantMessage], // Append to existing history if any (e.g., debug mode welcome)
                     lastMessageId: `msg-${assistantMessage.id}`,
                     isWaitingForDeepseek: false
                 });
@@ -1479,6 +1576,32 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 console.error('Initial Qwen API request failed:', error);
                 this.handleApiError(error.message || '网络请求失败');
             });
+    },
+
+    // Method to handle prompt tap (placeholder)
+    handlePromptTap: function (e: WechatMiniprogram.CustomEvent) {
+        const promptText = e.currentTarget.dataset.prompt as string;
+        console.log('Prompt tapped:', promptText);
+
+        // Check if there is prompt text and we are not already waiting for the AI
+        if (promptText && !this.data.isWaitingForDeepseek && !this.data.isRecording) {
+            // Stop TTS playback if it's currently active
+            if (this.data.isSpeaking) {
+                console.log('[Prompt Tap] Interrupting TTS playback.');
+                stopTTSPlayback(true); // true suppresses errors
+                this.setData({
+                    isSpeaking: false,
+                    orbState: 'idle' // Reset orb state after stopping speech
+                });
+            }
+
+            // Send the prompt text as a new user message
+            this.latestRecognizedText = promptText;
+            this.sendToDeepseek(); // Use the existing send function
+        } else if (this.data.isWaitingForDeepseek || this.data.isRecording) {
+            // Optionally inform the user if they tap while busy
+            wx.showToast({ title: '请等待当前操作完成', icon: 'none', duration: 1500 });
+        }
     },
 
     // Add new method to switch TTS providers
@@ -1528,15 +1651,14 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             this.sendInitialPromptToAI();
         } else {
             // 切换到 Debug 模式，显示增强的问候语
-            // 自定义的 Debug 模式问候语，包含更多种类的按钮和标签
-            const debugWelcomeText = "Debug 模式已启用! 您可以测试以下功能：\n\n" +
-                "1. 点击按钮跳转: [button:hongbao] [button:health] [button:scam_call]\n" +
-                "2. 询问功能: 试试问\"你有什么功能\"\n" +
-                "3. 直接命令: 试试说\"打开红包教程\"\n" +
-                "4. 语音回复: 试试说\"我要用语音回答\" [record]";
+            const debugWelcomeText = "当前 AI 已关闭，请点击右上角虫子图标开启。\n" +
+                "开启后可以语音与 AI 交流。\n" +
+                "示例功能：教我发红包；教我防范诈骗；你有什么功能；教我做特色美食（直接语音输入就行）\n" +
+                "[button:hongbao][button:scam_call][prompt:你会做什么？][prompt:帮我看看菜单]"; // Add debug prompts
+
 
             // 处理文本中的标签，提取按钮和其他功能
-            const { processedText, functionFound, buttons, shouldAutoRecord } = checkAndHandleFunctionTriggers(debugWelcomeText);
+            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(debugWelcomeText);
 
             // 创建经过处理的调试消息
             const debugMessage: ChatMessage = {
@@ -1544,6 +1666,8 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 role: 'assistant',
                 content: processedText,
                 buttons: buttons.length > 0 ? buttons : undefined,
+                images: images.length > 0 ? images : undefined, // Handle images too
+                prompts: prompts.length > 0 ? prompts : undefined, // Handle prompts
                 hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
             };
 
@@ -1871,7 +1995,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
                     // Make sure learning progress is visible so they see it anyway
                     this.setData({
-                        showLearningProgress: true
+                        showLearningProgress: false // Don't show progress by default
                     });
                 }
             }
@@ -1904,9 +2028,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         this.loginAndGetOpenID();
                         wx.hideLoading();
 
-                        // 显示学习进度
+                        // 不自动显示学习进度
                         this.setData({
-                            showLearningProgress: true
+                            showLearningProgress: false
                         });
                     },
                     fail: (err) => {
@@ -1936,9 +2060,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         this.loginAndGetOpenID();
                         wx.hideLoading();
 
-                        // 显示学习进度
+                        // 不自动显示学习进度
                         this.setData({
-                            showLearningProgress: true
+                            showLearningProgress: false
                         });
                     },
                     fail: (err) => {

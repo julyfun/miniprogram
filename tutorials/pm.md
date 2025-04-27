@@ -1,3 +1,4 @@
+
 ## base
 
 提示：
@@ -6,6 +7,14 @@
 - 编写完后，我会使用微信小程序模拟器运行结果，不用 npm run。要用二进制文件时（音频图片等）不要创建新文件，复用现有文件.
 
 ---
+
+## 首页 AI 对话允许解析 [image:图片名]
+
+解析到图片名后，从下方链接中提取对应图片文件.并展示在对话中。
+
+cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/images/
+
+##
 
 阿里巴巴的语音识别 SDK 位置：miniprogram\third_party\alibabacloud-nls-wx-sdk
 可通过 require 导入
@@ -149,7 +158,7 @@ type 不是 message 的事件不需要 content 和 role
 
 为“学习进度”栏目中的一部分，目前一共 2 个学习，包括发红包 @redpacket_tutorial.js 和发图片 @photo_tutorial.js 教学。这两个完成后自动更新进度 @event-player.ts 。模仿现有的诈骗防范课程进度，添加功能。
 
-## 增加选择题界面的宽度和勾选圆 所占宽度。目前 勾选圆 有时会被挤压成椭圆
+## 增加选择题界面的宽度和勾选圆 所占宽度。目前 勾选圆 有时会被挤压成椭圆 [ok]
 
 @event-player.scss @event-player.wxml @redpacket_tutorial.js
 
@@ -160,6 +169,8 @@ type 不是 message 的事件不需要 content 和 role
 ## 进度界面从关闭到显示时，自动从数据库请求刷新
 
 @index.ts 
+
+## 图标更新
 
 ## 数据迁移 [2] [ok]
 
