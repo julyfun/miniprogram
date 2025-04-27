@@ -641,7 +641,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     this.stopRecordingAndRecognition(true);
                     // Immediately attempt to send (sendToDeepseek will check text)
                     this.sendToDeepseek();
-                }, 4000); // 4 seconds of silence
+                }, 1800); // 4 seconds of silence
             }
             // If it *is* final (e.g., service decided end of speech),
             // and we have text, send it immediately? (Optional behavior)
