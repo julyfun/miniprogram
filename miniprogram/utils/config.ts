@@ -82,7 +82,7 @@ export const FUNCTION_PATTERN = /\[goto:([a-zA-Z0-9_]+)\]/;
 // Image pattern that supports both Chinese characters and standard Latin characters
 export const IMAGE_PATTERN = /\[image:([\u4e00-\u9fa5a-zA-Z0-9_\.]+)\]/g;
 
-export const MUSIC_PATTERN = /\[music:([\u4e00-\u9fa5a-zA-Z0-9-_\.]+)\]/g;
+export const MUSIC_PATTERN = /\[music:([\u4e00-\u9fa5a-zA-Z0-9-_\.（）【】\(\)]+)\]/g;
 
 // Prompt pattern for detecting prompt suggestions
 export const PROMPT_PATTERN = /\[prompt:([^\]]+)\]/g; // Capture content within the brackets
