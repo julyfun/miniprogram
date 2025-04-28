@@ -1587,3 +1587,63 @@
     min-height: unset;
     height: auto;
 }
+
+/* Music in chat messages */
+.message-music {
+    display: flex;
+    flex-direction: column;
+    gap: 15rpx;
+    margin-top: 20rpx;
+    width: 100%;
+}
+
+.music-item {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 12rpx;
+    padding: 20rpx;
+    width: 80%;
+    max-width: 500rpx;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.music-item:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: scale(0.98);
+}
+
+.music-icon {
+    font-size: 40rpx;
+    color: #c62828;
+    margin-right: 20rpx;
+}
+
+.music-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.music-name {
+    font-size: 28rpx;
+    color: #333;
+    margin-bottom: 5rpx;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.music-action {
+    font-size: 24rpx;
+    color: #666;
+}
+
+.message.user .message-music {
+    align-items: flex-end;
+}
+
+.message.assistant .message-music {
+    align-items: flex-start;
+}

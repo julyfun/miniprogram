@@ -22,6 +22,10 @@ Component({
       type: String,
       value: ''
     },
+    backIconColor: {
+      type: String,
+      value: ''
+    },
     back: {
       type: Boolean,
       value: true

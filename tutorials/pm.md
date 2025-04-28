@@ -8,6 +8,13 @@
 
 ---
 
+## 音乐播放界面
+
+- 暂停图标改为 miniprogram\assets\icons\music-player\stop.svg
+- 上一首图标改为 miniprogram\assets\icons\music-player\back.svg
+- 下一首图标改为 miniprogram\assets\icons\music-player\front.svg
+
+
 ## 首页 AI 对话允许解析 [image:图片名]
 
 解析到图片名后，从下方链接中提取对应图片文件.并展示在对话中。

@@ -1,0 +1,181 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #1a1a1a;
+    color: white;
+}
+
+.header {
+    display: flex;
+    padding: 24rpx;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-button {
+    padding: 20rpx;
+}
+
+.back-icon {
+    font-size: 40rpx;
+    color: white;
+}
+
+.title {
+    flex: 1;
+    font-size: 32rpx;
+    text-align: center;
+    margin-right: 60rpx;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40rpx;
+}
+
+/* Vinyl record design */
+.vinyl-record {
+    width: 500rpx;
+    height: 500rpx;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1a1a1a 0%, #121212 100%);
+    position: relative;
+    margin-bottom: 80rpx;
+    box-shadow: 0 0 30rpx rgba(0, 0, 0, 0.8);
+    transition: transform 0.5s ease;
+}
+
+.vinyl-record.spinning {
+    animation: spin 8s linear infinite;
+}
+
+.vinyl-inner {
+    position: absolute;
+    width: 150rpx;
+    height: 150rpx;
+    background-color: #c62828;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10rpx rgba(0, 0, 0, 0.5);
+}
+
+.music-icon {
+    width: 80rpx;
+    height: 80rpx;
+}
+
+.vinyl-outer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: repeating-radial-gradient(circle at center,
+            transparent 0,
+            transparent 20rpx,
+            rgba(255, 255, 255, 0.1) 20rpx,
+            rgba(255, 255, 255, 0.1) 22rpx);
+}
+
+.vinyl-arm {
+    position: absolute;
+    width: 200rpx;
+    height: 4rpx;
+    background-color: #c62828;
+    top: 50%;
+    right: -100rpx;
+    transform-origin: left center;
+    transform: rotate(-20deg);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.vinyl-arm.playing {
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+/* Controls */
+.controls {
+    width: 100%;
+    padding: 0 20rpx;
+}
+
+.progress-bar {
+    height: 6rpx;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3rpx;
+    margin-bottom: 20rpx;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #c62828;
+    border-radius: 3rpx;
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 40rpx;
+}
+
+.control-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 60rpx;
+}
+
+.control-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.main-button {
+    width: 120rpx;
+    height: 120rpx;
+    background-color: #c62828;
+}
+
+.control-icon {
+    width: 50rpx;
+    height: 50rpx;
+}
+
+.main-button .control-icon {
+    width: 80rpx;
+    height: 80rpx;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

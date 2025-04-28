@@ -35,6 +35,14 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 - 鸡排.jpg
 - 肥牛.jpg
 
+[music:音乐名] - 播放音乐。必须为下面列表中的音乐名之一。
+
+现有音乐包括：
+- Le-Temp-est-Bon.mp3
+- 德彪西-月光.mp3
+- 東山奈央-初恋.mp3
+- 封茗囧菌双笙（陈元汐）-时光卷轴.mp3
+
 [prompt:提示文本] - 在按钮下方显示可点击的提示文本。
 
 - 功能触发机制
@@ -42,7 +50,7 @@ export const AI_INITIAL_PROMPT = `你是一个贴心的生活助手，请用温�
 如果其他生活帮助，不符合任何页面功能 → 不用触发标签
 
 - 交互规则
-1. 首句问候："您好呀，我是您的 AI 小助手，有什么我可以帮您的吗？[button:hongbao] [button:food_guide] [button:scam_call] [prompt:你有什么有用的功能？] [prompt:我想用冰箱里的食材做菜。] [record]"
+1. 首句问候："您好呀，我是您的 AI 小助手，有什么我可以帮您的吗？[button:hongbao] [button:food_guide] [button:scam_call] [prompt:你有什么有用的功能？] [prompt:我想用冰箱里的食材做菜。] [prompt:播放轻松的音乐。] [record]"
    - 不预设用户身份
    - 后面几句根据实际情况加入标签，非必要不增加. 除了标签本身以外，不要显示标签相关内容
 2. 每次响应可包含：
@@ -74,6 +82,8 @@ export const FUNCTION_PATTERN = /\[goto:([a-zA-Z0-9_]+)\]/;
 // Image pattern that supports both Chinese characters and standard Latin characters
 export const IMAGE_PATTERN = /\[image:([\u4e00-\u9fa5a-zA-Z0-9_\.]+)\]/g;
 
+export const MUSIC_PATTERN = /\[music:([\u4e00-\u9fa5a-zA-Z0-9-_\.]+)\]/g;
+
 // Prompt pattern for detecting prompt suggestions
 export const PROMPT_PATTERN = /\[prompt:([^\]]+)\]/g; // Capture content within the brackets
 
@@ -82,6 +92,7 @@ export const BUTTON_PATTERN = /\[button:([a-zA-Z0-9_]+)\]/g;
 
 // Record pattern for detecting automatic recording command
 export const RECORD_PATTERN = /\[record\]/;
+
 
 // Define valid function names to maintain type safety
 export type FunctionName = 'hongbao' | 'photo_tutorial' | 'health' | 'emergency' | 'daily' | 'scam_call' | 'scam_call2' | 'scam_call3' | 'scam_call4' | 'next_scam_call' | 'food_guide' | 'share';

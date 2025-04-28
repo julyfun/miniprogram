@@ -6,7 +6,8 @@
     "pages/event-demo/event-demo",
     "pages/sample/sample",
     "pages/food-guide/food-guide",
-    "pages/share-progress/share-progress"
+    "pages/share-progress/share-progress",
+    "pages/music-player/music-player"
   ],
   "window": {
     "navigationBarTextStyle": "black",

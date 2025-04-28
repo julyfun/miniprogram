@@ -83,6 +83,16 @@
           <view class="message-images" wx:if="{{item.images && item.images.length > 0}}">
             <image wx:for="{{item.images}}" wx:for-item="imageSrc" wx:key="index" class="message-image" src="{{imageSrc}}" mode="widthFix" bindtap="previewImage" data-src="{{imageSrc}}" />
           </view>
+          <!-- Music in messages -->
+          <view class="message-music" wx:if="{{item.music && item.music.length > 0}}">
+            <view class="music-item" wx:for="{{item.music}}" wx:for-item="musicSrc" wx:key="index" bindtap="playMusic" data-src="{{musicSrc}}" data-name="{{musicSrc.split('/').pop()}}">
+              <view class="music-icon">♫</view>
+              <view class="music-info">
+                <text class="music-name">{{musicSrc.split('/').pop()}}</text>
+                <text class="music-action">点击播放</text>
+              </view>
+            </view>
+          </view>
           <!-- Feature Buttons -->
           <view class="feature-buttons" wx:if="{{item.buttons && item.buttons.length > 0}}">
             <view wx:for="{{item.buttons}}" wx:for-item="button" wx:key="id" class="feature-button" bindtap="handleFeatureButtonTap" data-feature="{{button.feature}}">

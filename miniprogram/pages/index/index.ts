@@ -3,7 +3,7 @@ import DashScopeSpeechRecognizer from '../../utils/dashScopeSpeechRecognition'; 
 import { DEEPSEEK_SECRETS } from '../../utils/secrets';
 import { synthesizeAndPlay, stopPlayback as stopTTSPlayback, setTtsProvider, getCurrentTtsProvider, TtsProviderType } from '../../utils/ttsProvider'; // Import TTS functions from the provider
 import { callQwenApi, callQwenApiWithHistory } from '../../utils/qwenApi';
-import { AI_INITIAL_PROMPT, FUNCTION_PATTERN, BUTTON_PATTERN, RECORD_PATTERN, IMAGE_PATTERN, PROMPT_PATTERN, FUNCTION_ROUTES, FunctionName } from '../../utils/config'; // Import AI config and PROMPT_PATTERN
+import { AI_INITIAL_PROMPT, FUNCTION_PATTERN, BUTTON_PATTERN, RECORD_PATTERN, IMAGE_PATTERN, PROMPT_PATTERN, FUNCTION_ROUTES, FunctionName, MUSIC_PATTERN } from '../../utils/config'; // Import AI config and PROMPT_PATTERN
 import { FEATURE_METADATA } from '../../utils/featureMetadata'; // Import feature metadata
 
 // Define ASR engine types
@@ -29,6 +29,7 @@ interface ChatMessage {
     buttons?: Button[]; // Add buttons field
     images?: string[]; // Add images field for displaying images
     prompts?: string[]; // Add prompts field
+    music?: string[]; // Add music field for displaying music player
 }
 
 interface IPageData {
@@ -132,7 +133,7 @@ interface ISpeechRecognizer {
 }
 
 // Add a function to check for and handle special function triggers in AI responses
-function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean, images: string[], prompts: string[] } {
+function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean, images: string[], prompts: string[], music: string[] } {
     // Don't modify the original text that is displayed to the user
     let processedText = text;
     let functionFound = false;
@@ -140,6 +141,7 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
     let shouldAutoRecord = false;
     let images: string[] = []; // Array to store image paths
     let prompts: string[] = []; // Array to store prompt texts
+    let music: string[] = []; // Array to store music paths
 
     // Check for goto function pattern
     const match = text.match(FUNCTION_PATTERN);
@@ -300,6 +302,24 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
         processedText = processedText.replace(IMAGE_PATTERN, '').trim();
     }
 
+    // Check for music patterns (can have multiple in one message)
+    let musicMatch;
+    // Reset lastIndex to avoid infinite loop
+    if (MUSIC_PATTERN) {
+        MUSIC_PATTERN.lastIndex = 0;
+        while ((musicMatch = MUSIC_PATTERN.exec(text)) !== null) {
+            const musicName = musicMatch[1];
+            console.log('Music tag detected:', musicName);
+
+            // Add the cloud storage path to the music
+            const musicPath = `cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/${musicName}`;
+            music.push(musicPath);
+        }
+
+        // Remove all music tags from the text
+        processedText = processedText.replace(MUSIC_PATTERN, '').trim();
+    }
+
     // Check for button patterns (can have multiple in one message)
     let buttonMatch;
     // Reset lastIndex to avoid infinite loop
@@ -342,7 +362,7 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
     // Remove all prompt tags from the text
     processedText = processedText.replace(PROMPT_PATTERN, '').trim();
 
-    return { processedText, functionFound, buttons, shouldAutoRecord, images, prompts }; // Return prompts
+    return { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music }; // Add music to return
 }
 
 Page<IPageData, WechatMiniprogram.IAnyObject>({
@@ -527,13 +547,13 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             console.log('[Debug] Skipping initial API request in debug mode');
 
             //增强的 Debug 模式问候语，包含更多种类的按钮和标签
-            const debugWelcomeText = "当前 AI 已关闭，请点击右上角虫子图标开启。\n" +
+            const debugWelcomeText = "当前 AI 已关闭，请点击右下角虫子图标开启。\n" +
                 "开启后可以语音与 AI 交流。\n" +
                 "示例功能：教我发红包；教我防范诈骗；你有什么功能；教我做特色美食（直接语音输入就行）\n" +
                 "[button:hongbao][button:scam_call][prompt:你会做什么？][prompt:帮我看看菜单]"; // Add debug prompts
 
             // 处理文本中的标签，提取按钮和其他功能
-            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(debugWelcomeText);
+            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugWelcomeText);
 
             // 创建经过处理的调试消息
             const debugMessage: ChatMessage = {
@@ -543,6 +563,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 buttons: buttons.length > 0 ? buttons : undefined,
                 images: images.length > 0 ? images : undefined,
                 prompts: prompts.length > 0 ? prompts : undefined, // Add prompts to debug message
+                music: music.length > 0 ? music : undefined, // Add music to debug message
                 hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
             };
 
@@ -1102,16 +1123,17 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 }
 
                 // Process the response the same way as regular API responses
-                const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(debugResponse);
+                const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugResponse);
 
                 const assistantMessage: ChatMessage = {
                     id: Date.now(),
                     role: 'assistant',
-                    content: processedText,
-                    buttons: buttons.length > 0 ? buttons : undefined,
-                    images: images.length > 0 ? images : undefined,
-                    prompts: prompts.length > 0 ? prompts : undefined, // Add prompts to debug message
-                    hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
+                    content: processedText, // Use the processed text without function tags
+                    buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
+                    images: images.length > 0 ? images : undefined, // Add images if any
+                    prompts: prompts.length > 0 ? prompts : undefined, // Add prompts if any
+                    music: music.length > 0 ? music : undefined, // Add music if any
+                    hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                 };
 
                 this.setData({
@@ -1198,7 +1220,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             }
 
                             // Check for function triggers, buttons, images, and prompts in the response
-                            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(fullContent);
+                            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(fullContent);
 
                             const assistantMessage: ChatMessage = {
                                 id: Date.now(),
@@ -1207,6 +1229,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                                 buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
                                 images: images.length > 0 ? images : undefined, // Add images if any
                                 prompts: prompts.length > 0 ? prompts : undefined, // Add prompts if any
+                                music: music.length > 0 ? music : undefined, // Add music if any
                                 hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                             };
 
@@ -1262,7 +1285,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     });
 
                     // Check for function triggers, buttons, images, and prompts in the response
-                    const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(response);
+                    const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(response);
                     console.log('Qwen response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                     const assistantMessage: ChatMessage = {
@@ -1272,6 +1295,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         buttons: buttons.length > 0 ? buttons : undefined, // Add buttons if any
                         images: images.length > 0 ? images : undefined, // Add images if any
                         prompts: prompts.length > 0 ? prompts : undefined, // Add prompts if any
+                        music: music.length > 0 ? music : undefined, // Add music if any
                         hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined // Add a hint when auto-record is enabled
                     };
 
@@ -1499,7 +1523,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         }
 
                         // For initial prompt, extract the text, buttons, images, prompts but skip function navigation
-                        const { processedText, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(fullContent);
+                        const { processedText, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(fullContent);
                         console.log('Initial prompt response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                         // Add the initial greeting from AI to chat with any buttons/prompts found
@@ -1510,6 +1534,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             buttons: buttons.length > 0 ? buttons : undefined,
                             images: images.length > 0 ? images : undefined, // Handle images too
                             prompts: prompts.length > 0 ? prompts : undefined, // Handle prompts
+                            music: music.length > 0 ? music : undefined, // Add music if any
                             hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                         };
 
@@ -1597,7 +1622,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 });
 
                 // For initial prompt, extract the text, buttons, images, prompts but skip function navigation
-                const { processedText, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(response);
+                const { processedText, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(response);
                 console.log('Initial prompt response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                 const assistantMessage: ChatMessage = {
@@ -1607,6 +1632,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     buttons: buttons.length > 0 ? buttons : undefined,
                     images: images.length > 0 ? images : undefined, // Handle images too
                     prompts: prompts.length > 0 ? prompts : undefined, // Handle prompts
+                    music: music.length > 0 ? music : undefined, // Add music if any
                     hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
                 };
 
@@ -1703,14 +1729,14 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             this.sendInitialPromptToAI();
         } else {
             // 切换到 Debug 模式，显示增强的问候语
-            const debugWelcomeText = "当前 AI 已关闭，请点击右上角虫子图标开启。\n" +
+            const debugWelcomeText = "当前 AI 已关闭，请点击右下角虫子图标开启。\n" +
                 "开启后可以语音与 AI 交流。\n" +
                 "示例功能：教我发红包；教我防范诈骗；你有什么功能；教我做特色美食（直接语音输入就行）\n" +
                 "[button:hongbao][button:scam_call][prompt:你会做什么？][prompt:帮我看看菜单]"; // Add debug prompts
 
 
             // 处理文本中的标签，提取按钮和其他功能
-            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts } = checkAndHandleFunctionTriggers(debugWelcomeText);
+            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugWelcomeText);
 
             // 创建经过处理的调试消息
             const debugMessage: ChatMessage = {
@@ -1720,6 +1746,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 buttons: buttons.length > 0 ? buttons : undefined,
                 images: images.length > 0 ? images : undefined, // Handle images too
                 prompts: prompts.length > 0 ? prompts : undefined, // Handle prompts
+                music: music.length > 0 ? music : undefined, // Add music to debug message
                 hint: shouldAutoRecord ? '(等待您的语音回复)' : undefined
             };
 
@@ -2219,6 +2246,29 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         }
                     });
                 }
+            }
+        });
+    },
+
+    // Handle music playback when user taps on a music item
+    playMusic: function (e: any) {
+        const src = e.currentTarget.dataset.src;
+        // 從 src 中提取音樂名稱
+        const musicName = src.split('/').pop().replace('.mp3', '').replace(/-/g, ' ');
+        console.log('Playing music:', src);
+
+        // Navigate to the music player page
+        wx.navigateTo({
+            url: '/pages/music-player/music-player?src=' + encodeURIComponent(src) + '&name=' + encodeURIComponent(musicName),
+            success: () => {
+                console.log('Music player page opened successfully');
+            },
+            fail: (err) => {
+                console.error('Failed to open music player page:', err);
+                wx.showToast({
+                    title: '音乐播放失败',
+                    icon: 'none'
+                });
             }
         });
     },

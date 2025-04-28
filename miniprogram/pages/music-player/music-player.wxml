@@ -1,0 +1,37 @@
+<view class="container">
+    <view class="header">
+        <view bindtap="goBack" class="back-button">
+            <text class="back-icon">←</text>
+        </view>
+        <view class="title">{{musicName}}</view>
+    </view>
+    <view class="player-container">
+        <view class="vinyl-record {{isPlaying ? 'spinning' : ''}}">
+            <view class="vinyl-inner">
+                <image class="music-icon" src="/images/music-note.png" mode="aspectFit"></image>
+            </view>
+            <view class="vinyl-outer"></view>
+            <view class="vinyl-arm {{isPlaying ? 'playing' : ''}}"></view>
+        </view>
+        <view class="controls">
+            <view class="progress-bar">
+                <view class="progress-fill" style="width: {{progressWidth}}%"></view>
+            </view>
+            <view class="time-display">
+                <text>{{currentTime}}</text>
+                <text>{{totalTime}}</text>
+            </view>
+            <view class="control-buttons">
+                <view class="control-button" bindtap="playPrevious">
+                    <image class="control-icon" src="/assets/icons/music-player/back.svg" mode="aspectFit"></image>
+                </view>
+                <view class="control-button main-button" bindtap="togglePlay">
+                    <image class="control-icon" src="{{isPlaying ? '/assets/icons/music-player/stop.svg' : '/assets/icons/music-player/play.svg'}}" mode="aspectFit"></image>
+                </view>
+                <view class="control-button" bindtap="playNext">
+                    <image class="control-icon" src="/assets/icons/music-player/front.svg" mode="aspectFit"></image>
+                </view>
+            </view>
+        </view>
+    </view>
+</view>
