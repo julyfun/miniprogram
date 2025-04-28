@@ -9,12 +9,7 @@ const VIDEO_OPTIONS = [
     '002.mp4',
     '003.mp4',
     '004.mp4',
-    '005.mp4',
-    '006.mp4',
-    '007.mp4',
-    '008.mp4',
-    '009.mp4',
-    '010.mp4',
+    '005.mp4'
 ];
 
 // Get a random video URL from the available options
@@ -30,159 +25,286 @@ const formatTime = (seconds: number): string => {
     return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 };
 
+// Interface for video item
+interface VideoItem {
+    id: string;
+    url: string;
+    isPlaying: boolean;
+    isLiked: boolean;
+    isSaved: boolean;
+    commentCount: number;
+    currentTime: string;
+    duration: string;
+    progressPercent: number;
+    videoContext: WechatMiniprogram.VideoContext | null;
+}
+
 Page({
     /**
      * Page initial data
      */
     data: {
-        videoUrl: '',
-        videoContext: null as WechatMiniprogram.VideoContext | null,
-        isPlaying: false,
-        isLiked: false,
-        isSaved: false,
-        commentCount: 0,
-        // Progress bar related data
-        currentTime: '00:00',
-        duration: '00:00',
-        progressPercent: 0,
+        videoList: [] as VideoItem[],
+        currentIndex: 0,
         // Comment related data
         showCommentInput: false,
         commentText: '',
-        // Swipe detection data
-        touchStartY: 0,
-        touchStartTime: 0,
-        // Animation control
-        animationClass: '',
-        isAnimating: false // Prevent multiple swipes during animation
+        // UI controls
+        showSwipeHint: true
     },
 
     /**
      * Lifecycle function--Called when page load
      */
     onLoad(options: { videoUrl?: string }) {
-        // Get video URL from page parameters or randomly select one
-        let videoUrl = '';
+        // Initialize with 3 videos (current, next, and previous)
+        const videoList: VideoItem[] = [];
 
+        // If a specific video URL is provided, use it as the first video
         if (options && options.videoUrl) {
-            // If a video URL is provided, use it
-            videoUrl = options.videoUrl;
-
+            let videoUrl = options.videoUrl;
             // If it's not a cloud path, convert it
             if (!videoUrl.startsWith('cloud://')) {
                 videoUrl = getCloudFileID(videoUrl);
             }
+            videoList.push(this.createVideoItem(videoUrl));
         } else {
-            // No video specified, randomly select one
-            videoUrl = getRandomVideoUrl();
+            // No video specified, add a random one
+            videoList.push(this.createVideoItem(getRandomVideoUrl()));
         }
 
-        this.setData({ videoUrl });
+        // Add two more random videos
+        videoList.push(this.createVideoItem(getRandomVideoUrl()));
+        videoList.push(this.createVideoItem(getRandomVideoUrl()));
 
-        // Initialize video context
-        this.setData({
-            videoContext: wx.createVideoContext('foodVideo', this)
-        });
+        this.setData({ videoList });
 
-        // Start playing the initial video
-        this.playCurrentVideo();
+        // Check if user has seen the swipe hint before
+        try {
+            const hasSeenHint = wx.getStorageSync('food_guide_swipe_hint_seen');
+            if (hasSeenHint) {
+                this.setData({ showSwipeHint: false });
+            }
+        } catch (e) {
+            console.error('Failed to get storage:', e);
+        }
+    },
+
+    /**
+     * Create a new video item with default values
+     */
+    createVideoItem(url: string): VideoItem {
+        return {
+            id: `video-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            url,
+            isPlaying: false,
+            isLiked: false,
+            isSaved: false,
+            commentCount: 0,
+            currentTime: '00:00',
+            duration: '00:00',
+            progressPercent: 0,
+            videoContext: null
+        };
+    },
+
+    /**
+     * Initialize video context for a specific video
+     */
+    initVideoContext(index: number) {
+        const { videoList } = this.data;
+        if (index >= 0 && index < videoList.length) {
+            const videoId = videoList[index].id;
+            const videoContext = wx.createVideoContext(videoId, this);
+            videoList[index].videoContext = videoContext;
+            this.setData({ videoList });
+            return videoContext;
+        }
+        return null;
+    },
+
+    /**
+     * Handle swiper change event
+     */
+    onSwiperChange(e: WechatMiniprogram.TouchEvent) {
+        const { current } = e.detail;
+        const { currentIndex, videoList } = this.data;
+
+        // If this is the first swipe, hide the swipe hint and save to storage
+        if (this.data.showSwipeHint) {
+            this.setData({ showSwipeHint: false });
+            try {
+                wx.setStorageSync('food_guide_swipe_hint_seen', true);
+            } catch (e) {
+                console.error('Failed to set storage:', e);
+            }
+        }
+
+        // Pause the previous video
+        if (videoList[currentIndex] && videoList[currentIndex].videoContext) {
+            videoList[currentIndex].videoContext.pause();
+            videoList[currentIndex].isPlaying = false;
+        }
+
+        // Update current index
+        this.setData({ currentIndex: current });
+
+        // Initialize video context if needed and play the current video
+        if (!videoList[current].videoContext) {
+            const videoContext = this.initVideoContext(current);
+            if (videoContext) {
+                videoContext.play();
+            }
+        } else {
+            videoList[current].videoContext.play();
+        }
+
+        videoList[current].isPlaying = true;
+        this.setData({ videoList });
+
+        // Check if we need to add more videos
+        if (current === videoList.length - 1) {
+            this.addNewVideo();
+        }
+    },
+
+    /**
+     * Add a new random video to the list
+     */
+    addNewVideo() {
+        const { videoList } = this.data;
+        const newVideo = this.createVideoItem(getRandomVideoUrl());
+        videoList.push(newVideo);
+        this.setData({ videoList });
     },
 
     /**
      * Video event handlers
      */
-    onVideoPlay() {
-        this.setData({ isPlaying: true });
-        console.log('Video started playing');
+    onVideoPlay(e: WechatMiniprogram.TouchEvent) {
+        const videoId = e.currentTarget.id;
+        const { videoList } = this.data;
+
+        // Find and update the video that started playing
+        const index = videoList.findIndex(v => v.id === videoId);
+        if (index !== -1) {
+            videoList[index].isPlaying = true;
+            this.setData({ videoList });
+        }
+        console.log(`Video ${videoId} started playing`);
     },
 
-    onVideoPause() {
-        this.setData({ isPlaying: false });
-        console.log('Video paused');
+    onVideoPause(e: WechatMiniprogram.TouchEvent) {
+        const videoId = e.currentTarget.id;
+        const { videoList } = this.data;
+
+        // Find and update the video that was paused
+        const index = videoList.findIndex(v => v.id === videoId);
+        if (index !== -1) {
+            videoList[index].isPlaying = false;
+            this.setData({ videoList });
+        }
+        console.log(`Video ${videoId} paused`);
     },
 
-    onVideoEnded() {
-        this.setData({
-            isPlaying: false,
-            currentTime: '00:00',
-            progressPercent: 0
-        });
-        console.log('Video playback ended');
+    onVideoEnded(e: WechatMiniprogram.TouchEvent) {
+        const videoId = e.currentTarget.id;
+        const { videoList } = this.data;
 
-        // Optionally restart the video
-        setTimeout(() => {
-            if (this.data.videoContext) {
-                this.data.videoContext.seek(0);
-                this.data.videoContext.play();
-            }
-        }, 2000);
+        // Find and update the video that ended
+        const index = videoList.findIndex(v => v.id === videoId);
+        if (index !== -1) {
+            videoList[index].isPlaying = false;
+            videoList[index].currentTime = '00:00';
+            videoList[index].progressPercent = 0;
+            this.setData({ videoList });
+
+            // Optionally restart the video
+            setTimeout(() => {
+                if (videoList[index].videoContext) {
+                    videoList[index].videoContext.seek(0);
+                    videoList[index].videoContext.play();
+                    videoList[index].isPlaying = true;
+                    this.setData({ videoList });
+                }
+            }, 2000);
+        }
+        console.log(`Video ${videoId} playback ended`);
     },
 
     /**
      * Track video progress
      */
     onVideoTimeUpdate(e: WechatMiniprogram.VideoTimeUpdate) {
+        const videoId = e.currentTarget.id;
         const { currentTime, duration } = e.detail;
+        const { videoList } = this.data;
 
-        // Calculate progress percentage
-        const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+        // Find and update the video progress
+        const index = videoList.findIndex(v => v.id === videoId);
+        if (index !== -1) {
+            // Calculate progress percentage
+            const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-        // Format time strings
-        const formattedCurrentTime = formatTime(currentTime);
-        const formattedDuration = formatTime(duration);
+            // Format time strings
+            const formattedCurrentTime = formatTime(currentTime);
+            const formattedDuration = formatTime(duration);
 
-        this.setData({
-            currentTime: formattedCurrentTime,
-            duration: formattedDuration,
-            progressPercent
-        });
+            videoList[index].currentTime = formattedCurrentTime;
+            videoList[index].duration = formattedDuration;
+            videoList[index].progressPercent = progressPercent;
+
+            this.setData({ videoList });
+        }
     },
 
     /**
      * Toggle play/pause when video is tapped
      */
-    onVideoTap() {
-        if (this.data.videoContext) {
-            if (this.data.isPlaying) {
-                this.data.videoContext.pause();
+    onVideoTap(e: WechatMiniprogram.TouchEvent) {
+        const videoId = e.currentTarget.id;
+        const { videoList } = this.data;
+
+        // Find the tapped video
+        const index = videoList.findIndex(v => v.id === videoId);
+        if (index !== -1 && videoList[index].videoContext) {
+            if (videoList[index].isPlaying) {
+                videoList[index].videoContext.pause();
+                videoList[index].isPlaying = false;
             } else {
-                this.data.videoContext.play();
+                videoList[index].videoContext.play();
+                videoList[index].isPlaying = true;
             }
+            this.setData({ videoList });
         }
     },
 
     /**
      * Interaction button handlers
      */
-    onLikeClick() {
-        // Play animation immediately when clicked
-        if (!this.data.isLiked) {
-            // Only play animation when liking (not when unliking)
-            this.setData({ isLiked: true });
+    onLikeClick(e: WechatMiniprogram.TouchEvent) {
+        const index = parseInt(e.currentTarget.dataset.index);
+        const { videoList } = this.data;
 
-            // Optional: Play a like sound effect
-            // const audioContext = wx.createInnerAudioContext();
-            // audioContext.src = '/assets/audio/like.mp3';
-            // audioContext.play();
+        if (index >= 0 && index < videoList.length) {
+            // Toggle like state
+            videoList[index].isLiked = !videoList[index].isLiked;
+            this.setData({ videoList });
 
-            console.log('Video liked');
-        } else {
-            // When unliking, simply toggle the state
-            this.setData({ isLiked: false });
-            console.log('Video unliked');
+            console.log(`Video ${index} ${videoList[index].isLiked ? 'liked' : 'unliked'}`);
         }
     },
 
-    onSaveClick() {
-        // Play animation immediately when clicked
-        if (!this.data.isSaved) {
-            // Only play animation when saving (not when unsaving)
-            this.setData({ isSaved: true });
+    onSaveClick(e: WechatMiniprogram.TouchEvent) {
+        const index = parseInt(e.currentTarget.dataset.index);
+        const { videoList } = this.data;
 
-            console.log('Video saved');
-        } else {
-            // When unsaving, simply toggle the state
-            this.setData({ isSaved: false });
-            console.log('Video unsaved');
+        if (index >= 0 && index < videoList.length) {
+            // Toggle save state
+            videoList[index].isSaved = !videoList[index].isSaved;
+            this.setData({ videoList });
+
+            console.log(`Video ${index} ${videoList[index].isSaved ? 'saved' : 'unsaved'}`);
         }
     },
 
@@ -203,9 +325,9 @@ Page({
 
     // Handle comment submission
     sendComment() {
-        const { commentText } = this.data;
+        const { commentText, currentIndex, videoList } = this.data;
         if (commentText.trim()) {
-            console.log('Comment submitted:', commentText);
+            console.log(`Comment submitted for video ${currentIndex}:`, commentText);
 
             // Here you would typically send the comment to your backend
             // For now, let's just show a success message
@@ -214,6 +336,12 @@ Page({
                 icon: 'success',
                 duration: 1500
             });
+
+            // Increment comment count for the current video
+            if (currentIndex >= 0 && currentIndex < videoList.length) {
+                videoList[currentIndex].commentCount++;
+                this.setData({ videoList });
+            }
 
             // Clear comment text and hide input
             this.setData({
@@ -233,16 +361,29 @@ Page({
      * Lifecycle function--Called when page is initially rendered
      */
     onReady() {
-        // You can perform additional initialization when the page is ready
+        // Initialize video context for the first video
+        this.initVideoContext(0);
+
+        // Start playing the first video
+        const { videoList } = this.data;
+        if (videoList[0].videoContext) {
+            videoList[0].videoContext.play();
+            videoList[0].isPlaying = true;
+            this.setData({ videoList });
+        }
     },
 
     /**
      * Lifecycle function--Called when page show
      */
     onShow() {
-        // You can resume video playback here if needed
-        if (this.data.videoContext && !this.data.isPlaying) {
-            this.data.videoContext.play();
+        // Resume video playback if needed
+        const { currentIndex, videoList } = this.data;
+        if (currentIndex >= 0 && currentIndex < videoList.length &&
+            videoList[currentIndex].videoContext && !videoList[currentIndex].isPlaying) {
+            videoList[currentIndex].videoContext.play();
+            videoList[currentIndex].isPlaying = true;
+            this.setData({ videoList });
         }
     },
 
@@ -250,131 +391,27 @@ Page({
      * Lifecycle function--Called when page hide
      */
     onHide() {
-        // Pause video when page is hidden
-        if (this.data.videoContext && this.data.isPlaying) {
-            this.data.videoContext.pause();
-        }
+        // Pause all videos when page is hidden
+        const { videoList } = this.data;
+        videoList.forEach((video, index) => {
+            if (video.videoContext && video.isPlaying) {
+                video.videoContext.pause();
+                video.isPlaying = false;
+            }
+        });
+        this.setData({ videoList });
     },
 
     /**
      * Lifecycle function--Called when page unload
      */
     onUnload() {
-        // Clean up resources when page is unloaded
-        if (this.data.videoContext) {
-            this.data.videoContext.stop();
-        }
-    },
-
-    // --- Touch Event Handlers for Swiping ---
-    onTouchStart(e: WechatMiniprogram.TouchEvent) {
-        this.setData({
-            touchStartY: e.touches[0].clientY,
-            touchStartTime: e.timeStamp
-        });
-    },
-
-    onTouchEnd(e: WechatMiniprogram.TouchEvent) {
-        const touchEndY = e.changedTouches[0].clientY;
-        const touchEndTime = e.timeStamp;
-        const startY = this.data.touchStartY;
-        const startTime = this.data.touchStartTime;
-
-        const deltaY = touchEndY - startY;
-        const deltaTime = touchEndTime - startTime;
-
-        // Detect swipe: significant vertical movement in a short time
-        if (deltaTime < 500 && Math.abs(deltaY) > 50) {
-            if (deltaY < 0) {
-                console.log('Swipe Up detected');
-                this.loadNextVideo('up');
-            } else {
-                console.log('Swipe Down detected');
-                this.loadNextVideo('down');
+        // Stop all videos when page is unloaded
+        const { videoList } = this.data;
+        videoList.forEach((video, index) => {
+            if (video.videoContext) {
+                video.videoContext.stop();
             }
-        }
-
-        // Reset touch start data
-        this.setData({
-            touchStartY: 0,
-            touchStartTime: 0
         });
-    },
-
-    // --- Load and Play Next Video ---
-    loadNextVideo(direction: 'up' | 'down' = 'up') { // Default direction if called without swipe
-        // Prevent starting a new animation if one is already in progress
-        if (this.data.isAnimating) {
-            console.log('Animation already in progress, swipe ignored.');
-            return;
-        }
-
-        // Stop current video if playing
-        if (this.data.videoContext && this.data.isPlaying) {
-            this.data.videoContext.stop();
-        }
-
-        const nextVideoUrl = getRandomVideoUrl();
-        console.log('Loading next video:', nextVideoUrl, 'Direction:', direction);
-
-        // Determine animation classes based on swipe direction
-        const outClass = direction === 'up' ? 'slide-out-up' : 'slide-out-down';
-        const inClass = direction === 'up' ? 'slide-in-down' : 'slide-in-up';
-
-        // Start the outgoing animation
-        this.setData({ animationClass: outClass, isAnimating: true });
-
-        // Wait for the outgoing animation to finish (500ms matches CSS)
-        setTimeout(() => {
-            // Reset state for the new video and apply incoming animation
-            this.setData({
-                videoUrl: nextVideoUrl,
-                isPlaying: false,
-                isLiked: false,
-                isSaved: false,
-                commentCount: 0,
-                currentTime: '00:00',
-                duration: '00:00',
-                progressPercent: 0,
-                showCommentInput: false,
-                commentText: '',
-                animationClass: inClass // Apply incoming animation class
-            }, () => {
-                // Ensure the video context is valid
-                if (!this.data.videoContext) {
-                    this.setData({
-                        videoContext: wx.createVideoContext('foodVideo', this)
-                    });
-                }
-                // Play the new video
-                this.playCurrentVideo();
-
-                // Wait for the incoming animation to finish, then clear the class and allow swiping again
-                setTimeout(() => {
-                    this.setData({ animationClass: '', isAnimating: false });
-                    console.log('Incoming animation finished.');
-                }, 500); // Animation duration
-            });
-        }, 500); // Outgoing animation duration
-    },
-
-    // --- Helper to Play Current Video ---
-    playCurrentVideo() {
-        // Use timeout to ensure video is ready
-        setTimeout(() => {
-            if (this.data.videoContext) {
-                console.log('Attempting to play current video');
-                this.data.videoContext.play();
-            } else {
-                console.error('Video context not available to play video');
-                // Attempt to re-initialize context
-                const videoContext = wx.createVideoContext('foodVideo', this);
-                if (videoContext) {
-                    this.setData({ videoContext: videoContext }, () => {
-                        this.data.videoContext?.play();
-                    });
-                }
-            }
-        }, 100); // Short delay
     }
 }); 

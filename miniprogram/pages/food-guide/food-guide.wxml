@@ -1,35 +1,47 @@
-<view class="food-guide-container" catchtouchstart="onTouchStart" catchtouchend="onTouchEnd">
+<view class="food-guide-container">
     <!-- Navigation bar with back button (explicitly setting back button color to white) -->
     <navigation-bar title="美食指南" back="{{true}}" color="#ffffff" backgroundColor="transparent" backIconColor="#ffffff"></navigation-bar>
     <!-- Main content area -->
     <view class="content-area">
-        <!-- Video player -->
-        <view class="video-section">
-            <view class="video-wrapper {{animationClass}}">
-                <video id="foodVideo" src="{{videoUrl}}" controls="{{false}}" show-center-play-btn="{{true}}" show-play-btn="{{true}}" bindplay="onVideoPlay" bindpause="onVideoPause" bindended="onVideoEnded" bindtimeupdate="onVideoTimeUpdate" bindtap="onVideoTap" object-fit="contain" autoplay="{{true}}"></video>
-            </view>
-            <!-- Custom progress bar -->
-            <view class="progress-container">
-                <view class="progress-bar">
-                    <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+        <!-- Vertical swiper for videos -->
+        <swiper class="video-swiper" vertical="{{true}}" duration="300" bindchange="onSwiperChange" current="{{currentIndex}}">
+            <swiper-item wx:for="{{videoList}}" wx:key="id">
+                <view class="video-section">
+                    <!-- Video player -->
+                    <video id="{{item.id}}" src="{{item.url}}" controls="{{false}}" show-center-play-btn="{{true}}" show-play-btn="{{true}}" bindplay="onVideoPlay" bindpause="onVideoPause" bindended="onVideoEnded" bindtimeupdate="onVideoTimeUpdate" bindtap="onVideoTap" object-fit="contain" autoplay="{{index === currentIndex}}" loop="{{false}}"></video>
+                    <!-- Custom progress bar -->
+                    <view class="progress-container">
+                        <view class="progress-bar">
+                            <view class="progress-fill" style="width: {{item.progressPercent}}%"></view>
+                        </view>
+                        <view class="progress-time">{{item.currentTime}}/{{item.duration}}</view>
+                    </view>
                 </view>
-                <view class="progress-time">{{currentTime}}/{{duration}}</view>
-            </view>
+                <!-- Interaction buttons overlaid on the right -->
+                <view class="interaction-buttons">
+                    <view class="button-item liked-button {{item.isLiked ? 'active' : ''}}" bindtap="onLikeClick" data-index="{{index}}">
+                        <image src="/assets/icons/video/like.svg" class="icon {{item.isLiked ? 'liked' : ''}}"></image>
+                        <text>喜欢</text>
+                    </view>
+                    <view class="button-item saved-button {{item.isSaved ? 'active' : ''}}" bindtap="onSaveClick" data-index="{{index}}">
+                        <image src="/assets/icons/video/collect.svg" class="icon {{item.isSaved ? 'saved' : ''}}"></image>
+                        <text>收藏</text>
+                    </view>
+                    <view class="button-item" bindtap="onCommentClick">
+                        <image src="/assets/icons/video/comment.svg" class="icon"></image>
+                        <text>评论</text>
+                    </view>
+                </view>
+            </swiper-item>
+        </swiper>
+        <!-- Swiper indicators (visual dots showing current position) -->
+        <view class="swiper-indicators">
+            <view wx:for="{{videoList}}" wx:key="id" class="indicator {{currentIndex === index ? 'active' : ''}}"></view>
         </view>
-        <!-- Interaction buttons overlaid on the right -->
-        <view class="interaction-buttons">
-            <view class="button-item liked-button {{isLiked ? 'active' : ''}}" bindtap="onLikeClick">
-                <image src="/assets/icons/video/like.svg" class="icon {{isLiked ? 'liked' : ''}}"></image>
-                <text>喜欢</text>
-            </view>
-            <view class="button-item saved-button {{isSaved ? 'active' : ''}}" bindtap="onSaveClick">
-                <image src="/assets/icons/video/collect.svg" class="icon {{isSaved ? 'saved' : ''}}"></image>
-                <text>收藏</text>
-            </view>
-            <view class="button-item" bindtap="onCommentClick">
-                <image src="/assets/icons/video/comment.svg" class="icon"></image>
-                <text>评论</text>
-            </view>
+        <!-- Swipe hint (shows only initially) -->
+        <view class="swipe-hint" wx:if="{{showSwipeHint}}">
+            <view class="arrow-up"></view>
+            <text class="hint-text">上滑切换视频</text>
         </view>
     </view>
     <!-- Comment input area (appears when comment button is clicked) -->

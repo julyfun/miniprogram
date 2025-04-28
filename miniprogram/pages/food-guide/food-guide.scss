@@ -15,6 +15,21 @@
     margin-top: 15rpx;
     /* Space for navigation bar */
     padding: 10rpx;
+    overflow: hidden;
+}
+
+/* Video swiper styles */
+.video-swiper {
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+}
+
+swiper-item {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 .video-section {
@@ -31,6 +46,7 @@
         height: calc(100% - 50rpx);
         /* Reserve space for progress bar */
         border-radius: 8rpx;
+        object-fit: contain;
     }
 }
 
@@ -134,6 +150,89 @@
     }
 }
 
+/* Swiper indicators for vertical swipe */
+.swiper-indicators {
+    position: absolute;
+    right: 20rpx;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10rpx;
+    z-index: 5;
+
+    .indicator {
+        width: 8rpx;
+        height: 30rpx;
+        border-radius: 4rpx;
+        background-color: rgba(255, 255, 255, 0.3);
+
+        &.active {
+            background-color: #ffffff;
+            height: 45rpx;
+        }
+    }
+}
+
+/* Swipe hint overlay - shows initially to guide users */
+.swipe-hint {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    animation: fadeOut 2s ease 3s forwards;
+
+    .arrow-up {
+        width: 60rpx;
+        height: 60rpx;
+        border-left: 6rpx solid #ffffff;
+        border-top: 6rpx solid #ffffff;
+        transform: rotate(45deg);
+        margin-bottom: 30rpx;
+        animation: arrowPulse 1.5s infinite;
+    }
+
+    .hint-text {
+        color: #ffffff;
+        font-size: 30rpx;
+    }
+}
+
+@keyframes arrowPulse {
+    0% {
+        opacity: 0.2;
+        transform: rotate(45deg) scale(0.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: rotate(45deg) scale(1.2);
+    }
+
+    100% {
+        opacity: 0.2;
+        transform: rotate(45deg) scale(0.8);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
 /* Define the button shake animation */
 @keyframes button-shake {
     0% {
@@ -165,12 +264,16 @@
     right: 0;
     background-color: rgba(0, 0, 0, 0.8);
     padding: 20rpx;
-    transition: bottom 0.3s ease;
+    transition: bottom 0.3s ease, opacity 0.3s ease;
     z-index: 100;
     backdrop-filter: blur(10px);
+    opacity: 0;
+    visibility: hidden;
 
     &.active {
         bottom: 0;
+        opacity: 1;
+        visibility: visible;
     }
 }
 
@@ -236,78 +339,4 @@ navigation-bar {
             }
         }
     }
-}
-
-/* --- Animation Keyframes --- */
-@keyframes slideOutUp {
-    from {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    to {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-}
-
-@keyframes slideInDown {
-    from {
-        transform: translateY(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOutDown {
-    from {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    to {
-        transform: translateY(100%);
-        opacity: 0;
-    }
-}
-
-@keyframes slideInUp {
-    from {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* --- Animation Classes --- */
-.video-wrapper {
-    width: 100%;
-    height: 100%;
-    /* Ensure wrapper takes full height of video section */
-    position: relative;
-    /* Needed for positioning/transform */
-}
-
-.slide-out-up {
-    animation: slideOutUp 0.5s forwards ease-out;
-}
-
-.slide-in-down {
-    animation: slideInDown 0.5s forwards ease-out;
-}
-
-.slide-out-down {
-    animation: slideOutDown 0.5s forwards ease-out;
-}
-
-.slide-in-up {
-    animation: slideInUp 0.5s forwards ease-out;
 }
