@@ -197,18 +197,27 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
                 const learningProgress = currentPage.data?.learningProgress || { modules: {} };
 
                 // Find the first incomplete scam call module
-                const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+                const scamModules = ['scam_call', 'scam_call2', 'scam_call3', 'scam_call4'];
                 let targetModule = 'scam_call'; // Default to first module
+                let allModulesCompleted = true;
 
                 for (const module of scamModules) {
                     // If module is not completed or doesn't exist in progress data
                     if (!learningProgress.modules[module] || !learningProgress.modules[module].completed) {
                         targetModule = module;
+                        allModulesCompleted = false;
                         break;
                     }
                 }
 
-                console.log(`动态路由到首个未完成的诈骗防范模块: ${targetModule}`);
+                // If all modules are completed, select a random one
+                if (allModulesCompleted) {
+                    console.log('All scam_call modules completed, selecting random module');
+                    const randomIndex = Math.floor(Math.random() * scamModules.length);
+                    targetModule = scamModules[randomIndex];
+                }
+
+                console.log(`动态路由到诈骗防范模块: ${targetModule}`);
 
                 // Navigate to the identified target module
                 wx.navigateTo({
@@ -395,7 +404,50 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
             // 在任何导航前停止TTS播放
             stopTTSPlayback(true); // true参数抑制错误提示
 
-            // Navigate to the appropriate page
+            // Special handling for scam_call feature
+            if (feature === 'scam_call') {
+                // Find the first incomplete scam call module or choose random one if all completed
+                const scamModules = ['scam_call', 'scam_call2', 'scam_call3', 'scam_call4'];
+                let targetModule = 'scam_call'; // Default to first module
+                let allModulesCompleted = true;
+
+                // Check if all modules are completed
+                for (const module of scamModules) {
+                    if (!this.data.learningProgress.modules[module] ||
+                        !this.data.learningProgress.modules[module].completed) {
+                        targetModule = module;
+                        allModulesCompleted = false;
+                        break;
+                    }
+                }
+
+                // If all modules are completed, choose a random one
+                if (allModulesCompleted) {
+                    console.log('All scam_call modules completed, selecting random module');
+                    const randomIndex = Math.floor(Math.random() * scamModules.length);
+                    targetModule = scamModules[randomIndex];
+                }
+
+                console.log(`动态路由到诈骗防范模块: ${targetModule}`);
+
+                // Navigate to the identified target module
+                wx.navigateTo({
+                    url: `/pages/event-demo/event-demo?id=${targetModule}`,
+                    success: () => {
+                        console.log(`Successfully navigated to module: ${targetModule}`);
+                    },
+                    fail: (err) => {
+                        console.error('Navigation failed:', err);
+                        wx.showToast({
+                            title: '跳转失败',
+                            icon: 'none'
+                        });
+                    }
+                });
+                return;
+            }
+
+            // Navigate to the appropriate page for other features
             wx.navigateTo({
                 url: FUNCTION_ROUTES[feature],
                 success: () => {
@@ -1926,8 +1978,9 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
         // Check if this is the special next_scam_call module
         if (moduleId === 'next_scam_call') {
             // Find the first incomplete scam call module
-            const scamModules = ['scam_call', 'scam_call2', 'scam_call3'];
+            const scamModules = ['scam_call', 'scam_call2', 'scam_call3', 'scam_call4'];
             let targetModule = 'scam_call'; // Default to first module
+            let allModulesCompleted = true;
 
             const modules = this.data.learningProgress.modules || {};
 
@@ -1935,11 +1988,19 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 // If module is not completed or doesn't exist in progress data
                 if (!modules[module] || !modules[module].completed) {
                     targetModule = module;
+                    allModulesCompleted = false;
                     break;
                 }
             }
 
-            console.log(`动态路由到首个未完成的诈骗防范模块: ${targetModule}`);
+            // If all modules are completed, select a random one
+            if (allModulesCompleted) {
+                console.log('All scam_call modules completed, selecting random module');
+                const randomIndex = Math.floor(Math.random() * scamModules.length);
+                targetModule = scamModules[randomIndex];
+            }
+
+            console.log(`动态路由到诈骗防范模块: ${targetModule}`);
 
             // Navigate to the identified target module
             wx.navigateTo({
