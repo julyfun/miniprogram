@@ -237,3 +237,77 @@ navigation-bar {
         }
     }
 }
+
+/* --- Animation Keyframes --- */
+@keyframes slideOutUp {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* --- Animation Classes --- */
+.video-wrapper {
+    width: 100%;
+    height: 100%;
+    /* Ensure wrapper takes full height of video section */
+    position: relative;
+    /* Needed for positioning/transform */
+}
+
+.slide-out-up {
+    animation: slideOutUp 0.5s forwards ease-out;
+}
+
+.slide-in-down {
+    animation: slideInDown 0.5s forwards ease-out;
+}
+
+.slide-out-down {
+    animation: slideOutDown 0.5s forwards ease-out;
+}
+
+.slide-in-up {
+    animation: slideInUp 0.5s forwards ease-out;
+}

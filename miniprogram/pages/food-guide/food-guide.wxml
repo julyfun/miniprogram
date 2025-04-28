@@ -1,11 +1,13 @@
-<view class="food-guide-container">
+<view class="food-guide-container" catchtouchstart="onTouchStart" catchtouchend="onTouchEnd">
     <!-- Navigation bar with back button (explicitly setting back button color to white) -->
     <navigation-bar title="美食指南" back="{{true}}" color="#ffffff" backgroundColor="transparent" backIconColor="#ffffff"></navigation-bar>
     <!-- Main content area -->
     <view class="content-area">
         <!-- Video player -->
         <view class="video-section">
-            <video id="foodVideo" src="{{videoUrl}}" controls="{{false}}" show-center-play-btn="{{true}}" show-play-btn="{{true}}" bindplay="onVideoPlay" bindpause="onVideoPause" bindended="onVideoEnded" bindtimeupdate="onVideoTimeUpdate" bindtap="onVideoTap" object-fit="contain" autoplay="{{true}}"></video>
+            <view class="video-wrapper {{animationClass}}">
+                <video id="foodVideo" src="{{videoUrl}}" controls="{{false}}" show-center-play-btn="{{true}}" show-play-btn="{{true}}" bindplay="onVideoPlay" bindpause="onVideoPause" bindended="onVideoEnded" bindtimeupdate="onVideoTimeUpdate" bindtap="onVideoTap" object-fit="contain" autoplay="{{true}}"></video>
+            </view>
             <!-- Custom progress bar -->
             <view class="progress-container">
                 <view class="progress-bar">
