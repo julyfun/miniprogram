@@ -133,7 +133,7 @@ interface ISpeechRecognizer {
 }
 
 // Add a function to check for and handle special function triggers in AI responses
-function checkAndHandleFunctionTriggers(text: string): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean, images: string[], prompts: string[], music: string[] } {
+function checkAndHandleFunctionTriggers(text: string, page?: WechatMiniprogram.Page.Instance<IPageData, WechatMiniprogram.IAnyObject>): { processedText: string, functionFound: boolean, buttons: Button[], shouldAutoRecord: boolean, images: string[], prompts: string[], music: string[] } {
     // Don't modify the original text that is displayed to the user
     let processedText = text;
     let functionFound = false;
@@ -314,6 +314,34 @@ function checkAndHandleFunctionTriggers(text: string): { processedText: string, 
             // Add the cloud storage path to the music
             const musicPath = `cloud://cloud1-6g9ht8y6f2744311.636c-cloud1-6g9ht8y6f2744311-1350392348/assets/audio/${musicName}`;
             music.push(musicPath);
+
+            // If the page reference is provided, automatically navigate to the music player
+            if (page && music.length === 1) { // Only navigate for the first music tag to avoid multiple navigations
+                // Stop TTS playback before navigating
+                stopTTSPlayback(true);
+
+                // Extract music name from the path for display
+                const musicDisplayName = musicName.replace('.mp3', '').replace(/-/g, ' ');
+
+                console.log('Automatically navigating to music player for:', musicPath);
+
+                // Wait a brief moment to allow the chat message to be displayed first
+                setTimeout(() => {
+                    wx.navigateTo({
+                        url: '/pages/music-player/music-player?src=' + encodeURIComponent(musicPath) + '&name=' + encodeURIComponent(musicDisplayName),
+                        success: () => {
+                            console.log('Music player page opened automatically');
+                        },
+                        fail: (err) => {
+                            console.error('Failed to auto-open music player page:', err);
+                            wx.showToast({
+                                title: '音乐自动播放失败',
+                                icon: 'none'
+                            });
+                        }
+                    });
+                }, 300);
+            }
         }
 
         // Remove all music tags from the text
@@ -553,7 +581,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 "[button:hongbao][button:scam_call][prompt:你会做什么？][prompt:帮我看看菜单]"; // Add debug prompts
 
             // 处理文本中的标签，提取按钮和其他功能
-            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugWelcomeText);
+            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugWelcomeText, this);
 
             // 创建经过处理的调试消息
             const debugMessage: ChatMessage = {
@@ -1123,7 +1151,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 }
 
                 // Process the response the same way as regular API responses
-                const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugResponse);
+                const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugResponse, this);
 
                 const assistantMessage: ChatMessage = {
                     id: Date.now(),
@@ -1220,7 +1248,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                             }
 
                             // Check for function triggers, buttons, images, and prompts in the response
-                            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(fullContent);
+                            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(fullContent, this);
 
                             const assistantMessage: ChatMessage = {
                                 id: Date.now(),
@@ -1285,7 +1313,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                     });
 
                     // Check for function triggers, buttons, images, and prompts in the response
-                    const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(response);
+                    const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(response, this);
                     console.log('Qwen response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                     const assistantMessage: ChatMessage = {
@@ -1523,7 +1551,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                         }
 
                         // For initial prompt, extract the text, buttons, images, prompts but skip function navigation
-                        const { processedText, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(fullContent);
+                        const { processedText, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(fullContent, this);
                         console.log('Initial prompt response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                         // Add the initial greeting from AI to chat with any buttons/prompts found
@@ -1622,7 +1650,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
                 });
 
                 // For initial prompt, extract the text, buttons, images, prompts but skip function navigation
-                const { processedText, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(response);
+                const { processedText, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(response, this);
                 console.log('Initial prompt response with buttons:', buttons.length > 0, 'prompts:', prompts.length > 0);
 
                 const assistantMessage: ChatMessage = {
@@ -1736,7 +1764,7 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
 
 
             // 处理文本中的标签，提取按钮和其他功能
-            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugWelcomeText);
+            const { processedText, functionFound, buttons, shouldAutoRecord, images, prompts, music } = checkAndHandleFunctionTriggers(debugWelcomeText, this);
 
             // 创建经过处理的调试消息
             const debugMessage: ChatMessage = {
@@ -2253,15 +2281,21 @@ Page<IPageData, WechatMiniprogram.IAnyObject>({
     // Handle music playback when user taps on a music item
     playMusic: function (e: any) {
         const src = e.currentTarget.dataset.src;
-        // 從 src 中提取音樂名稱
-        const musicName = src.split('/').pop().replace('.mp3', '').replace(/-/g, ' ');
-        console.log('Playing music:', src);
+        // 從 src 中提取音樂名稱 - 首先获取文件名部分
+        const fileName = src.split('/').pop() || '';
+        // 然后移除扩展名和连字符，使用空格代替连字符
+        const musicName = fileName.replace('.mp3', '').replace(/-/g, ' ');
+
+        console.log('Manual music play requested:', src);
+
+        // 停止当前TTS播放
+        stopTTSPlayback(true);
 
         // Navigate to the music player page
         wx.navigateTo({
             url: '/pages/music-player/music-player?src=' + encodeURIComponent(src) + '&name=' + encodeURIComponent(musicName),
             success: () => {
-                console.log('Music player page opened successfully');
+                console.log('Music player page opened manually');
             },
             fail: (err) => {
                 console.error('Failed to open music player page:', err);

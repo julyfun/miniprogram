@@ -139,7 +139,7 @@
       <view class="orb-outer"></view>
     </view>
     <view class="orb-instruction">
-      {{isRecording ? '正在聆听...' : (isSpeaking ? '正在说话...' : '轻触开始')}}
+      {{isRecording ? '正在聆听...' : (isSpeaking ? '正在说话...' : '轻触说话')}}
     </view>
   </view>
   <!-- 设置按钮和菜单 -->
